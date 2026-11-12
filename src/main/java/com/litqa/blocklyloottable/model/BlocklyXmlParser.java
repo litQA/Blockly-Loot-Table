@@ -28,8 +28,18 @@ public final class BlocklyXmlParser {
     }
 
     public static ParseResult parse(String xml, LootTableType type, ItemNameResolver resolver) {
+        return parse(xml, type, resolver, "");
+    }
+
+    /**
+     * @param providedBlock registry name of the element target block, used by
+     *                      the provided blockstate dependency block
+     */
+    public static ParseResult parse(String xml, LootTableType type, ItemNameResolver resolver,
+            String providedBlock) {
         LootTableType effectiveType = type == null ? LootTableType.BLOCK : type;
         ItemNameResolver effectiveResolver = resolver == null ? ItemNameResolver.IDENTITY : resolver;
+        String effectiveProvidedBlock = providedBlock == null ? "" : providedBlock.trim();
         LootTableModel model = new LootTableModel(effectiveType);
         ValidationReport report = new ValidationReport();
 
@@ -74,15 +84,23 @@ public final class BlocklyXmlParser {
         Element root = document.getDocumentElement();
         List<Element> topBlocks = directChildren(root, "block");
         Element startBlock = null;
+        int extraStarts = 0;
         for (Element block : topBlocks) {
             if ("loottable_start".equals(block.getAttribute("type"))) {
-                startBlock = block;
-                break;
+                if (startBlock == null) {
+                    startBlock = block;
+                } else {
+                    extraStarts++;
+                }
             }
+        }
+        if (extraStarts > 0) {
+            report.addWarning("loottable_start",
+                    "Only one loot table start block is allowed; " + extraStarts + " extra start block(s) were ignored.");
         }
 
         if (startBlock != null) {
-            parsePoolChain(nextBlock(startBlock), effectiveType, effectiveResolver, model, report);
+            parsePoolChain(nextBlock(startBlock), effectiveType, effectiveResolver, effectiveProvidedBlock, model, report);
             for (Element block : topBlocks) {
                 if (block != startBlock && "loottable_pool".equals(block.getAttribute("type"))) {
                     report.addWarning("loottable_pool",
@@ -95,7 +113,7 @@ public final class BlocklyXmlParser {
             for (Element block : topBlocks) {
                 if ("loottable_pool".equals(block.getAttribute("type"))) {
                     poolIndex++;
-                    parsePool(block, poolIndex, effectiveType, effectiveResolver, model, report);
+                    parsePool(block, poolIndex, effectiveType, effectiveResolver, effectiveProvidedBlock, model, report);
                 }
             }
         }
@@ -107,13 +125,13 @@ public final class BlocklyXmlParser {
     }
 
     private static int parsePoolChain(Element first, LootTableType type, ItemNameResolver resolver,
-            LootTableModel model, ValidationReport report) {
+            String providedBlock, LootTableModel model, ValidationReport report) {
         int poolCount = 0;
         for (Element block = first; block != null; block = nextBlock(block)) {
             String blockType = block.getAttribute("type");
             if ("loottable_pool".equals(blockType)) {
                 poolCount++;
-                parsePool(block, poolCount, type, resolver, model, report);
+                parsePool(block, poolCount, type, resolver, providedBlock, model, report);
             } else if (!"loottable_start".equals(blockType)) {
                 report.addWarning(blockType, "Block " + blockType + " is not a pool and was skipped.");
             }
@@ -122,15 +140,16 @@ public final class BlocklyXmlParser {
     }
 
     private static void parsePool(Element block, int poolIndex, LootTableType type, ItemNameResolver resolver,
-            LootTableModel model, ValidationReport report) {
+            String providedBlock, LootTableModel model, ValidationReport report) {
         LootTableModel.Pool pool = new LootTableModel.Pool();
         pool.setRolls(readWholeNumber(block, "rolls", 1, 0, "Pool " + poolIndex + " rolls", report));
         pool.setBonusRolls(readWholeNumber(block, "bonus_rolls", 0, 0,
                 "Pool " + poolIndex + " bonus rolls", report));
 
-        parseConditionChain(statementFirstBlock(block, "conditions"), type, resolver, pool.getConditions(), report);
+        parseConditionChain(statementFirstBlock(block, "conditions"), type, resolver, providedBlock,
+                pool.getConditions(), report);
         int entryCount = parseEntryChain(statementFirstBlock(block, "entries"), poolIndex, type, resolver,
-                pool.getEntries(), report);
+                providedBlock, pool.getEntries(), report);
         if (entryCount == 0) {
             report.addWarning("loottable_pool",
                     "Pool " + poolIndex + " has no valid entries and was skipped.");
@@ -140,7 +159,7 @@ public final class BlocklyXmlParser {
     }
 
     private static int parseEntryChain(Element first, int poolIndex, LootTableType type, ItemNameResolver resolver,
-            List<LootTableModel.Entry> entries, ValidationReport report) {
+            String providedBlock, List<LootTableModel.Entry> entries, ValidationReport report) {
         int entryCount = 0;
         for (Element block = first; block != null; block = nextBlock(block)) {
             String blockType = block.getAttribute("type");
@@ -149,7 +168,7 @@ public final class BlocklyXmlParser {
                         "Block " + blockType + " is not an item entry and was skipped in pool " + poolIndex + ".");
                 continue;
             }
-            LootTableModel.Entry entry = parseEntry(block, type, resolver, report);
+            LootTableModel.Entry entry = parseEntry(block, type, resolver, providedBlock, report);
             if (entry != null) {
                 entries.add(entry);
                 entryCount++;
@@ -159,7 +178,7 @@ public final class BlocklyXmlParser {
     }
 
     private static LootTableModel.Entry parseEntry(Element block, LootTableType type, ItemNameResolver resolver,
-            ValidationReport report) {
+            String providedBlock, ValidationReport report) {
         String rawItem = fieldValue(block, "item");
         if (rawItem.isBlank()) {
             report.addWarning("loottable_entry_item", "An item entry has no selected item and was skipped.");
@@ -196,14 +215,15 @@ public final class BlocklyXmlParser {
         entry.setMaxCount(maxCount);
         entry.setWeight(readWholeNumber(block, "weight", 1, 1, "Entry weight", report));
 
-        parseConditionChain(statementFirstBlock(block, "conditions"), type, resolver, entry.getConditions(), report);
+        parseConditionChain(statementFirstBlock(block, "conditions"), type, resolver, providedBlock,
+                entry.getConditions(), report);
         return entry;
     }
 
     private static void parseConditionChain(Element first, LootTableType type, ItemNameResolver resolver,
-            List<LootTableModel.Condition> conditions, ValidationReport report) {
+            String providedBlock, List<LootTableModel.Condition> conditions, ValidationReport report) {
         for (Element block = first; block != null; block = nextBlock(block)) {
-            LootTableModel.Condition condition = parseCondition(block, type, resolver, report);
+            LootTableModel.Condition condition = parseCondition(block, type, resolver, providedBlock, report);
             if (condition != null) {
                 conditions.add(condition);
             }
@@ -216,7 +236,7 @@ public final class BlocklyXmlParser {
      * @return condition or {@code null} when the block is unknown or illegal
      */
     private static LootTableModel.Condition parseCondition(Element block, LootTableType type,
-            ItemNameResolver resolver, ValidationReport report) {
+            ItemNameResolver resolver, String providedBlock, ValidationReport report) {
         String blockType = block.getAttribute("type");
         ConditionDefinition definition = ConditionScopeRegistry.get(blockType);
         if (definition == null) {
@@ -269,13 +289,52 @@ public final class BlocklyXmlParser {
                     condition.getProperties().put("value", value);
                 }
             }
+            case "loottable_block_state_boolean", "loottable_block_state_integer", "loottable_block_state_enum" -> {
+                String resolvedBlock = parseBlockValue(block, "block", providedBlock, resolver, report);
+                if (resolvedBlock.isBlank()) {
+                    return null;
+                }
+                String property = fieldValue(block, "property").trim();
+                String value = fieldValue(block, "value").trim();
+                if (property.isBlank()) {
+                    report.addWarning(blockType,
+                            "Block state property has no property name and was skipped.");
+                    return null;
+                }
+                if (value.isBlank()) {
+                    report.addWarning(blockType, "Block state property has no comparison value and was skipped.");
+                    return null;
+                }
+                if ("loottable_block_state_boolean".equals(blockType)) {
+                    value = value.toLowerCase(java.util.Locale.ROOT);
+                }
+                condition.getProperties().put("block", resolvedBlock);
+                condition.getProperties().put("property", property);
+                condition.getProperties().put("value", value);
+            }
+            case "loottable_entity_has_potion" -> {
+                String entity = parseEntityValue(block, "entity", type, report);
+                if (entity.isBlank()) {
+                    return null;
+                }
+                String effect = fieldValue(block, "potion").trim();
+                if (effect.isBlank()) {
+                    report.addWarning(blockType, "Potion condition has no effect selected and was skipped.");
+                    return null;
+                }
+                if (!effect.contains(":")) {
+                    effect = "minecraft:" + effect;
+                }
+                condition.getProperties().put("entity", entity);
+                condition.getProperties().put("effect", effect);
+            }
             case "loottable_inverted" -> {
                 Element termBlock = statementFirstBlock(block, "term");
                 if (termBlock == null) {
                     report.addWarning(blockType, "Inverted condition has no nested condition and was skipped.");
                     return null;
                 }
-                LootTableModel.Condition term = parseCondition(termBlock, type, resolver, report);
+                LootTableModel.Condition term = parseCondition(termBlock, type, resolver, providedBlock, report);
                 if (term == null) {
                     report.addWarning(blockType, "Inverted condition has no valid nested condition and was skipped.");
                     return null;
@@ -296,6 +355,76 @@ public final class BlocklyXmlParser {
             }
         }
         return "";
+    }
+
+    private static String parseBlockValue(Element block, String inputName, String providedBlock,
+            ItemNameResolver resolver, ValidationReport report) {
+        Element valueBlock = valueBlock(block, inputName);
+        if (valueBlock == null) {
+            if (!providedBlock.isBlank()) {
+                return providedBlock;
+            }
+            report.addError(block.getAttribute("type"), "A block value is required for this condition.");
+            return "";
+        }
+
+        String valueType = valueBlock.getAttribute("type");
+        String rawBlock;
+        switch (valueType) {
+            case "loottable_provided_blockstate", "blockstate_from_deps" -> rawBlock = providedBlock;
+            case "loottable_block_selector", "blockstate_selector" -> rawBlock = fieldValue(valueBlock, "block");
+            default -> {
+                report.addWarning(valueType, "Block value " + valueType + " is not supported and was skipped.");
+                return "";
+            }
+        }
+
+        if (rawBlock.isBlank()) {
+            if ("loottable_provided_blockstate".equals(valueType) || "blockstate_from_deps".equals(valueType)) {
+                report.addError(valueType,
+                        "Provided blockstate requires a target block in the loot table settings.");
+            } else {
+                report.addWarning(valueType, "Block selector has no selected block and was skipped.");
+            }
+            return "";
+        }
+
+        String resolved = resolver.resolve(rawBlock);
+        if (resolved.isBlank() || resolved.startsWith("#")) {
+            report.addWarning(valueType,
+                    "Block value '" + rawBlock + "' is not a concrete block and was skipped.");
+            return "";
+        }
+        return resolved;
+    }
+
+    private static String parseEntityValue(Element block, String inputName, LootTableType type,
+            ValidationReport report) {
+        Element valueBlock = valueBlock(block, inputName);
+        if (valueBlock == null) {
+            return "this";
+        }
+
+        String valueType = valueBlock.getAttribute("type");
+        return switch (valueType) {
+            case "loottable_entity_dependency", "entity_from_deps" -> "this";
+            case "loottable_source_entity_dependency", "source_entity_from_deps" ->
+                    type == LootTableType.ENTITY ? "attacker" : "attacking_player";
+            case "immediate_source_entity_dependency" -> "direct_attacker";
+            default -> {
+                report.addWarning(valueType, "Entity value " + valueType + " is not supported and was skipped.");
+                yield "";
+            }
+        };
+    }
+
+    private static Element valueBlock(Element block, String name) {
+        for (Element value : directChildren(block, "value")) {
+            if (name.equals(value.getAttribute("name"))) {
+                return directChild(value, "block");
+            }
+        }
+        return null;
     }
 
     private static Element statementFirstBlock(Element block, String name) {

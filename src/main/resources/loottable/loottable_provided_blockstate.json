@@ -1,0 +1,8 @@
+{
+  "output": "MCItemBlock",
+  "colour": 60,
+  "mcreator": {
+    "toolbox_id": "loottable_blocks",
+    "toolbox_init": []
+  }
+}

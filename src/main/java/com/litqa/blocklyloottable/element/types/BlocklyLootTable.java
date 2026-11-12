@@ -51,8 +51,8 @@ public class BlocklyLootTable extends GeneratableElement {
 
     public String getDependencyLabel() {
         return getLootTableTypeEnum() == LootTableType.ENTITY
-                ? "entity, source entity, world"
-                : "blockstate, source entity, world";
+                ? "event/target entity, source entity, world"
+                : "provided blockstate, block selector, source entity, world";
     }
 
     public String getTargetRegistryName() {
@@ -111,7 +111,8 @@ public class BlocklyLootTable extends GeneratableElement {
     }
 
     private BlocklyXmlParser.ParseResult parseDocument() {
-        return BlocklyXmlParser.parse(blocklyXml, getLootTableTypeEnum(), createResolver());
+        return BlocklyXmlParser.parse(blocklyXml, getLootTableTypeEnum(), createResolver(),
+                getTargetRegistryName());
     }
 
     private ValidationReport validate(BlocklyXmlParser.ParseResult parseResult) {

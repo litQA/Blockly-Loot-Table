@@ -12,6 +12,20 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.0.2.1-beta
+
+- The `loottable_start` block is hidden from the toolbox and forced to be
+  non-deletable. A workspace with multiple start blocks keeps the first one and
+  reports a warning for the rest.
+- Added block-state boolean, integer and enum comparisons, plus the entity
+  potion-effect predicate. The legacy `block_state_property` block remains
+  parseable for existing workspaces but is hidden from the toolbox.
+- Added provided-blockstate, block-selector, event/target-entity and
+  source-entity value blocks. The provided blockstate is resolved from the loot
+  table element target; entity dependencies resolve by context.
+- The generated JSON schema is unchanged for existing elements, so no workspace
+  migration is required.
+
 ### 1.0.1.8-beta
 
 - The custom Blockly editor now registers the toolbar localization keys used by
@@ -32,12 +46,15 @@ workspace metadata is modified.
    blocks that add conditions must register their scope in this Java registry or
    they are treated as unknown and skipped with a warning.
 
-2. **First-phase condition subset.**
-   Only `random_chance`, `killed_by_player`, `survives_explosion`,
-   `weather_check`, `inverted` and a basic `block_state_property` are
-   implemented. `table_bonus`, `location_check`, `random_chance_with_looting`,
-   `killed_by_player_or_pets`, `alternative`, `and`, `match_tool`,
-   `entity_properties` and `damage_source_properties` remain future work.
+2. **Condition subset.**
+   The available conditions are `random_chance`, `killed_by_player`,
+   `survives_explosion`, `weather_check`, `inverted`, the legacy
+   `block_state_property` form, block-state boolean/integer/enum comparisons and
+   the entity potion-effect predicate. `table_bonus`, `location_check`,
+   `random_chance_with_looting`, `killed_by_player_or_pets`, `alternative`, `and`,
+   `match_tool`, full `entity_properties` and `damage_source_properties` remain
+   future work. The entity condition currently exposes the `effects` predicate
+   only.
 
 3. **Concrete item entries only.**
    The item selector uses MCreator's block/item list. Item tags are recognized

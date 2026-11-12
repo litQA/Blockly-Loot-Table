@@ -124,6 +124,31 @@ public final class LootTableJsonWriter {
                     json.put("properties", properties);
                 }
             }
+            case "loottable_block_state_boolean", "loottable_block_state_integer",
+                    "loottable_block_state_enum" -> {
+                String block = string(condition.getProperties().get("block"));
+                String property = string(condition.getProperties().get("property"));
+                if (block.isBlank() || block.startsWith("#") || property.isBlank()) {
+                    return null;
+                }
+                json.put("block", block);
+                Map<String, Object> properties = new LinkedHashMap<>();
+                properties.put(property, string(condition.getProperties().get("value")));
+                json.put("properties", properties);
+            }
+            case "loottable_entity_has_potion" -> {
+                String entity = string(condition.getProperties().get("entity"));
+                String effect = string(condition.getProperties().get("effect"));
+                if (entity.isBlank() || effect.isBlank()) {
+                    return null;
+                }
+                json.put("entity", entity);
+                Map<String, Object> effects = new LinkedHashMap<>();
+                effects.put(effect, new LinkedHashMap<>());
+                Map<String, Object> predicate = new LinkedHashMap<>();
+                predicate.put("effects", effects);
+                json.put("predicate", predicate);
+            }
             case "loottable_inverted" -> {
                 Map<String, Object> term = conditionToJson(condition.getTerm());
                 if (term == null) {

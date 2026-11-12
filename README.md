@@ -14,7 +14,19 @@ The first implementation supports these condition blocks:
 - `survives_explosion` (Block loot tables only)
 - `weather_check`
 - `inverted`
-- `block_state_property` (Block loot tables only; basic block/property/value form)
+- block-state boolean, integer and enum comparisons (Block loot tables only)
+- entity potion-effect predicate (Entity loot tables only)
+- legacy `block_state_property` (parseable for existing workspaces; hidden from the toolbox)
+
+The Blockly toolbox also provides “Provided blockstate” and “Block to test”
+value blocks for block conditions, and “Event/target entity” and “Source entity”
+value blocks for entity conditions. The provided blockstate resolves to the
+block selected by the loot table element; source entities resolve to
+`attacking_player` for block tables and `attacker` for entity tables.
+
+The `loottable_start` block is hidden from the toolbox and cannot be deleted.
+Each loot table has exactly one start block; extra start blocks are ignored with
+a warning.
 
 Pools support `rolls`, `bonus_rolls`, conditions and weighted item entries.
 Entries support an item selector, a count range, a weight and an optional
@@ -81,15 +93,15 @@ gradlew.bat selfCheck
 3. The path is generated automatically as
    `<target namespace>:<blocks|entities>/<target path>`. Check **Manual path** to
    disable the target selector and enter a path yourself.
-4. Drag the start block and build the pool/entry/condition chain.
+4. Build the pool/entry/condition chain below the fixed start block.
 5. Use the template selector for the two built-in examples.
 6. Save. Invalid condition scopes are marked in the Blockly workspace, shown in
    the compile notes panel, and block saving and generation.
 
 The context dependencies shown in the editor are:
 
-- Block: `blockstate, source entity, world`
-- Entity: `entity, source entity, world`
+- Block: `provided blockstate, block selector, source entity, world`
+- Entity: `event/target entity, source entity, world`
 
 ## Examples
 
@@ -119,11 +131,20 @@ The template selector creates both documents automatically.
 - Creating a new element opens the Blockly editor promptly, without toolbar
   paint exceptions or repeated WebView execution timeouts in `mcreator.log`.
 - The element can be created, saved and reopened with its Blockly document.
+- The start block is not in the toolbox and cannot be deleted.
 - A Block table with `random_chance` and a diamond ore entry saves.
 - A Block table with `survives_explosion` saves.
+- A Block table with boolean/integer/enum property comparisons saves, and the
+  generated condition names the selected block and property value.
+- A Block table using **Provided blockstate** emits the element target block,
+  not an empty or placeholder block id.
 - An Entity table with `killed_by_player` saves.
-- An Entity table containing `block_state_property` shows a Blockly warning,
-  shows an error in the compile notes panel, and saving is blocked.
+- An Entity table with the potion condition and **Source entity** emits
+  `minecraft:entity_properties`, `entity: "attacker"` and a non-empty
+  `predicate.effects` map.
+- An Entity table containing `block_state_property` (or a block-state
+  comparison) shows a Blockly warning, shows an error in the compile notes
+  panel, and saving is blocked.
 - A Block table containing `killed_by_player` behaves the same way.
 - Build output places the JSON in `loot_tables/` before 1.21 and `loot_table/`
   from 1.21 onward.

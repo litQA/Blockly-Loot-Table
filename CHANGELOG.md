@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.0.2.1-beta
+
+### New Content
+
+- The loot table start block is now hidden from the toolbox and cannot be
+  deleted. Each loot table has exactly one entry point.
+- Added block-state boolean, integer and enum comparison conditions.
+- Added the entity potion-effect condition using `minecraft:entity_properties`.
+- Added provided-blockstate, block-selector, event/target-entity and
+  source-entity value blocks. The provided blockstate resolves to the block
+  selected by the loot table element, and entity dependencies resolve to
+  `this`, `attacker` or `attacking_player` based on the loot context.
+- Extended the headless self-check to 80 checks covering the new block JSON,
+  parser, writer, localization and duplicate-start protection.
+
 ## 1.0.1.8-beta
 
 ### Bug Fixes

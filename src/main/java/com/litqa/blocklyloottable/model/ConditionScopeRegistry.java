@@ -27,6 +27,14 @@ public final class ConditionScopeRegistry {
                 ConditionScope.BLOCK_AND_ENTITY, "Inverted condition"));
         register(new ConditionDefinition("loottable_block_state_property", "minecraft:block_state_property",
                 ConditionScope.BLOCK_ONLY, "Block state property"));
+        register(new ConditionDefinition("loottable_block_state_boolean", "minecraft:block_state_property",
+                ConditionScope.BLOCK_ONLY, "Block state boolean property"));
+        register(new ConditionDefinition("loottable_block_state_integer", "minecraft:block_state_property",
+                ConditionScope.BLOCK_ONLY, "Block state integer property"));
+        register(new ConditionDefinition("loottable_block_state_enum", "minecraft:block_state_property",
+                ConditionScope.BLOCK_ONLY, "Block state enum property"));
+        register(new ConditionDefinition("loottable_entity_has_potion", "minecraft:entity_properties",
+                ConditionScope.ENTITY_ONLY, "Entity has potion effect"));
     }
 
     private ConditionScopeRegistry() {

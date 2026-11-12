@@ -1,0 +1,8 @@
+{
+  "output": "Entity",
+  "colour": 35,
+  "mcreator": {
+    "toolbox_id": "loottable_entities",
+    "toolbox_init": []
+  }
+}

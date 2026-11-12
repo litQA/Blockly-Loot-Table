@@ -25,8 +25,13 @@ public final class LootTableSelfCheck {
         itemMapping();
         validBlockTable();
         validEntityTable();
+        validBlockStateConditions();
+        validEntityPotionCondition();
         invalidEntityBlockState();
         invalidBlockKilledByPlayer();
+        invalidEntityPotionOnBlock();
+        duplicateStartIsWarned();
+        startBlockIsHidden();
         unknownConditionIsSkipped();
         malformedXmlDoesNotThrow();
         emptyDocumentProducesEmptyTable();
@@ -57,7 +62,15 @@ public final class LootTableSelfCheck {
                 "blockly.templates.loottable.export_failed.message",
                 "blockly.templates.loottable.export_failed.title",
                 "blockly.templates.loottable.import_failed.message",
-                "blockly.templates.loottable.import_failed.title")) {
+                "blockly.templates.loottable.import_failed.title",
+                "blockly.block.loottable_provided_blockstate",
+                "blockly.block.loottable_block_selector",
+                "blockly.block.loottable_entity_dependency",
+                "blockly.block.loottable_source_entity_dependency",
+                "blockly.block.loottable_block_state_boolean",
+                "blockly.block.loottable_block_state_integer",
+                "blockly.block.loottable_block_state_enum",
+                "blockly.block.loottable_entity_has_potion")) {
             check(properties.containsKey(key), fileName + " contains " + key);
         }
     }
@@ -113,6 +126,113 @@ public final class LootTableSelfCheck {
         check(json.contains("\"type\": \"minecraft:entity\""), "JSON root type is entity");
         check(json.contains("\"condition\": \"minecraft:killed_by_player\""), "killed by player exists");
         check(json.contains("\"max\": 2"), "count range exists");
+    }
+
+    private static void validBlockStateConditions() {
+        ItemNameResolver resolver = value -> switch (value) {
+            case "Blocks.OAK_LOG" -> "minecraft:oak_log";
+            case "Blocks.STONE" -> "minecraft:stone";
+            default -> value;
+        };
+
+        BlocklyXmlParser.ParseResult booleanResult = BlocklyXmlParser.parse(blockTableXml(
+                entry("Blocks.DIAMOND_ORE", 1, 1, 1),
+                condition("loottable_block_state_boolean",
+                        "<field name=\"property\">waterlogged</field>"
+                                + "<value name=\"block\"><block type=\"loottable_block_selector\">"
+                                + "<field name=\"block\">Blocks.OAK_LOG</field></block></value>"
+                                + "<field name=\"operator\">=</field>"
+                                + "<field name=\"value\">true</field>")), LootTableType.BLOCK, resolver);
+        check(!booleanResult.report().hasErrors(), "boolean block state condition has no errors");
+        String booleanJson = LootTableJsonWriter.write(booleanResult.model(), "test", "blocks/log", false);
+        check(booleanJson.contains("\"condition\": \"minecraft:block_state_property\""),
+                "boolean block state condition type exists");
+        check(booleanJson.contains("\"block\": \"minecraft:oak_log\""),
+                "block selector value resolves to a registry name");
+        check(booleanJson.contains("\"waterlogged\": \"true\""),
+                "boolean block state property value exists");
+
+        BlocklyXmlParser.ParseResult integerResult = BlocklyXmlParser.parse(blockTableXml(
+                entry("Blocks.DIAMOND_ORE", 1, 1, 1),
+                condition("loottable_block_state_integer",
+                        "<field name=\"property\">age</field>"
+                                + "<value name=\"block\"><block type=\"loottable_provided_blockstate\"></block></value>"
+                                + "<field name=\"operator\">=</field>"
+                                + "<field name=\"value\">3</field>")), LootTableType.BLOCK, resolver,
+                "minecraft:oak_log");
+        check(!integerResult.report().hasErrors(), "provided blockstate condition has no errors");
+        String integerJson = LootTableJsonWriter.write(integerResult.model(), "test", "blocks/log", false);
+        check(integerJson.contains("\"block\": \"minecraft:oak_log\""),
+                "provided blockstate uses the element target block");
+        check(integerJson.contains("\"age\": \"3\""), "integer block state property value exists");
+
+        BlocklyXmlParser.ParseResult enumResult = BlocklyXmlParser.parse(blockTableXml(
+                entry("Blocks.DIAMOND_ORE", 1, 1, 1),
+                condition("loottable_block_state_enum",
+                        "<field name=\"property\">half</field>"
+                                + "<value name=\"block\"><block type=\"loottable_block_selector\">"
+                                + "<field name=\"block\">Blocks.STONE</field></block></value>"
+                                + "<field name=\"operator\">=</field>"
+                                + "<field name=\"value\">upper</field>")), LootTableType.BLOCK, resolver);
+        check(!enumResult.report().hasErrors(), "enum block state condition has no errors");
+        String enumJson = LootTableJsonWriter.write(enumResult.model(), "test", "blocks/stone", false);
+        check(enumJson.contains("\"half\": \"upper\""), "enum block state property value exists");
+    }
+
+    private static void validEntityPotionCondition() {
+        BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(entityTableXml(
+                entry("Items.ROTTEN_FLESH", 1, 1, 1),
+                condition("loottable_entity_has_potion",
+                        "<value name=\"entity\"><block type=\"loottable_source_entity_dependency\"></block></value>"
+                                + "<field name=\"potion\">minecraft:fire_resistance</field>")),
+                LootTableType.ENTITY, value -> value);
+        check(!result.report().hasErrors(), "entity potion condition has no errors");
+        String json = LootTableJsonWriter.write(result.model(), "test", "entities/zombie", false);
+        check(json.contains("\"condition\": \"minecraft:entity_properties\""),
+                "entity potion condition type exists");
+        check(json.contains("\"entity\": \"attacker\""), "entity source dependency uses the attacker");
+        check(json.contains("\"minecraft:fire_resistance\": {}"), "entity potion effect map exists");
+    }
+
+    private static void invalidEntityPotionOnBlock() {
+        BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(blockTableXml(
+                entry("Blocks.STONE", 1, 1, 1),
+                condition("loottable_entity_has_potion",
+                        "<field name=\"potion\">minecraft:fire_resistance</field>")),
+                LootTableType.BLOCK, value -> value);
+        check(result.report().hasErrors(), "block table with entity potion condition is an error");
+        check(result.report().summary().contains("entity_has_potion"), "error names the entity condition");
+    }
+
+    private static void duplicateStartIsWarned() {
+        BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(
+                "<xml xmlns=\"https://developers.google.com/blockly/xml\">"
+                        + "<block type=\"loottable_start\"></block>"
+                        + "<block type=\"loottable_start\"></block></xml>",
+                LootTableType.BLOCK, ItemNameResolver.IDENTITY);
+        check(!result.report().hasErrors(), "duplicate start blocks are a warning, not an error");
+        check(result.report().summary().contains("extra start block"),
+                "duplicate start blocks produce a warning");
+    }
+
+    private static void startBlockIsHidden() {
+        String blockJson = resourceText("/loottable/loottable_start.json");
+        check(blockJson.contains("\"mcreator\""), "start block keeps its Blockly metadata");
+        check(!blockJson.contains("\"toolbox_id\""), "start block is hidden from the toolbox");
+
+        String script = resourceText("/blockly/js/loottable_start.js");
+        check(script.contains("setDeletable(false)"), "start block script disables deletion");
+    }
+
+    private static String resourceText(String path) {
+        try (InputStream input = LootTableSelfCheck.class.getResourceAsStream(path)) {
+            if (input == null) {
+                throw new AssertionError("Missing resource: " + path);
+            }
+            return new String(input.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException exception) {
+            throw new AssertionError("Could not read resource: " + path, exception);
+        }
     }
 
     private static void invalidEntityBlockState() {
