@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.1.8-beta
+
+### Bug Fixes
+
+- Added all Blockly toolbar localization keys required by MCreator 2026.1.
+  The missing `blockly.search_loottable` key caused a null string paint
+  exception on every toolbar repaint and made the new-element editor appear
+  unresponsive.
+- Moved Blockly workspace validation off the Swing event dispatch thread and
+  debounced validation requests so the initial workspace load cannot block the
+  UI for the WebView execution timeout.
+- Extended the headless self-check to cover the toolbar localization contract.
+
 ## 1.0.1.7-beta
 
 ## New Content

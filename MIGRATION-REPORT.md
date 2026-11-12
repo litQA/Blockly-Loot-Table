@@ -10,6 +10,19 @@ is converted to a standard loot table JSON document by the generator template
 for the active generator. No native generator definition, FreeMarker template or
 workspace metadata is modified.
 
+## Fixed Issues
+
+### 1.0.1.8-beta
+
+- The custom Blockly editor now registers the toolbar localization keys used by
+  MCreator 2026.1. Without `blockly.search_loottable`, the toolbar painted a null
+  string and flooded the event dispatch thread with exceptions.
+- Validation reads the Blockly workspace on a background worker after a short
+  debounce. It no longer calls `BlocklyPanel.getXML()` synchronously from the
+  EDT while the initial workspace is still loading.
+- Element data and generated loot table JSON are unchanged by this fix, so no
+  workspace migration is required.
+
 ## Known Limitations
 
 1. **Context validation is implemented in Java.**

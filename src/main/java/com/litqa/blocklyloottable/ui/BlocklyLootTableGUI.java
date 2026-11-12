@@ -37,6 +37,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.BorderLayout;
@@ -49,6 +50,8 @@ import java.awt.Insets;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Blockly based loot table editor.
@@ -69,12 +72,25 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
     private final CompileNotesPanel compileNotesPanel = new CompileNotesPanel();
     private final JLabel statusLabel = new JLabel();
 
+    private final Timer validationTimer;
+    private final ExecutorService validationExecutor = Executors.newSingleThreadExecutor(runnable -> {
+        Thread thread = new Thread(runnable, "Blockly Loot Table validation");
+        thread.setDaemon(true);
+        return thread;
+    });
+
     private BlocklyPanel blocklyPanel;
     private boolean refreshing;
+    private volatile boolean blocklyReady;
+    private volatile boolean closed;
+    private boolean validationInFlight;
+    private boolean validationPending;
 
     public BlocklyLootTableGUI(MCreator mcreator, ModElement modElement, boolean editingMode) {
         super(mcreator, modElement, editingMode);
         this.mcreatorRef = mcreator;
+        validationTimer = new Timer(300, event -> runValidation());
+        validationTimer.setRepeats(false);
         initGUI();
         super.finalizeGUI();
     }
@@ -96,6 +112,7 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
             if (!isEditingMode()) {
                 blocklyPanel.setInitialXML(BlocklyLootTable.XML_BASE);
             }
+            blocklyReady = true;
             refreshValidation();
         });
 
@@ -383,13 +400,51 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
     }
 
     private void refreshValidation() {
-        if (refreshing || blocklyPanel == null) {
+        if (closed) {
             return;
         }
-        String xml = blocklyPanel.getXML();
-        if (xml == null || xml.isBlank()) {
-            xml = BlocklyLootTable.XML_BASE;
+        if (SwingUtilities.isEventDispatchThread()) {
+            validationTimer.restart();
+        } else {
+            SwingUtilities.invokeLater(validationTimer::restart);
         }
+    }
+
+    private void runValidation() {
+        if (closed || refreshing || !blocklyReady || blocklyPanel == null) {
+            return;
+        }
+        if (validationInFlight) {
+            validationPending = true;
+            return;
+        }
+
+        validationInFlight = true;
+        validationExecutor.submit(() -> {
+            String xml = null;
+            try {
+                xml = blocklyPanel.getXML();
+            } catch (RuntimeException exception) {
+                // The web view can be closing while a validation is queued.
+            }
+            String finalXml = xml == null || xml.isBlank() ? BlocklyLootTable.XML_BASE : xml;
+            SwingUtilities.invokeLater(() -> {
+                if (closed) {
+                    validationInFlight = false;
+                    return;
+                }
+                validationInFlight = false;
+                boolean rerun = validationPending;
+                validationPending = false;
+                applyValidation(finalXml);
+                if (rerun) {
+                    refreshValidation();
+                }
+            });
+        });
+    }
+
+    private void applyValidation(String xml) {
         BlocklyLootTable probe = buildElement(xml);
         ValidationReport report = probe.getValidationReport();
         compileNotesPanel.updateCompileNotes(report.getIssues().stream().map(this::toCompileNote).toList());
@@ -492,6 +547,9 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
 
     @Override
     public void onViewClosed() {
+        closed = true;
+        validationTimer.stop();
+        validationExecutor.shutdownNow();
         if (blocklyPanel != null) {
             blocklyPanel.close();
         }

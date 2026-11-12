@@ -1,7 +1,13 @@
 package com.litqa.blocklyloottable.model;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Headless smoke test for the parser and JSON writer. Run with
@@ -15,6 +21,7 @@ public final class LootTableSelfCheck {
     }
 
     public static void main(String[] args) {
+        blocklyTranslations();
         itemMapping();
         validBlockTable();
         validEntityTable();
@@ -24,6 +31,35 @@ public final class LootTableSelfCheck {
         malformedXmlDoesNotThrow();
         emptyDocumentProducesEmptyTable();
         System.out.println("SELF CHECK PASSED (" + checks + " checks)");
+    }
+
+    private static void blocklyTranslations() {
+        assertTranslationKeys("texts.properties");
+        assertTranslationKeys("texts_zh_CN.properties");
+    }
+
+    private static void assertTranslationKeys(String fileName) {
+        Properties properties = new Properties();
+        try (InputStream input = LootTableSelfCheck.class.getResourceAsStream("/lang/" + fileName)) {
+            if (input == null) {
+                throw new AssertionError("Missing language resource: " + fileName);
+            }
+            properties.load(new InputStreamReader(input, StandardCharsets.UTF_8));
+        } catch (IOException exception) {
+            throw new AssertionError("Could not read language resource: " + fileName, exception);
+        }
+
+        for (String key : List.of(
+                "blockly.search_loottable",
+                "blockly.templates.loottable",
+                "blockly.templates.loottable.export",
+                "blockly.templates.loottable.import",
+                "blockly.templates.loottable.export_failed.message",
+                "blockly.templates.loottable.export_failed.title",
+                "blockly.templates.loottable.import_failed.message",
+                "blockly.templates.loottable.import_failed.title")) {
+            check(properties.containsKey(key), fileName + " contains " + key);
+        }
     }
 
     private static void itemMapping() {

@@ -116,6 +116,8 @@ The template selector creates both documents automatically.
 ## Manual test checklist
 
 - Plugin appears in MCreator 2026.1 and **Blockly Loot Table** is visible.
+- Creating a new element opens the Blockly editor promptly, without toolbar
+  paint exceptions or repeated WebView execution timeouts in `mcreator.log`.
 - The element can be created, saved and reopened with its Blockly document.
 - A Block table with `random_chance` and a diamond ore entry saves.
 - A Block table with `survives_explosion` saves.
