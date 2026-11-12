@@ -81,22 +81,27 @@ public final class BlocklyXmlParser {
             }
         }
 
-        int poolCount;
         if (startBlock != null) {
-            poolCount = parsePoolChain(nextBlock(startBlock), effectiveType, effectiveResolver, model, report);
+            parsePoolChain(nextBlock(startBlock), effectiveType, effectiveResolver, model, report);
+            for (Element block : topBlocks) {
+                if (block != startBlock && "loottable_pool".equals(block.getAttribute("type"))) {
+                    report.addWarning("loottable_pool",
+                            "A pool block is not connected to the start block and was ignored.");
+                }
+            }
         } else {
             report.addWarning(null, "No loot table start block was found; top-level pools will still be read.");
-            poolCount = 0;
+            int poolIndex = 0;
             for (Element block : topBlocks) {
                 if ("loottable_pool".equals(block.getAttribute("type"))) {
-                    poolCount++;
-                    parsePool(block, poolCount, effectiveType, effectiveResolver, model, report);
+                    poolIndex++;
+                    parsePool(block, poolIndex, effectiveType, effectiveResolver, model, report);
                 }
             }
         }
 
-        if (poolCount == 0) {
-            report.addWarning(null, "No loot table pools are defined; an empty loot table will be generated.");
+        if (model.getPools().isEmpty()) {
+            report.addWarning(null, "No valid loot table pools are available; an empty loot table will be generated.");
         }
         return new ParseResult(model, report);
     }
@@ -128,7 +133,8 @@ public final class BlocklyXmlParser {
                 pool.getEntries(), report);
         if (entryCount == 0) {
             report.addWarning("loottable_pool",
-                    "Pool " + poolIndex + " has no valid entries; it will be generated with an empty entry list.");
+                    "Pool " + poolIndex + " has no valid entries and was skipped.");
+            return;
         }
         model.addPool(pool);
     }

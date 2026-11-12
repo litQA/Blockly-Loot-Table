@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.1.6-beta
+## 1.0.1.7-beta
 
 ## New Content
 
