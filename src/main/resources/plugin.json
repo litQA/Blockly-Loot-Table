@@ -1,0 +1,15 @@
+{
+  "id": "blockly_loot_table",
+  "weight": 3001,
+  "javaplugin": "com.litqa.blocklyloottable.BlocklyLootTablePlugin",
+  "supportedversions": [
+    2026001
+  ],
+  "info": {
+    "name": "Blockly Loot Table",
+    "version": "@VERSION@",
+    "description": "Adds a Blockly based loot table element with pools, weighted item entries and context validated conditions. Generates standard Minecraft loot table JSON without modifying native generators.",
+    "author": "LitQA",
+    "license": "CC BY-NC 4.0"
+  }
+}

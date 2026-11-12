@@ -1,0 +1,78 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.litqa.blocklyloottable'
+
+def versionProps = new Properties()
+file('version.properties').withInputStream { versionProps.load(it) }
+def pluginVersion = versionProps.getProperty('version')
+version = pluginVersion
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    // Intentionally empty. The build is offline and self-contained.
+}
+
+dependencies {
+    compileOnly files('libs/mcreator-api-2026.1.jar')
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+}
+
+def buildVersionFile = layout.buildDirectory.file('blockly_loot_table/version.txt')
+
+def bumpBuildNumber = tasks.register('bumpBuildNumber') {
+    outputs.file(buildVersionFile)
+    outputs.upToDateWhen { false }
+    doLast {
+        def props = new Properties()
+        file('version.properties').withInputStream { props.load(it) }
+        def current = props.getProperty('version')
+        def matcher = current =~ /^(.*\.)(\d+)(-[A-Za-z0-9]+)?$/
+        def next = current
+        if (matcher.matches()) {
+            next = matcher.group(1) + (matcher.group(2).toInteger() + 1) + (matcher.group(3) ?: '')
+        }
+        props.setProperty('version', next)
+        file('version.properties').withWriter { props.store(it, 'Blockly Loot Table version') }
+        def output = buildVersionFile.get().asFile
+        output.parentFile.mkdirs()
+        output.text = next
+    }
+}
+
+processResources {
+    dependsOn bumpBuildNumber
+    outputs.upToDateWhen { false }
+    doLast {
+        def versionText = buildVersionFile.get().asFile.text.trim()
+        def pluginJson = file("${buildDir}/resources/main/plugin.json")
+        if (pluginJson.exists()) {
+            pluginJson.setText(pluginJson.getText('UTF-8').replace('@VERSION@', versionText), 'UTF-8')
+        }
+    }
+}
+
+tasks.named('jar') {
+    dependsOn bumpBuildNumber
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    archiveFileName = 'blockly_loot_table-2026.1.zip'
+    exclude 'com/litqa/blocklyloottable/model/LootTableSelfCheck*.class'
+}
+
+// Lightweight self-check for the pure Java parser and JSON writer. It does not
+// require MCreator to be running and is not part of the plugin archive.
+tasks.register('selfCheck', JavaExec) {
+    dependsOn tasks.named('classes')
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.litqa.blocklyloottable.model.LootTableSelfCheck'
+}

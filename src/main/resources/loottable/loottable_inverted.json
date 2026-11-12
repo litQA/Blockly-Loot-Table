@@ -1,0 +1,23 @@
+{
+  "args0": [
+    {
+      "type": "input_statement",
+      "name": "term"
+    }
+  ],
+  "inputsInline": false,
+  "previousStatement": null,
+  "nextStatement": null,
+  "colour": 120,
+  "mcreator": {
+    "toolbox_id": "loottable_conditions",
+    "toolbox_init": [
+      "<statement name=\"term\"><block type=\"loottable_random_chance\"><field name=\"chance\">0.5</field></block></statement>"
+    ],
+    "statements": [
+      {
+        "name": "term"
+      }
+    ]
+  }
+}

@@ -1,0 +1,4 @@
+templates:
+  - template: blockly_loot_table.json.ftl
+    writer: json
+    name: "@RESROOT/data/@[getLootTableNamespace()]/loot_tables/@[getLootTablePath()].json"

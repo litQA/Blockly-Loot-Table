@@ -1,2 +1,7 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Keep wrapper launchers usable on their native platforms
+gradlew text eol=lf
+gradlew.bat text eol=crlf
+*.sh text eol=lf
