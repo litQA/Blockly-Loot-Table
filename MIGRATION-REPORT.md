@@ -12,7 +12,7 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
-### 1.0.3.44-beta
+### 1.0.3.45-beta
 
 - Added custom-NBT item producers for boolean, number and text values.
   `set_custom_data` is used on 1.20.5+; `set_nbt` is used on older generators.
@@ -22,6 +22,10 @@ workspace metadata is modified.
   counts are rejected because container counts must be integral.
 - Moved A-1 item producers to **Loot tables**, moved **Random chance** to
   **Logic**, and moved the main-hand item block to **Entity conditions**.
+- Fixed the boolean and empty-text labels to keep their `%1` field placeholder.
+  Without it Blockly rejected those blocks and the toolboxes that referenced
+  them could render empty or overlap.
+- Removed the empty **Loot conditions** category.
 - Limitation: custom NBT is limited to a flat tag name and a scalar value. Nested
   compounds, lists and dynamic number providers are not supported.
 

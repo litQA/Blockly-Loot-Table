@@ -270,9 +270,13 @@ longer ships a preset-template selector.
   `Block to test` prefix.
 - Entity and item blocks use the native entity and item colors, and NBT blocks
   use the native logic, math and text hues.
-- The **Logic** category contains `and`, `or` and `not`; all three can be nested
-  in each other. `and` emits `all_of`, `or` emits `any_of`, and `not` with
-  multiple children emits `inverted(all_of(...))`.
+- The **Logic**, **Minecraft components** and **Loot tables** categories render
+  their blocks without overlap or empty entries, and **Loot conditions** is
+  absent.
+- The **Logic** category contains `and`, `or`, `not`, `random chance` and the
+  true/false selector; `and`/`or`/`not` can be nested in each other. `and`
+  emits `all_of`, `or` emits `any_of`, and `not` with multiple children emits
+  `inverted(all_of(...))`.
 - The entry item socket accepts the empty item selector and the **Item with
   enchantment** value block. The enchanted item block starts with one row, adds
   and removes rows dynamically, and emits `minecraft:set_enchantments` with the

@@ -147,9 +147,19 @@ public final class LootTableSelfCheck {
                 "blockly.block.loottable_function_apply_bonus_ore",
                 "blockly.block.loottable_function_enchanted_count_increase",
                 "blockly.block.loottable_function_limit_count",
-                "blockly.block.loottable_function_set_count_add")) {
+                "blockly.block.loottable_function_set_count_add",
+                "blockly.block.loottable_boolean",
+                "blockly.block.loottable_empty_text")) {
             check(properties.containsKey(key), fileName + " contains " + key);
         }
+        check(properties.getProperty("blockly.block.loottable_boolean").contains("%1"),
+                fileName + " keeps the boolean field placeholder");
+        check(properties.getProperty("blockly.block.loottable_empty_text").contains("%1"),
+                fileName + " keeps the empty-text field placeholder");
+        check(!properties.containsKey("blockly.category.loottable_conditions"),
+                fileName + " no longer exposes the loot conditions category");
+        check(LootTableSelfCheck.class.getResourceAsStream("/loottable/$loottable_conditions.json") == null,
+                "loot conditions category resource is removed");
     }
 
     private static void itemMapping() {

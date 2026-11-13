@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.3.44-beta
+## 1.0.3.45-beta
 
 ### New Content
 
@@ -24,11 +24,15 @@
 - String-aware NBT and container serialization for 1.20.5+ item components.
 - Container counts reject floating-point literals instead of emitting an
   invalid `set_contents` entry.
+- Fixed the boolean and empty-text labels so Blockly no longer rejects their
+  field arguments. This also restores the default-value blocks used by the
+  NBT and container producers in **Loot tables**.
+- Removed the now-empty **Loot conditions** category.
 
 ### Internal
 
-- Extended the self-check to 389 checks for NBT serialization, item containers,
-  category placement and number constraints.
+- Extended the self-check to 401 checks for NBT serialization, item containers,
+  category placement, placeholder integrity and category removals.
 
 ## 1.0.3.41-beta
 
