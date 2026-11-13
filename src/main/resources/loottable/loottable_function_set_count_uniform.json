@@ -22,7 +22,6 @@
   "nextStatement": "LootTableFunction",
   "colour": "%{BKY_MATH_HUE}",
   "mcreator": {
-    "toolbox_id": "loottable_numbers",
     "inputs": [
       "min",
       "max"

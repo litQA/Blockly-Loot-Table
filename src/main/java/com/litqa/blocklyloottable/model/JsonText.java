@@ -100,7 +100,25 @@ public final class JsonText {
         builder.append('"');
     }
 
+    /**
+     * Returns a number that always renders with a decimal point. This keeps
+     * float-valued JSON fields visibly float-shaped even when the value is whole.
+     */
+    public static Number floating(double value) {
+        if (!Double.isFinite(value)) {
+            value = 0;
+        }
+        BigDecimal decimal = BigDecimal.valueOf(value);
+        if (decimal.scale() <= 0) {
+            decimal = decimal.setScale(1);
+        }
+        return decimal;
+    }
+
     private static String formatNumber(Number number) {
+        if (number instanceof BigDecimal decimal) {
+            return decimal.toPlainString();
+        }
         if (number instanceof Byte || number instanceof Short || number instanceof Integer || number instanceof Long) {
             return number.toString();
         }

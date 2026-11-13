@@ -34,13 +34,20 @@ a warning.
 
 Pools support `rolls`, `bonus_rolls`, conditions and weighted item entries.
 Entries support an item selector, a number count input, a weight, a condition
-chain and a function chain. The function chain accepts `set_count uniform`
-(minimum and maximum) and `set_count add` (added count). Their numeric inputs,
-and the entry count input, accept either a number value or a number provider.
-The number category contains `Integer`, `Float`, `Integer provider` and
-`Float provider`; integer blocks truncate fractional input and report a warning.
-Incompatible block types cannot be connected because pool, entry, condition and
-function connections use distinct Blockly types.
+chain and a function chain. The count input accepts a bare number or a number
+provider. The **Numbers** category contains the terminal `Integer` and `Float`
+blocks, the constant `Integer provider` and `Float provider` blocks, the
+`Uniform` and `Binomial` provider blocks, and the `Add value` function block.
+`Uniform` and `Binomial` can be nested inside one another, and their sockets
+accept either a bare number or a provider. `Add value` appends a
+`minecraft:set_count` function with `"add": true`; the old `Set count uniform`
+function is kept only for existing workspaces and is hidden from the toolbox.
+
+Bare integer and float blocks serialize as bare JSON numbers. The two provider
+constant blocks serialize as `{"type":"minecraft:constant","value":...}`.
+Integer blocks truncate fractional input and report a warning; float defaults
+display as `1.0`. Incompatible block types cannot be connected because pool,
+entry, condition and function connections use distinct Blockly types.
 
 ## Supported generators
 
@@ -156,10 +163,15 @@ The template selector creates both documents automatically.
   `entity_properties` with the expected SNBT value.
 - An entity main-hand item enchantment condition emits the
   `equipment.mainhand` predicate with the selected enchantment and level.
-- `set_count uniform` and `set_count add` on the entry function chain emit the
-  expected count provider and `add` flag.
-- A number input accepts `Integer`, `Float`, `Integer provider` or
-  `Float provider`; an integer containing a decimal is truncated with a warning.
+- The item count socket accepts `Integer`, `Float`, `Integer provider`,
+  `Float provider`, `Uniform` or `Binomial`; generated JSON uses a bare number
+  for constants and a `minecraft:constant` object for provider constants.
+- `Uniform` and `Binomial` can be nested in each other's sockets; binomial
+  trials truncate to an integer and probability keeps a float shape.
+- `Add value` on the entry function chain emits `minecraft:set_count` with the
+  selected count and `"add": true`.
+- A float block defaults to `1.0`; an integer block containing a decimal is
+  truncated with a warning.
 - Pool, entry, condition and function blocks connect when their types match;
   pulling a condition onto an entry chain is rejected by Blockly.
 - The block selector displays only the selector field, without a

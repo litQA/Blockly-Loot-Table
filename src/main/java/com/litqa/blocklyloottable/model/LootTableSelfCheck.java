@@ -94,6 +94,8 @@ public final class LootTableSelfCheck {
                 "blockly.block.loottable_float",
                 "blockly.block.loottable_integer_provider",
                 "blockly.block.loottable_float_provider",
+                "blockly.block.loottable_uniform",
+                "blockly.block.loottable_binomial",
                 "blockly.block.loottable_function_set_count_uniform",
                 "blockly.block.loottable_function_set_count_add")) {
             check(properties.containsKey(key), fileName + " contains " + key);
@@ -151,7 +153,7 @@ public final class LootTableSelfCheck {
         check(json.contains("\"type\": \"minecraft:entity\""), "JSON root type is entity");
         check(json.contains("\"condition\": \"minecraft:killed_by_player\""), "killed by player exists");
         check(json.contains("\"function\": \"minecraft:set_count\""), "count function exists");
-        check(json.contains("\"value\": 2"), "count value is written");
+        check(json.contains("\"count\": 2"), "bare count value is written");
     }
 
     private static void validBlockStateConditions() {
@@ -295,44 +297,64 @@ public final class LootTableSelfCheck {
     }
 
     private static void validCountFunctions() {
-        String entryXml = entryWithFunctions(entry("Items.ROTTEN_FLESH", 2, 1), chain(
-                "<block type=\"loottable_function_set_count_uniform\">"
-                        + "<value name=\"min\"><block type=\"loottable_integer\">"
-                        + "<field name=\"value\">1</field></block></value>"
-                        + "<value name=\"max\"><block type=\"loottable_float_provider\">"
-                        + "<field name=\"value\">3.5</field></block></value>"
-                        + "</block>",
+        String countXml = "<value name=\"count\"><block type=\"loottable_uniform\">"
+                + "<value name=\"min\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">1</field></block></value>"
+                + "<value name=\"max\"><block type=\"loottable_float_provider\">"
+                + "<field name=\"value\">3.5</field></block></value>"
+                + "</block></value>";
+        String entryXml = entryWithFunctions(entryWithCount("Items.ROTTEN_FLESH", countXml, 1), chain(
                 "<block type=\"loottable_function_set_count_add\">"
                         + "<value name=\"count\"><block type=\"loottable_integer_provider\">"
                         + "<field name=\"value\">2</field></block></value>"
                         + "</block>"));
         BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(entityTableXml(entryXml, ""),
                 LootTableType.ENTITY, value -> value);
-        check(!result.report().hasErrors(), "count functions have no errors");
-        check(result.model().getPools().get(0).getEntries().get(0).getFunctions().size() == 2,
-                "both count functions were parsed");
+        check(!result.report().hasErrors(), "count provider has no errors");
+        check(result.model().getPools().get(0).getEntries().get(0).getFunctions().size() == 1,
+                "add value function was parsed");
         String json = LootTableJsonWriter.write(result.model(), "test", "entities/zombie", false);
         check(json.contains("\"type\": \"minecraft:uniform\""), "uniform count provider is written");
-        check(json.contains("\"min\": {"), "uniform minimum is written as a provider");
-        check(json.contains("\"max\": {"), "uniform maximum is written as a provider");
-        check(json.contains("\"value\": 3.5"), "uniform maximum accepts a float provider");
-        check(json.contains("\"add\": true"), "add count function is written");
+        check(json.contains("\"min\": 1"), "bare integer minimum is written as a number");
+        check(json.contains("\"max\": {"), "constant provider maximum is written as an object");
+        check(json.contains("\"value\": 3.5"), "float provider maximum keeps its value");
+        check(json.contains("\"add\": true"), "add value function is written");
+
+        String nestedXml = "<value name=\"count\"><block type=\"loottable_uniform\">"
+                + "<value name=\"min\"><block type=\"loottable_binomial\">"
+                + "<value name=\"n\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">2</field></block></value>"
+                + "<value name=\"p\"><block type=\"loottable_float\">"
+                + "<field name=\"value\">1</field></block></value>"
+                + "</block></value>"
+                + "<value name=\"max\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">4</field></block></value>"
+                + "</block></value>";
+        BlocklyXmlParser.ParseResult nested = BlocklyXmlParser.parse(
+                entityTableXml(entryWithCount("Items.ROTTEN_FLESH", nestedXml, 1), ""),
+                LootTableType.ENTITY, value -> value);
+        check(!nested.report().hasErrors(), "nested binomial provider has no errors");
+        String nestedJson = LootTableJsonWriter.write(nested.model(), "test", "entities/zombie", false);
+        check(nestedJson.contains("\"type\": \"minecraft:binomial\""), "binomial provider is nested");
+        check(nestedJson.contains("\"n\": 2"), "binomial trials are a bare integer");
+        check(nestedJson.contains("\"p\": 1.0"), "binomial probability keeps a float shape");
+        check(nestedJson.contains("\"max\": 4"), "uniform maximum keeps a bare number");
     }
 
     private static void integerTruncation() {
-        String entryXml = "<block type=\"loottable_entry_item\">"
-                + "<field name=\"item\">Items.ROTTEN_FLESH</field>"
-                + "<value name=\"count\"><block type=\"loottable_integer\">"
-                + "<field name=\"value\">2.9</field></block></value>"
-                + "<field name=\"weight\">1</field></block>";
-        BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(entityTableXml(entryXml, ""),
+        String countXml = "<value name=\"count\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">2.9</field></block></value>";
+        BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(
+                entityTableXml(entryWithCount("Items.ROTTEN_FLESH", countXml, 1), ""),
                 LootTableType.ENTITY, value -> value);
         check(!result.report().hasErrors(), "integer truncation is a warning, not an error");
         check(result.report().summary().contains("fractional part was removed"),
                 "integer truncation reports a warning");
         String json = LootTableJsonWriter.write(result.model(), "test", "entities/zombie", false);
-        check(json.contains("\"value\": 2"), "integer count truncates the decimal part");
+        check(json.contains("\"count\": 2"), "integer count truncates the decimal part");
         check(!json.contains("2.9"), "integer count does not keep the decimal part");
+        check(!json.contains("\"type\": \"minecraft:constant\""),
+                "terminal integer is not wrapped in a constant provider");
     }
 
     private static void strictConnectionChecks() {
@@ -367,9 +389,21 @@ public final class LootTableSelfCheck {
                 "entity condition uses the native entity color");
         check(entryBlock.contains("\"colour\": 350"), "item entry uses the native item color");
         check(entryBlock.contains("\"NumberProvider\""), "item count accepts number providers");
-        check(resourceText("/loottable/loottable_function_set_count_uniform.json")
+        check(resourceText("/loottable/loottable_uniform.json")
+                        .contains("\"output\": \"NumberProvider\""),
+                "uniform is a number provider");
+        check(resourceText("/loottable/loottable_uniform.json")
                         .contains("\"NumberProvider\""),
-                "uniform inputs accept number providers");
+                "uniform inputs accept nested providers");
+        check(resourceText("/loottable/loottable_binomial.json")
+                        .contains("\"output\": \"NumberProvider\""),
+                "binomial is a number provider");
+        check(resourceText("/loottable/loottable_binomial.json")
+                        .contains("\"NumberProvider\""),
+                "binomial inputs accept nested providers");
+        check(!resourceText("/loottable/loottable_function_set_count_uniform.json")
+                        .contains("\"toolbox_id\""),
+                "legacy uniform function is hidden from the toolbox");
         check(resourceText("/loottable/loottable_integer.json").contains("\"output\": \"Number\""),
                 "integer number has a number output");
         check(resourceText("/loottable/loottable_float.json").contains("\"output\": \"Number\""),
@@ -529,6 +563,14 @@ public final class LootTableSelfCheck {
                 + "<field name=\"item\">" + item + "</field>"
                 + "<value name=\"count\"><block type=\"loottable_integer\">"
                 + "<field name=\"value\">" + count + "</field></block></value>"
+                + "<field name=\"weight\">" + weight + "</field>"
+                + "</block>";
+    }
+
+    private static String entryWithCount(String item, String countXml, int weight) {
+        return "<block type=\"loottable_entry_item\">"
+                + "<field name=\"item\">" + item + "</field>"
+                + countXml
                 + "<field name=\"weight\">" + weight + "</field>"
                 + "</block>";
     }

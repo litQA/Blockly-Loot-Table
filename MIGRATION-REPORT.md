@@ -12,6 +12,19 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.0.3.7-beta
+
+- Number blocks now distinguish terminal values from provider constants.
+  `Integer` and `Float` write bare JSON numbers; `Integer provider` and
+  `Float provider` write `minecraft:constant` provider objects. Existing
+  workspaces with the old `loottable_number` block continue to load.
+- `Uniform` and `Binomial` are number-provider blocks that can be nested through
+  their sockets. `Add value` is the function-chain block that emits
+  `minecraft:set_count` with `add: true`.
+- The legacy `Set count uniform` function block remains parseable but is hidden
+  from the toolbox. Reopen an old workspace and replace it with a `Uniform`
+  provider in the item count socket.
+
 ### 1.0.3.5-beta
 
 - Statement checks now use Blockly's string form instead of an object. The object

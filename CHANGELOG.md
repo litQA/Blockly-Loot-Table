@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.0.3.7-beta
+
+### Fixed
+
+- Fixed number-provider JSON. Terminal `Integer` and `Float` blocks now write a
+  bare JSON number, while `Integer provider` and `Float provider` write
+  `{"type":"minecraft:constant","value":...}`. The previous build wrapped both
+  forms as constant providers, so uniform bounds were invalid.
+- Removed the old `Set count uniform` function from the toolbox. The item count
+  socket now takes the `Uniform` provider directly.
+
+### New Content
+
+- Added a `Uniform` number-provider block with two nested number/provider
+  sockets and a `Binomial` number-provider block with integer trials and float
+  probability sockets.
+- Added the `Add value` function block for the entry function chain; it writes a
+  `minecraft:set_count` function with `"add": true`.
+- Float blocks now default to `1.0` and preserve a decimal point in generated
+  JSON, even when the value is whole.
+
+### Internal
+
+- Added recursive `uniform` and `binomial` number-provider models. Providers
+  accept bare numbers, constant providers and nested provider blocks.
+- Extended the headless self-check to 185 checks, including bare/constant
+  serialization, nested providers, binomial type handling and count functions.
+
 ## 1.0.3.5-beta
 
 ### Fixed

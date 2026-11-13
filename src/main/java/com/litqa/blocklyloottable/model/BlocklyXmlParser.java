@@ -494,9 +494,10 @@ public final class BlocklyXmlParser {
     private static LootTableModel.NumberProvider parseCount(Element block, ValidationReport report) {
         Element countBlock = valueBlock(block, "count");
         if (countBlock == null) {
-            return LootTableModel.NumberProvider.constant(1);
+            return LootTableModel.NumberProvider.number(1, false);
         }
-        return parseNumberValue(countBlock, 1, "Entry count", report);
+        return nonNegative(parseNumberValue(countBlock, 1, false, "Entry count", report),
+                "loottable_entry_item", "Entry count", report);
     }
 
     private static void parseFunctionChain(Element first, List<LootTableModel.LootFunction> functions,
@@ -520,7 +521,7 @@ public final class BlocklyXmlParser {
                 LootTableModel.NumberProvider max = nonNegative(
                         parseNumberInput(block, "max", 1, "Uniform maximum", report),
                         blockType, "Uniform count", report);
-                if (isConstant(min) && isConstant(max) && max.getValue() < min.getValue()) {
+                if (isSimpleNumber(min) && isSimpleNumber(max) && max.getValue() < min.getValue()) {
                     report.addWarning(blockType,
                             "Uniform maximum was smaller than the minimum; the values were swapped.");
                     LootTableModel.NumberProvider swap = min;
@@ -546,65 +547,169 @@ public final class BlocklyXmlParser {
 
     private static LootTableModel.NumberProvider parseNumberInput(Element block, String inputName, double fallback,
             String label, ValidationReport report) {
+        return parseNumberInput(block, inputName, fallback, false, label, report);
+    }
+
+    private static LootTableModel.NumberProvider parseNumberInput(Element block, String inputName, double fallback,
+            boolean fallbackFloating, String label, ValidationReport report) {
         Element valueBlock = valueBlock(block, inputName);
         if (valueBlock == null) {
-            return LootTableModel.NumberProvider.constant(fallback);
+            return LootTableModel.NumberProvider.number(fallback, fallbackFloating);
         }
-        return parseNumberValue(valueBlock, fallback, label, report);
+        return parseNumberValue(valueBlock, fallback, fallbackFloating, label, report);
     }
 
     private static LootTableModel.NumberProvider parseNumberValue(Element valueBlock, double fallback,
             String label, ValidationReport report) {
+        return parseNumberValue(valueBlock, fallback, false, label, report);
+    }
+
+    private static LootTableModel.NumberProvider parseNumberValue(Element valueBlock, double fallback,
+            boolean fallbackFloating, String label, ValidationReport report) {
         String valueType = valueBlock.getAttribute("type");
         String raw;
-        boolean integer = false;
         switch (valueType) {
             case "loottable_integer", "loottable_integer_provider" -> {
                 raw = fieldValue(valueBlock, "value");
-                integer = true;
+                return integerNumber(valueBlock, raw, fallback, fallbackFloating, label, report,
+                        "loottable_integer_provider".equals(valueType));
             }
-            case "loottable_float", "loottable_float_provider", "loottable_number" ->
-                    raw = fieldValue(valueBlock, "value");
-            case "math_number" -> raw = fieldValue(valueBlock, "NUM");
+            case "loottable_float", "loottable_float_provider", "loottable_number" -> {
+                raw = fieldValue(valueBlock, "value");
+                return floatingNumber(valueBlock, raw, fallback, fallbackFloating, label, report,
+                        "loottable_float_provider".equals(valueType));
+            }
+            case "loottable_uniform" -> {
+                LootTableModel.NumberProvider min = nonNegative(
+                        parseNumberInput(valueBlock, "min", 1, "Uniform minimum", report),
+                        valueType, "Uniform minimum", report);
+                LootTableModel.NumberProvider max = nonNegative(
+                        parseNumberInput(valueBlock, "max", 1, "Uniform maximum", report),
+                        valueType, "Uniform maximum", report);
+                if (isSimpleNumber(min) && isSimpleNumber(max) && max.getValue() < min.getValue()) {
+                    report.addWarning(valueType,
+                            "Uniform maximum was smaller than the minimum; the values were swapped.");
+                    LootTableModel.NumberProvider swap = min;
+                    min = max;
+                    max = swap;
+                }
+                return LootTableModel.NumberProvider.uniform(min, max);
+            }
+            case "loottable_binomial" -> {
+                LootTableModel.NumberProvider trials = integerTrials(
+                        parseNumberInput(valueBlock, "n", 1, "Binomial trials", report), report);
+                LootTableModel.NumberProvider probability = probability(
+                        parseNumberInput(valueBlock, "p", 1.0, true, "Binomial probability", report),
+                        report);
+                return LootTableModel.NumberProvider.binomial(trials, probability);
+            }
+            case "math_number" -> {
+                raw = fieldValue(valueBlock, "NUM");
+                return raw.contains(".")
+                        ? floatingNumber(valueBlock, raw, fallback, fallbackFloating, label, report, false)
+                        : integerNumber(valueBlock, raw, fallback, fallbackFloating, label, report, false);
+            }
             default -> {
                 report.addWarning(valueType,
-                        label + " only supports a number provider block; the default was used.");
-                return LootTableModel.NumberProvider.constant(fallback);
+                        label + " only supports a number or number provider block; the default was used.");
+                return LootTableModel.NumberProvider.number(fallback, fallbackFloating);
             }
         }
+    }
+
+    private static LootTableModel.NumberProvider integerNumber(Element block, String raw, double fallback,
+            boolean fallbackFloating, String label, ValidationReport report, boolean provider) {
+        String valueType = block.getAttribute("type");
         if (raw.isBlank()) {
-            return LootTableModel.NumberProvider.constant(fallback);
+            return provider
+                    ? LootTableModel.NumberProvider.constant(fallback, fallbackFloating)
+                    : LootTableModel.NumberProvider.number(fallback, fallbackFloating);
         }
         try {
             double value = Double.parseDouble(raw);
             if (!Double.isFinite(value)) {
                 throw new NumberFormatException("not finite");
             }
-            if (integer) {
-                long truncated = (long) value;
-                if (value != truncated) {
-                    report.addWarning(valueType, label + " value '" + raw
-                            + "' is not an integer; the fractional part was removed.");
-                }
-                return LootTableModel.NumberProvider.constant(truncated);
+            long truncated = (long) value;
+            if (value != truncated) {
+                report.addWarning(valueType, label + " value '" + raw
+                        + "' is not an integer; the fractional part was removed.");
             }
-            return LootTableModel.NumberProvider.constant(value);
+            return provider
+                    ? LootTableModel.NumberProvider.constant(truncated, false)
+                    : LootTableModel.NumberProvider.number(truncated, false);
         } catch (NumberFormatException exception) {
             report.addWarning(valueType,
                     label + " value '" + raw + "' is not a number; the default was used.");
-            return LootTableModel.NumberProvider.constant(fallback);
+            return provider
+                    ? LootTableModel.NumberProvider.constant(fallback, fallbackFloating)
+                    : LootTableModel.NumberProvider.number(fallback, fallbackFloating);
         }
     }
 
-    private static boolean isConstant(LootTableModel.NumberProvider provider) {
-        return provider != null && "constant".equals(provider.getType());
+    private static LootTableModel.NumberProvider floatingNumber(Element block, String raw, double fallback,
+            boolean fallbackFloating, String label, ValidationReport report, boolean provider) {
+        String valueType = block.getAttribute("type");
+        if (raw.isBlank()) {
+            return provider
+                    ? LootTableModel.NumberProvider.constant(fallback, true)
+                    : LootTableModel.NumberProvider.number(fallback, true);
+        }
+        try {
+            double value = Double.parseDouble(raw);
+            if (!Double.isFinite(value)) {
+                throw new NumberFormatException("not finite");
+            }
+            return provider
+                    ? LootTableModel.NumberProvider.constant(value, true)
+                    : LootTableModel.NumberProvider.number(value, true);
+        } catch (NumberFormatException exception) {
+            report.addWarning(valueType,
+                    label + " value '" + raw + "' is not a number; the default was used.");
+            return provider
+                    ? LootTableModel.NumberProvider.constant(fallback, true)
+                    : LootTableModel.NumberProvider.number(fallback, true);
+        }
+    }
+
+    private static LootTableModel.NumberProvider integerTrials(LootTableModel.NumberProvider provider,
+            ValidationReport report) {
+        if (provider != null && "number".equals(provider.getType())) {
+            double value = provider.getValue();
+            long truncated = (long) value;
+            if (value != truncated) {
+                report.addWarning("loottable_binomial", "Binomial trials value '" + value
+                        + "' is not an integer; the fractional part was removed.");
+            }
+            return LootTableModel.NumberProvider.number(truncated, false);
+        }
+        return provider;
+    }
+
+    private static LootTableModel.NumberProvider probability(LootTableModel.NumberProvider provider,
+            ValidationReport report) {
+        if (provider != null && "number".equals(provider.getType())) {
+            if (!provider.isFloating()) {
+                report.addWarning("loottable_binomial",
+                        "Binomial probability should use a Float block; the integer value was converted to a float.");
+            }
+            return LootTableModel.NumberProvider.number(provider.getValue(), true);
+        }
+        return provider;
+    }
+
+    private static boolean isSimpleNumber(LootTableModel.NumberProvider provider) {
+        return provider != null
+                && ("number".equals(provider.getType()) || "constant".equals(provider.getType()));
     }
 
     private static LootTableModel.NumberProvider nonNegative(LootTableModel.NumberProvider provider,
             String blockType, String label, ValidationReport report) {
-        if (isConstant(provider) && provider.getValue() < 0) {
+        if (isSimpleNumber(provider) && provider.getValue() < 0) {
             report.addWarning(blockType, label + " cannot be negative; the value was clamped to 0.");
-            return LootTableModel.NumberProvider.constant(0);
+            return "constant".equals(provider.getType())
+                    ? LootTableModel.NumberProvider.constant(0, provider.isFloating())
+                    : LootTableModel.NumberProvider.number(0, provider.isFloating());
         }
         return provider;
     }

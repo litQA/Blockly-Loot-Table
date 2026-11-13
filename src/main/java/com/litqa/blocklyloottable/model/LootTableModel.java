@@ -66,7 +66,7 @@ public final class LootTableModel {
     public static final class Entry {
 
         private String item = "";
-        private NumberProvider count = NumberProvider.constant(1);
+        private NumberProvider count = NumberProvider.number(1, false);
         private double weight = 1;
         private final List<Condition> conditions = new ArrayList<>();
         private final List<LootFunction> functions = new ArrayList<>();
@@ -84,7 +84,7 @@ public final class LootTableModel {
         }
 
         public void setCount(NumberProvider count) {
-            this.count = count == null ? NumberProvider.constant(1) : count;
+            this.count = count == null ? NumberProvider.number(1, false) : count;
         }
 
         public double getWeight() {
@@ -111,28 +111,53 @@ public final class LootTableModel {
 
         private final String type;
         private final double value;
+        private final boolean floating;
         private final NumberProvider min;
         private final NumberProvider max;
+        private final NumberProvider n;
+        private final NumberProvider p;
 
-        private NumberProvider(String type, double value, NumberProvider min, NumberProvider max) {
+        private NumberProvider(String type, double value, boolean floating,
+                NumberProvider min, NumberProvider max, NumberProvider n, NumberProvider p) {
             this.type = type;
             this.value = value;
+            this.floating = floating;
             this.min = min;
             this.max = max;
+            this.n = n;
+            this.p = p;
         }
 
-        public static NumberProvider constant(double value) {
-            return new NumberProvider("constant", value, null, null);
+        /**
+         * A bare JSON number. This is the inline form accepted by vanilla
+         * number-provider codecs for fields that are themselves providers.
+         */
+        public static NumberProvider number(double value, boolean floating) {
+            return new NumberProvider("number", value, floating, null, null, null, null);
+        }
+
+        /**
+         * The explicit {@code minecraft:constant} number provider object.
+         */
+        public static NumberProvider constant(double value, boolean floating) {
+            return new NumberProvider("constant", value, floating, null, null, null, null);
         }
 
         public static NumberProvider uniform(double min, double max) {
-            return uniform(constant(min), constant(max));
+            return uniform(number(min, false), number(max, false));
         }
 
         public static NumberProvider uniform(NumberProvider min, NumberProvider max) {
-            return new NumberProvider("uniform", 0,
-                    min == null ? constant(1) : min,
-                    max == null ? constant(1) : max);
+            return new NumberProvider("uniform", 0, false,
+                    min == null ? number(1, false) : min,
+                    max == null ? number(1, false) : max,
+                    null, null);
+        }
+
+        public static NumberProvider binomial(NumberProvider n, NumberProvider p) {
+            return new NumberProvider("binomial", 0, false, null, null,
+                    n == null ? number(1, false) : n,
+                    p == null ? number(1, true) : p);
         }
 
         public String getType() {
@@ -143,12 +168,24 @@ public final class LootTableModel {
             return value;
         }
 
+        public boolean isFloating() {
+            return floating;
+        }
+
         public NumberProvider getMin() {
             return min;
         }
 
         public NumberProvider getMax() {
             return max;
+        }
+
+        public NumberProvider getN() {
+            return n;
+        }
+
+        public NumberProvider getP() {
+            return p;
         }
     }
 

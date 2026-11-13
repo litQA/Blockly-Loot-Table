@@ -100,21 +100,37 @@ public final class LootTableJsonWriter {
         return json;
     }
 
-    private static Map<String, Object> numberProviderToJson(LootTableModel.NumberProvider provider) {
+    private static Object numberProviderToJson(LootTableModel.NumberProvider provider) {
         if (provider == null) {
-            return Map.of("type", "minecraft:constant", "value", 1);
+            return 1;
         }
-        if ("uniform".equals(provider.getType())) {
-            Map<String, Object> json = new LinkedHashMap<>();
-            json.put("type", "minecraft:uniform");
-            json.put("min", numberProviderToJson(provider.getMin()));
-            json.put("max", numberProviderToJson(provider.getMax()));
-            return json;
-        }
-        Map<String, Object> json = new LinkedHashMap<>();
-        json.put("type", "minecraft:constant");
-        json.put("value", compactNumber(provider.getValue()));
-        return json;
+        return switch (provider.getType()) {
+            case "number" -> numberValue(provider.getValue(), provider.isFloating());
+            case "uniform" -> {
+                Map<String, Object> json = new LinkedHashMap<>();
+                json.put("type", "minecraft:uniform");
+                json.put("min", numberProviderToJson(provider.getMin()));
+                json.put("max", numberProviderToJson(provider.getMax()));
+                yield json;
+            }
+            case "binomial" -> {
+                Map<String, Object> json = new LinkedHashMap<>();
+                json.put("type", "minecraft:binomial");
+                json.put("n", numberProviderToJson(provider.getN()));
+                json.put("p", numberProviderToJson(provider.getP()));
+                yield json;
+            }
+            default -> {
+                Map<String, Object> json = new LinkedHashMap<>();
+                json.put("type", "minecraft:constant");
+                json.put("value", numberValue(provider.getValue(), provider.isFloating()));
+                yield json;
+            }
+        };
+    }
+
+    private static Object numberValue(double value, boolean floating) {
+        return floating ? JsonText.floating(value) : compactNumber(value);
     }
 
     private static Map<String, Object> functionToJson(LootTableModel.LootFunction function) {
@@ -290,9 +306,9 @@ public final class LootTableJsonWriter {
             return provider;
         }
         if (value instanceof Number number) {
-            return LootTableModel.NumberProvider.constant(number.doubleValue());
+            return LootTableModel.NumberProvider.number(number.doubleValue(), false);
         }
-        return LootTableModel.NumberProvider.constant(fallback);
+        return LootTableModel.NumberProvider.number(fallback, false);
     }
 
     private static boolean bool(Object value, boolean fallback) {

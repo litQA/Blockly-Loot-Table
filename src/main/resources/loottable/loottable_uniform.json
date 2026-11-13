@@ -1,0 +1,34 @@
+{
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "min",
+      "check": [
+        "Number",
+        "NumberProvider"
+      ]
+    },
+    {
+      "type": "input_value",
+      "name": "max",
+      "check": [
+        "Number",
+        "NumberProvider"
+      ]
+    }
+  ],
+  "inputsInline": true,
+  "output": "NumberProvider",
+  "colour": "%{BKY_MATH_HUE}",
+  "mcreator": {
+    "toolbox_id": "loottable_numbers",
+    "inputs": [
+      "min",
+      "max"
+    ],
+    "toolbox_init": [
+      "<value name=\"min\"><block type=\"loottable_integer\"><field name=\"value\">1</field></block></value>",
+      "<value name=\"max\"><block type=\"loottable_integer\"><field name=\"value\">1</field></block></value>"
+    ]
+  }
+}

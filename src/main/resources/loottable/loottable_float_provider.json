@@ -3,7 +3,7 @@
     {
       "type": "field_number",
       "name": "value",
-      "value": 1,
+      "value": 1.0,
       "min": 0,
       "max": 64000,
       "precision": 0.01
