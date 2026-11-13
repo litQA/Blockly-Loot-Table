@@ -9,6 +9,9 @@
         }
 
         doClassValidation_(newValue) {
+            if (typeof newValue === 'number') {
+                newValue = String(newValue);
+            }
             if (typeof newValue !== 'string') {
                 return null;
             }
