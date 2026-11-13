@@ -282,11 +282,11 @@ public final class LootTableSelfCheck {
         check(json.contains("\"equipment\""), "main-hand enchantment uses equipment");
         check(json.contains("\"mainhand\""), "main-hand enchantment uses the mainhand slot");
         check(json.contains("\"minecraft:enchantments\": [\n"), "enchantment predicate list exists");
-        check(json.contains("\"enchantment\": \"minecraft:sharpness\""),
-                "enchantment id is lower-case and singular");
+        check(json.contains("\"enchantments\": [\n") && json.contains("\"minecraft:sharpness\""),
+                "enchantment id is lower-case and uses the official plural list");
         check(json.contains("\"levels\": {") && json.contains("\"min\": 3"),
                 "enchantment level is a minimum range object");
-        check(!json.contains("\"enchantments\":"), "enchantment predicate does not use the plural list");
+        check(!json.contains("\"enchantment\":"), "enchantment predicate does not use a singular field");
 
         BlocklyXmlParser.ParseResult toolResult = BlocklyXmlParser.parse(blockTableXml(
                 entry("Blocks.STONE", 1, 1),

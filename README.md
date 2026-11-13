@@ -167,8 +167,9 @@ The template selector creates both documents automatically.
   `entity_properties` with the expected SNBT value.
 - An entity main-hand item enchantment condition emits the
   `equipment.mainhand` predicate with the selected enchantment and level.
-  The enchantment id is lower case, and the predicate entry uses
-  `{"enchantment":"...","levels":{"min":...}}`.
+  The enchantment id is lower case, and the predicate entry uses the official
+  1.21 `enchantments` list with a `levels` range object, for example
+  `{"enchantments":["minecraft:vanishing_curse"],"levels":{"min":1}}`.
 - The item count socket accepts `Integer`, `Float`, `Integer provider`,
   `Float provider`, `Uniform` or `Binomial`; generated JSON uses a bare number
   for constants and a `minecraft:constant` object for provider constants.

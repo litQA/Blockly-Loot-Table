@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.3.9-beta
+## 1.0.3.11-beta
 
 ### Fixed
 
@@ -10,9 +10,9 @@
   source-entity and source-player inputs are rejected and skipped in that
   context.
 - Enchantment ids are normalized to lower case. The item enchantment predicate
-  now emits `{"enchantment":"...","levels":{"min":...}}` inside
-  `minecraft:enchantments` instead of the previous plural id list with a scalar
-  level.
+  now emits the official 1.21 `EnchantmentPredicate` shape, with the
+  `enchantments` list and a `levels` range object:
+  `{"enchantments":["minecraft:vanishing_curse"],"levels":{"min":1}}`.
 
 ### Internal
 

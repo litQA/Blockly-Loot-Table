@@ -12,16 +12,19 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
-### 1.0.3.9-beta
+### 1.0.3.11-beta
 
 - The potion-effect condition is valid in both Block and Entity loot tables.
   Block tables can supply the target entity only when a player breaks the block;
   the editor and save validation report this as a warning, not an error. Source
   entity, immediate source entity and source-player values are skipped in Block
   contexts because the block loot context does not provide those parameters.
-- Enchantment predicates now use lower-case enchantment ids and the
-  `{"enchantment":"...","levels":{"min":...}}` item sub-predicate shape. Existing
-  elements pick up the corrected output the next time they are generated.
+- Enchantment predicates now use lower-case enchantment ids and a `levels` range
+  object. The predicate keeps the official `enchantments` list field because
+  Minecraft 1.21.1 through 1.21.10 codecs require it; the singular
+  `enchantment` field is not an `EnchantmentPredicate` field in those versions.
+  Existing elements pick up the corrected output the next time they are
+  generated.
 
 ### 1.0.3.7-beta
 

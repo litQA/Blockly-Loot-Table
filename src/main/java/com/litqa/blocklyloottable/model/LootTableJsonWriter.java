@@ -247,7 +247,7 @@ public final class LootTableJsonWriter {
                 Map<String, Object> levels = new LinkedHashMap<>();
                 levels.put("min", level);
                 Map<String, Object> enchantmentPredicate = new LinkedHashMap<>();
-                enchantmentPredicate.put("enchantment", enchantment);
+                enchantmentPredicate.put("enchantments", List.of(enchantment));
                 enchantmentPredicate.put("levels", levels);
                 List<Object> enchantmentPredicates = new ArrayList<>();
                 enchantmentPredicates.add(enchantmentPredicate);
