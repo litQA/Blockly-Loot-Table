@@ -509,8 +509,21 @@ public final class LootTableSelfCheck {
                 "number category exists");
         check(resourceText("/loottable/$loottable_logic.json").contains("\"color\": 210"),
                 "logic category exists");
-        check(resourceText("/loottable/$loottable_functions.json").contains("\"color\": 330"),
+        check(resourceText("/loottable/$loottable_functions.json").contains("\"color\": 280"),
                 "function category exists");
+        for (String functionFile : new String[]{
+                "loottable_function_set_count_add.json",
+                "loottable_function_apply_bonus_uniform.json",
+                "loottable_function_apply_bonus_binomial.json",
+                "loottable_function_apply_bonus_ore.json",
+                "loottable_function_enchanted_count_increase.json",
+                "loottable_function_limit_count.json"}) {
+            check(resourceText("/loottable/" + functionFile).contains("\"colour\": 280"),
+                    functionFile + " uses the purple function colour");
+        }
+        check(resourceText("/lang/texts.properties")
+                        .contains("loottable_entry_item_simple=Item %1, count %2"),
+                "simple entry label omits Simple");
         check(resourceText("/loottable/loottable_function_set_count_add.json")
                         .contains("\"toolbox_id\": \"loottable_functions\""),
                 "add value is in the function category");

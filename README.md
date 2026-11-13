@@ -63,15 +63,16 @@ category contains the terminal `Integer` and `Float` blocks, the constant
 provider blocks. `Uniform` and `Binomial` can be nested inside one another, and
 their sockets accept either a bare number or a provider.
 
-The **Functions** category contains `Add value` and five loot-function blocks:
-`Add enchantment bonus` (uniform), `Add binomial enchantment bonus`, `Apply ore
-bonus`, `Increase count by enchantment level` and `Limit final count`. These
-append `minecraft:apply_bonus`, `minecraft:enchanted_count_increase` and
-`minecraft:limit_count` functions to the entry function chain. The three
-`apply_bonus` numeric parameters are literal numbers in 1.21.1; their sockets
-reject number providers with a warning.
+The **Functions** category, colour 280, contains `Add value` and five
+loot-function blocks: `Add enchantment bonus` (uniform), `Add binomial
+enchantment bonus`, `Apply ore bonus`, `Increase count by enchantment level`
+and `Limit final count`. These append `minecraft:apply_bonus`,
+`minecraft:enchanted_count_increase` and `minecraft:limit_count` functions to
+the entry function chain. The three `apply_bonus` numeric parameters are
+literal numbers in 1.21.1; their sockets reject number providers with a
+warning.
 
-The simple item entry is a shorter B-shaped entry with only item and count
+The compact item entry is a shorter B-shaped entry with only item and count
 sockets. It is useful when no conditions or functions are needed.
 
 Bare integer and float blocks serialize as bare JSON numbers. The two provider
@@ -224,9 +225,10 @@ longer ships a preset-template selector.
   treasure checkbox. The random-any block also has minimum and maximum level
   sockets and writes a uniform `levels` provider. The unchecked case writes
   `options: "#minecraft:on_random_loot"`; the checked case omits `options`.
-- The simple item entry has only item and count sockets and emits no condition or
-  function arrays beyond the base `set_count`.
-- The **Functions** category is present and `Add value` is inside it.
+- The compact item entry has only item and count sockets and emits no condition
+  or function arrays beyond the base `set_count`.
+- The **Functions** category is present, uses the purple colour 280, and
+  `Add value` is inside it.
 - The five function blocks emit their expected JSON: uniform/binomial/ore
   `apply_bonus`, `enchanted_count_increase` and `limit_count`.
 - A provider placed in an `apply_bonus` multiplier/extra/probability socket is

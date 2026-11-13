@@ -12,7 +12,7 @@
   "inputsInline": true,
   "previousStatement": "LootTableFunction",
   "nextStatement": "LootTableFunction",
-  "colour": "%{BKY_MATH_HUE}",
+  "colour": 280,
   "mcreator": {
     "toolbox_id": "loottable_functions",
     "inputs": [

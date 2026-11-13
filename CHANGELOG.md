@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.0.3.41-beta
+
+### Changed
+
+- Changed the **Functions** category and all six function blocks to the purple
+  colour 280.
+- Removed the word “Simple” from the compact item entry label; it is now
+  `Item %1, count %2`.
+
+### Documentation
+
+- Added an English method reference for the 1.21-1.21.8 loot-table format.
+- Added a 1.20-1.20.6 compatibility report covering the 1.20, 1.20.2 and
+  1.20.5 changes.
+
+### Internal
+
+- Extended the self-check to 373 checks with function colour and label
+  assertions.
+
 ## 1.0.3.38-beta
 
 ### New Content

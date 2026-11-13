@@ -12,6 +12,16 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.0.3.41-beta
+
+- The **Functions** category and every function block now use the purple
+  colour 280.
+- The compact item entry label no longer contains “Simple”.
+- Added the 1.21-1.21.8 method reference and a 1.20-1.20.6 compatibility report.
+  The report concludes that the methods emitted by this plugin do not break
+  across 1.20-1.20.6; only the data-pack folder changes from `loot_tables` to
+  `loot_table` in 1.21.
+
 ### 1.0.3.38-beta
 
 - Added a **Functions** category and five loot-function blocks. `apply_bonus`
