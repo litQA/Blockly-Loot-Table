@@ -34,7 +34,7 @@ public final class LootTableSelfCheck {
         strictConnectionChecks();
         invalidEntityBlockState();
         invalidBlockKilledByPlayer();
-        invalidEntityPotionOnBlock();
+        validEntityPotionOnBlock();
         duplicateStartIsWarned();
         startBlockIsHidden();
         unknownConditionIsSkipped();
@@ -271,7 +271,7 @@ public final class LootTableSelfCheck {
                         "<value name=\"item\"><block type=\"loottable_entity_mainhand_item\">"
                                 + "<value name=\"entity\"><block type=\"loottable_source_entity_dependency\"></block></value>"
                                 + "</block></value>"
-                                + "<field name=\"enhancement\">minecraft:sharpness</field>"
+                                + "<field name=\"enhancement\">minecraft:SHARPNESS</field>"
                                 + "<field name=\"level\">3</field>")),
                 LootTableType.ENTITY, value -> value);
         check(!result.report().hasErrors(), "item enchantment condition has no errors");
@@ -282,7 +282,11 @@ public final class LootTableSelfCheck {
         check(json.contains("\"equipment\""), "main-hand enchantment uses equipment");
         check(json.contains("\"mainhand\""), "main-hand enchantment uses the mainhand slot");
         check(json.contains("\"minecraft:enchantments\": [\n"), "enchantment predicate list exists");
-        check(json.contains("\"levels\": 3"), "enchantment level is written as an integer");
+        check(json.contains("\"enchantment\": \"minecraft:sharpness\""),
+                "enchantment id is lower-case and singular");
+        check(json.contains("\"levels\": {") && json.contains("\"min\": 3"),
+                "enchantment level is a minimum range object");
+        check(!json.contains("\"enchantments\":"), "enchantment predicate does not use the plural list");
 
         BlocklyXmlParser.ParseResult toolResult = BlocklyXmlParser.parse(blockTableXml(
                 entry("Blocks.STONE", 1, 1),
@@ -416,14 +420,22 @@ public final class LootTableSelfCheck {
                 "float provider has a provider output");
     }
 
-    private static void invalidEntityPotionOnBlock() {
+    private static void validEntityPotionOnBlock() {
         BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(blockTableXml(
                 entry("Blocks.STONE", 1, 1),
                 condition("loottable_entity_has_potion",
-                        "<field name=\"potion\">minecraft:fire_resistance</field>")),
+                        "<value name=\"entity\"><block type=\"loottable_entity_dependency\"></block></value>"
+                                + "<field name=\"potion\">minecraft:fire_resistance</field>")),
                 LootTableType.BLOCK, value -> value);
-        check(result.report().hasErrors(), "block table with entity potion condition is an error");
-        check(result.report().summary().contains("entity_has_potion"), "error names the entity condition");
+        check(!result.report().hasErrors(), "block table with entity potion condition has no errors");
+        check(result.report().summary().contains("only provide the target entity"),
+                "block potion condition warns about the optional target entity dependency");
+        String json = LootTableJsonWriter.write(result.model(), "test", "blocks/stone", false);
+        check(json.contains("\"condition\": \"minecraft:entity_properties\""),
+                "block potion condition uses entity_properties");
+        check(json.contains("\"entity\": \"this\""), "block potion condition targets the breaker entity");
+        check(json.contains("\"minecraft:fire_resistance\": {}"),
+                "block potion condition writes the effect predicate");
     }
 
     private static void duplicateStartIsWarned() {

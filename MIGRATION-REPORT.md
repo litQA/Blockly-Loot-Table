@@ -12,6 +12,17 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.0.3.9-beta
+
+- The potion-effect condition is valid in both Block and Entity loot tables.
+  Block tables can supply the target entity only when a player breaks the block;
+  the editor and save validation report this as a warning, not an error. Source
+  entity, immediate source entity and source-player values are skipped in Block
+  contexts because the block loot context does not provide those parameters.
+- Enchantment predicates now use lower-case enchantment ids and the
+  `{"enchantment":"...","levels":{"min":...}}` item sub-predicate shape. Existing
+  elements pick up the corrected output the next time they are generated.
+
 ### 1.0.3.7-beta
 
 - Number blocks now distinguish terminal values from provider constants.
@@ -98,8 +109,8 @@ workspace metadata is modified.
    `killed_by_player_or_pets`, `alternative`, `and`, full `entity_properties` and
    `damage_source_properties` remain future work. The potion condition exposes
    the `effects` predicate only, and NBT conditions compare one tag at a time.
-   The function chain supports `set_count` uniform and add; other loot functions
-   remain future work.
+   The item count accepts recursive number providers; the function chain supports
+   `set_count` add, while other loot functions remain future work.
 
 3. **Concrete item entries only.**
    The item selector uses MCreator's block/item list. Item tags are recognized

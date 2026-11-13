@@ -52,7 +52,7 @@ public class BlocklyLootTable extends GeneratableElement {
     public String getDependencyLabel() {
         return getLootTableTypeEnum() == LootTableType.ENTITY
                 ? "event/target entity, source entity, immediate source entity, source player, main-hand item, world"
-                : "provided blockstate, block selector, source entity, immediate source entity, source player, world";
+                : "provided blockstate, block selector, target entity (player breaker only), world";
     }
 
     public String getTargetRegistryName() {

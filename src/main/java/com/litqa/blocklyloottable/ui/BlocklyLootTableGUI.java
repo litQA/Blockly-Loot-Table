@@ -276,7 +276,7 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
         dependencyLabel.setText(L10N.t("elementgui.blockly_loot_table.dependencies") + " "
                 + (currentType() == LootTableType.ENTITY
                 ? "entity, source entity, world"
-                : "blockstate, source entity, world"));
+                : "blockstate, target entity, source entity, world"));
     }
 
     private void updateManualPathState() {

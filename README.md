@@ -15,7 +15,8 @@ Supported condition blocks:
 - `weather_check`
 - `inverted`
 - block-state boolean, integer and enum comparisons (Block loot tables only)
-- entity potion-effect predicate (Entity loot tables only)
+- entity potion-effect predicate (Block tables test the player who breaks the
+  block; Entity tables test the selected entity)
 - block and entity NBT logic, number and text comparisons
 - item enchantment condition with an item input (Entity or tool context)
 - legacy `block_state_property` (parseable for existing workspaces; hidden from the toolbox)
@@ -117,7 +118,7 @@ gradlew.bat selfCheck
 
 The context dependencies shown in the editor are:
 
-- Block: `provided blockstate, block selector, source entity, immediate source entity, source player, world`
+- Block: `provided blockstate, block selector, target entity (player breaker only), world`
 - Entity: `event/target entity, source entity, immediate source entity, source player, main-hand item, world`
 
 ## Examples
@@ -159,10 +160,15 @@ The template selector creates both documents automatically.
 - An Entity table with the potion condition and **Source entity** emits
   `minecraft:entity_properties`, `entity: "attacker"` and a non-empty
   `predicate.effects` map.
+- A Block table with the potion condition and **Event/target entity** emits
+  `entity: "this"` and shows a warning that the entity is only present when a
+  player breaks the block.
 - Block and entity NBT logic/number/text conditions emit `location_check` and
   `entity_properties` with the expected SNBT value.
 - An entity main-hand item enchantment condition emits the
   `equipment.mainhand` predicate with the selected enchantment and level.
+  The enchantment id is lower case, and the predicate entry uses
+  `{"enchantment":"...","levels":{"min":...}}`.
 - The item count socket accepts `Integer`, `Float`, `Integer provider`,
   `Float provider`, `Uniform` or `Binomial`; generated JSON uses a bare number
   for constants and a `minecraft:constant` object for provider constants.

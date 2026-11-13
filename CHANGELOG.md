@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.0.3.9-beta
+
+### Fixed
+
+- The entity potion-effect condition is now allowed in Block loot tables so it
+  can test the player who breaks the block. A target-entity input on a Block
+  table reports a warning because the entity is only available for player drops;
+  source-entity and source-player inputs are rejected and skipped in that
+  context.
+- Enchantment ids are normalized to lower case. The item enchantment predicate
+  now emits `{"enchantment":"...","levels":{"min":...}}` inside
+  `minecraft:enchantments` instead of the previous plural id list with a scalar
+  level.
+
+### Internal
+
+- Extended the headless self-check to 190 checks, including the Block potion
+  context, target-entity warning and the enchantment predicate shape.
+
 ## 1.0.3.7-beta
 
 ### Fixed

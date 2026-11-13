@@ -408,6 +408,7 @@ public final class BlocklyXmlParser {
             report.addWarning(blockType, "Enchantment condition has no enchantment selected and was skipped.");
             return false;
         }
+        enchantment = enchantment.toLowerCase(java.util.Locale.ROOT);
         if (!enchantment.contains(":")) {
             enchantment = "minecraft:" + enchantment;
         }
@@ -773,11 +774,39 @@ public final class BlocklyXmlParser {
 
         String valueType = valueBlock.getAttribute("type");
         return switch (valueType) {
-            case "loottable_entity_dependency", "entity_from_deps" -> "this";
-            case "loottable_source_entity_dependency", "source_entity_from_deps" -> "attacker";
-            case "loottable_immediate_source_entity_dependency", "immediate_source_entity_from_deps" ->
-                    "direct_attacker";
-            case "loottable_source_player_dependency", "source_player_from_deps" -> "attacking_player";
+            case "loottable_entity_dependency", "entity_from_deps" -> {
+                if (type == LootTableType.BLOCK) {
+                    report.addWarning(valueType,
+                            "Block loot tables only provide the target entity when a player breaks the block; "
+                                    + "this condition may not match for non-player drops.");
+                }
+                yield "this";
+            }
+            case "loottable_source_entity_dependency", "source_entity_from_deps" -> {
+                if (type == LootTableType.BLOCK) {
+                    report.addWarning(valueType,
+                            "Source entity is not available in a block loot table context; the condition was skipped.");
+                    yield "";
+                }
+                yield "attacker";
+            }
+            case "loottable_immediate_source_entity_dependency", "immediate_source_entity_from_deps" -> {
+                if (type == LootTableType.BLOCK) {
+                    report.addWarning(valueType,
+                            "Immediate source entity is not available in a block loot table context; "
+                                    + "the condition was skipped.");
+                    yield "";
+                }
+                yield "direct_attacker";
+            }
+            case "loottable_source_player_dependency", "source_player_from_deps" -> {
+                if (type == LootTableType.BLOCK) {
+                    report.addWarning(valueType,
+                            "Source player is not available in a block loot table context; the condition was skipped.");
+                    yield "";
+                }
+                yield "attacking_player";
+            }
             default -> {
                 report.addWarning(valueType, "Entity value " + valueType + " is not supported and was skipped.");
                 yield "";
