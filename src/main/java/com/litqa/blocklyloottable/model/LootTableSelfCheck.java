@@ -33,6 +33,7 @@ public final class LootTableSelfCheck {
         validItemEnchantmentCondition();
         validLogicConditions();
         validEnchantedItem();
+        validItemDataAndContainers();
         validEnchantItemFunctions();
         validFunctionBlocks();
         validWorldConditions();
@@ -691,6 +692,91 @@ public final class LootTableSelfCheck {
                         && json.contains("\"value\": 3"),
                 "enchanted item writes the second provider level");
         check(json.contains("\"add\": false"), "enchanted item replaces existing enchantments");
+    }
+
+    private static void validItemDataAndContainers() {
+        String count = "<value name=\"count\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">1</field></block></value>";
+        String base = "<block type=\"loottable_item_selector\">"
+                + "<field name=\"item\">minecraft:paper</field></block>";
+
+        String nbtLogic = "<block type=\"loottable_item_nbt_logic\">"
+                + "<field name=\"tag\">CustomName</field>"
+                + "<value name=\"value\"><block type=\"loottable_boolean\">"
+                + "<field name=\"BOOL\">TRUE</field></block></value>"
+                + "<value name=\"item\">" + base + "</value></block>";
+        BlocklyXmlParser.ParseResult logicResult = BlocklyXmlParser.parse(blockTableXml(
+                entryWithItem(nbtLogic, count, 1), ""), LootTableType.BLOCK, value -> value);
+        check(!logicResult.report().hasErrors(), "boolean NBT item parses without errors");
+        String modernNbt = LootTableJsonWriter.write(logicResult.model(), "test", "blocks/paper", false, true);
+        check(modernNbt.contains("\"function\": \"minecraft:set_custom_data\""),
+                "boolean NBT uses set_custom_data on 1.20.5+");
+        check(modernNbt.contains("{CustomName:1b}"), "boolean NBT writes a byte tag");
+        String legacyNbt = LootTableJsonWriter.write(logicResult.model(), "test", "blocks/paper", false, false);
+        check(legacyNbt.contains("\"function\": \"minecraft:set_nbt\""),
+                "boolean NBT uses set_nbt before 1.20.5");
+
+        String nbtText = "<block type=\"loottable_item_nbt_text\">"
+                + "<field name=\"tag\">Note</field>"
+                + "<value name=\"value\"><block type=\"loottable_empty_text\">"
+                + "<field name=\"TEXT\">hello</field></block></value>"
+                + "<value name=\"item\">" + base + "</value></block>";
+        BlocklyXmlParser.ParseResult textResult = BlocklyXmlParser.parse(blockTableXml(
+                entryWithItem(nbtText, count, 1), ""), LootTableType.BLOCK, value -> value);
+        String textJson = LootTableJsonWriter.write(textResult.model(), "test", "blocks/paper", false, true);
+        check(textJson.contains("{Note:\\\"hello\\\"}"), "text NBT writes an escaped quoted string");
+
+        String container = "<block type=\"loottable_item_container\">"
+                + "<mutation inputs=\"2\"></mutation>"
+                + "<field name=\"component\">minecraft:bundle_contents</field>"
+                + "<value name=\"item\">" + base + "</value>"
+                + "<value name=\"item0\"><block type=\"loottable_item_selector\">"
+                + "<field name=\"item\">minecraft:apple</field></block></value>"
+                + "<value name=\"count0\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">2</field></block></value>"
+                + "<value name=\"item1\"><block type=\"loottable_item_selector\">"
+                + "<field name=\"item\">minecraft:diamond</field></block></value>"
+                + "<value name=\"count1\"><block type=\"loottable_float\">"
+                + "<field name=\"value\">2.5</field></block></value></block>";
+        BlocklyXmlParser.ParseResult containerResult = BlocklyXmlParser.parse(blockTableXml(
+                entryWithItem(container, count, 1), ""), LootTableType.BLOCK, value -> value);
+        check(containerResult.report().getErrorMessages().stream()
+                        .anyMatch(message -> message.contains("integer literal")),
+                "container float count is rejected");
+        String containerJson = LootTableJsonWriter.write(
+                containerResult.model(), "test", "blocks/bundle", false, true);
+        check(containerJson.contains("\"function\": \"minecraft:set_contents\""),
+                "container item writes set_contents");
+        check(containerJson.contains("\"component\": \"minecraft:bundle_contents\""),
+                "container item writes its component");
+        check(containerJson.contains("\"name\": \"minecraft:apple\"")
+                        && containerJson.contains("\"name\": \"minecraft:diamond\""),
+                "container item writes its rows");
+        check(containerJson.contains("\"count\": 2"), "container item writes the integer count");
+        String legacyContainer = LootTableJsonWriter.write(
+                containerResult.model(), "test", "blocks/bundle", false, false);
+        check(legacyContainer.contains("\"type\": \"minecraft:bundle_contents\""),
+                "container item uses the pre-1.20.5 type field");
+
+        String booleanJson = resourceText("/loottable/loottable_boolean.json");
+        check(booleanJson.contains("%{BKY_LOGIC_HUE}")
+                        && booleanJson.contains("\"toolbox_id\": \"loottable_logic\""),
+                "boolean selector is in the logic category");
+        String emptyTextJson = resourceText("/loottable/loottable_empty_text.json");
+        check(emptyTextJson.contains("%{BKY_TEXTS_HUE}")
+                        && emptyTextJson.contains("\"toolbox_id\": \"loottable_components\""),
+                "empty text block is in the components category");
+        String containerResource = resourceText("/loottable/loottable_item_container.json");
+        check(containerResource.contains("loottable_item_container_mutator")
+                        && containerResource.contains("\"toolbox_id\": \"loottable\""),
+                "container item resource exposes its mutator");
+        String randomChance = resourceText("/loottable/loottable_random_chance.json");
+        check(randomChance.contains("%{BKY_LOGIC_HUE}")
+                        && randomChance.contains("\"toolbox_id\": \"loottable_logic\""),
+                "random chance moved to the logic category");
+        String mainhand = resourceText("/loottable/loottable_entity_mainhand_item.json");
+        check(mainhand.contains("\"toolbox_id\": \"loottable_entities\""),
+                "main-hand item is in the entity category");
     }
 
     private static void validEnchantItemFunctions() {

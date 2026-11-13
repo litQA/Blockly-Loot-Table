@@ -196,10 +196,12 @@ public class BlocklyLootTable extends GeneratableElement {
 
         String outputKey = getSafeNormalizedPath();
         boolean randomSequence = VersionCompat.supportsRandomSequence(getWorkspace());
+        boolean itemComponents = VersionCompat.usesItemComponents(getWorkspace());
         String json = LootTableJsonWriter.write(parseResult.model(),
                 RegistryNames.namespace(outputKey),
                 RegistryNames.pathPart(outputKey),
-                randomSequence);
+                randomSequence,
+                itemComponents);
         System.out.println("[Blockly Loot Table] Generated loot table " + outputKey);
         return json;
     }

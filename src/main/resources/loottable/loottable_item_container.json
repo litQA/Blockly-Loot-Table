@@ -1,0 +1,35 @@
+{
+  "type": "loottable_item_container",
+  "message0": "item %1 with contents %2",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "item",
+      "check": "MCItem"
+    },
+    {
+      "type": "field_dropdown",
+      "name": "component",
+      "options": [
+        ["container", "minecraft:container"],
+        ["bundle", "minecraft:bundle_contents"]
+      ]
+    }
+  ],
+  "inputsInline": true,
+  "output": "MCItem",
+  "colour": 350,
+  "tooltip": "Adds items to a container component. Use the mutator to add or remove rows.",
+  "mutator": "loottable_item_container_mutator",
+  "mcreator": {
+    "toolbox_id": "loottable",
+    "inputs": ["item"],
+    "repeating_inputs": ["row"],
+    "toolbox_init": [
+      "<value name=\"item\"><block type=\"loottable_item_selector\"></block></value>",
+      "<mutation inputs=\"1\"></mutation>",
+      "~<value name=\"item0\"><block type=\"loottable_item_selector\"></block></value>",
+      "~<value name=\"count0\"><block type=\"loottable_integer\"><field name=\"value\">1</field></block></value>"
+    ]
+  }
+}

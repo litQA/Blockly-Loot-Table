@@ -15,12 +15,21 @@ public final class LootTableJsonWriter {
     }
 
     public static String write(LootTableModel model, String namespace, String path, boolean includeRandomSequence) {
+        return write(model, namespace, path, includeRandomSequence, true);
+    }
+
+    /**
+     * @param itemComponents true for 1.20.5+ where item components replaced
+     *                       item NBT in loot functions
+     */
+    public static String write(LootTableModel model, String namespace, String path, boolean includeRandomSequence,
+            boolean itemComponents) {
         Map<String, Object> root = new LinkedHashMap<>();
         root.put("type", model.getType().getJsonType());
 
         List<Object> pools = new ArrayList<>();
         for (LootTableModel.Pool pool : model.getPools()) {
-            pools.add(poolToJson(pool));
+            pools.add(poolToJson(pool, itemComponents));
         }
         root.put("pools", pools);
 
@@ -31,7 +40,7 @@ public final class LootTableJsonWriter {
         return JsonText.write(root);
     }
 
-    private static Map<String, Object> poolToJson(LootTableModel.Pool pool) {
+    private static Map<String, Object> poolToJson(LootTableModel.Pool pool, boolean itemComponents) {
         Map<String, Object> json = new LinkedHashMap<>();
         json.put("rolls", pool.getRolls());
         json.put("bonus_rolls", pool.getBonusRolls());
@@ -45,7 +54,7 @@ public final class LootTableJsonWriter {
 
         List<Object> entries = new ArrayList<>();
         for (LootTableModel.Entry entry : pool.getEntries()) {
-            Map<String, Object> entryJson = entryToJson(entry);
+            Map<String, Object> entryJson = entryToJson(entry, itemComponents);
             if (entryJson != null) {
                 entries.add(entryJson);
             }
@@ -54,7 +63,7 @@ public final class LootTableJsonWriter {
         return json;
     }
 
-    private static Map<String, Object> entryToJson(LootTableModel.Entry entry) {
+    private static Map<String, Object> entryToJson(LootTableModel.Entry entry, boolean itemComponents) {
         String item = entry.getItem();
         if (item == null || item.isBlank() || item.startsWith("#") || "minecraft:air".equals(item)) {
             return null;
@@ -72,7 +81,7 @@ public final class LootTableJsonWriter {
         List<Object> functions = new ArrayList<>();
         functions.add(setCount);
         for (LootTableModel.LootFunction function : entry.getFunctions()) {
-            Map<String, Object> functionJson = functionToJson(function);
+            Map<String, Object> functionJson = functionToJson(function, itemComponents);
             if (functionJson != null) {
                 functions.add(functionJson);
             }
@@ -121,7 +130,7 @@ public final class LootTableJsonWriter {
         return floating ? JsonText.floating(value) : compactNumber(value);
     }
 
-    private static Map<String, Object> functionToJson(LootTableModel.LootFunction function) {
+    private static Map<String, Object> functionToJson(LootTableModel.LootFunction function, boolean itemComponents) {
         if (function == null) {
             return null;
         }
@@ -224,6 +233,56 @@ public final class LootTableJsonWriter {
                 Map<String, Object> json = new LinkedHashMap<>();
                 json.put("function", "minecraft:limit_count");
                 json.put("limit", numberProviderToJson(provider(function.getProperties().get("limit"), 9)));
+                return json;
+            }
+            case "loottable_item_nbt" -> {
+                String tag = string(function.getProperties().get("nbt"));
+                if (tag.isBlank()) {
+                    return null;
+                }
+                Map<String, Object> json = new LinkedHashMap<>();
+                json.put("function", itemComponents ? "minecraft:set_custom_data" : "minecraft:set_nbt");
+                json.put("tag", tag);
+                return json;
+            }
+            case "loottable_item_container" -> {
+                Object value = function.getProperties().get("items");
+                if (!(value instanceof List<?> rawItems) || rawItems.isEmpty()) {
+                    return null;
+                }
+                List<Object> entries = new ArrayList<>();
+                for (Object rawItem : rawItems) {
+                    if (!(rawItem instanceof LootTableModel.ContainerItem item) || item.getItem().isBlank()) {
+                        continue;
+                    }
+                    Map<String, Object> entry = new LinkedHashMap<>();
+                    entry.put("type", "minecraft:item");
+                    entry.put("name", item.getItem());
+
+                    List<Object> functions = new ArrayList<>();
+                    Map<String, Object> count = new LinkedHashMap<>();
+                    count.put("function", "minecraft:set_count");
+                    count.put("count", numberProviderToJson(item.getCount()));
+                    functions.add(count);
+                    for (LootTableModel.LootFunction child : item.getFunctions()) {
+                        Map<String, Object> childJson = functionToJson(child, itemComponents);
+                        if (childJson != null) {
+                            functions.add(childJson);
+                        }
+                    }
+                    entry.put("functions", functions);
+                    entries.add(entry);
+                }
+                if (entries.isEmpty()) {
+                    return null;
+                }
+                Map<String, Object> json = new LinkedHashMap<>();
+                json.put("function", "minecraft:set_contents");
+                json.put(itemComponents ? "component" : "type",
+                        string(function.getProperties().get("component")).isBlank()
+                                ? "minecraft:container"
+                                : string(function.getProperties().get("component")));
+                json.put("entries", entries);
                 return json;
             }
             default -> {

@@ -192,6 +192,33 @@ public final class LootTableModel {
     /**
      * One loot function attached to an item entry.
      */
+    public static final class ContainerItem {
+
+        private String item = "";
+        private NumberProvider count = NumberProvider.number(1, false);
+        private final List<LootFunction> functions = new ArrayList<>();
+
+        public String getItem() {
+            return item;
+        }
+
+        public void setItem(String item) {
+            this.item = item == null ? "" : item;
+        }
+
+        public NumberProvider getCount() {
+            return count;
+        }
+
+        public void setCount(NumberProvider count) {
+            this.count = count == null ? NumberProvider.number(1, false) : count;
+        }
+
+        public List<LootFunction> getFunctions() {
+            return functions;
+        }
+    }
+
     public static final class LootFunction {
 
         private final String blockType;

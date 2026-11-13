@@ -57,6 +57,20 @@ other variants write `minecraft:enchant_randomly` or
 so treasure enchantments are eligible, while an unchecked box restricts to
 `#minecraft:on_random_loot`.
 
+The **Loot tables** category also contains A-1 item producers for custom NBT and
+container contents. The three NBT blocks add boolean, number or text SNBT to the
+item's `tag`. On 1.20.5+ they emit `minecraft:set_custom_data`; older generators
+receive `minecraft:set_nbt`. Number NBT accepts only a constant value, because
+the tag must be static. **Item with contents** is an expandable container block
+with one item socket and one Number/NumberProvider count socket per row. It
+emits `minecraft:set_contents` with `type` before 1.20.5 and with `component`
+from 1.20.5 onward. A floating-point literal count is rejected so the generated
+container remains valid.
+
+`Random chance` now lives in the **Logic** category and uses the native logic
+colour. The main-hand item block is in **Entity conditions**. The item producer
+blocks were moved out of the item-condition list into **Loot tables**.
+
 The count input accepts a bare number or a number provider. The **Numbers**
 category contains the terminal `Integer` and `Float` blocks, the constant
 `Integer provider` and `Float provider` blocks, and the `Uniform` and `Binomial`

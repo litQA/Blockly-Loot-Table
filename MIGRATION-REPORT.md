@@ -12,6 +12,19 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.0.3.44-beta
+
+- Added custom-NBT item producers for boolean, number and text values.
+  `set_custom_data` is used on 1.20.5+; `set_nbt` is used on older generators.
+  NBT is static SNBT, so number NBT accepts only constant values.
+- Added an expandable item-with-contents producer. It writes `set_contents` with
+  `type` before 1.20.5 and with `component` from 1.20.5. Floating-point literal
+  counts are rejected because container counts must be integral.
+- Moved A-1 item producers to **Loot tables**, moved **Random chance** to
+  **Logic**, and moved the main-hand item block to **Entity conditions**.
+- Limitation: custom NBT is limited to a flat tag name and a scalar value. Nested
+  compounds, lists and dynamic number providers are not supported.
+
 ### 1.0.3.41-beta
 
 - The **Functions** category and every function block now use the purple

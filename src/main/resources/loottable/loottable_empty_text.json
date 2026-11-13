@@ -1,0 +1,17 @@
+{
+  "type": "loottable_empty_text",
+  "message0": "%1",
+  "args0": [
+    {
+      "type": "field_input",
+      "name": "TEXT",
+      "text": ""
+    }
+  ],
+  "output": "String",
+  "colour": "%{BKY_TEXTS_HUE}",
+  "tooltip": "A text value. Leave it empty for an empty string.",
+  "mcreator": {
+    "toolbox_id": "loottable_components"
+  }
+}

@@ -304,6 +304,80 @@ public final class BlocklyXmlParser {
                         "Include treasure enchantments", report));
                 yield value;
             }
+            case "loottable_item_nbt_logic", "loottable_item_nbt_number", "loottable_item_nbt_text" -> {
+                String tag = fieldValue(itemBlock, "tag").trim();
+                if (tag.isBlank()) {
+                    tag = "tag";
+                }
+                String nbtValue = switch (itemType) {
+                    case "loottable_item_nbt_logic" -> {
+                        Element valueBlock = valueBlock(itemBlock, "value");
+                        String bool = valueBlock == null ? "TRUE" : fieldValue(valueBlock, "BOOL");
+                        yield "TRUE".equalsIgnoreCase(bool) || "true".equals(bool) ? "1b" : "0b";
+                    }
+                    case "loottable_item_nbt_number" -> {
+                        LootTableModel.NumberProvider number = parseNumberValue(
+                                valueBlock(itemBlock, "value"), 0.0, true, "NBT number", report);
+                        if (!isSimpleNumber(number)) {
+                            report.addWarning(itemType,
+                                    "NBT values must be static; a non-constant number provider was replaced by 0.0.");
+                            yield "0.0";
+                        }
+                        double numeric = number.getValue();
+                        yield number.isFloating() || numeric != Math.rint(numeric)
+                                ? Double.toString(numeric)
+                                : Long.toString((long) numeric);
+                    }
+                    default -> {
+                        Element valueBlock = valueBlock(itemBlock, "value");
+                        String text = valueBlock == null ? "" : fieldValue(valueBlock, "TEXT");
+                        yield quoteNbtText(text == null ? "" : text);
+                    }
+                };
+                LootTableModel.LootFunction value = new LootTableModel.LootFunction("loottable_item_nbt");
+                value.getProperties().put("nbt", "{" + quoteNbtKey(tag) + ":" + nbtValue + "}");
+                yield value;
+            }
+            case "loottable_item_container" -> {
+                String component = fieldValue(itemBlock, "component").trim();
+                if (component.isBlank()) {
+                    component = "minecraft:container";
+                }
+                int rows = mutationInputCount(itemBlock);
+                List<LootTableModel.ContainerItem> items = new ArrayList<>();
+                for (int index = 0; index < rows; index++) {
+                    Element rowItem = valueBlock(itemBlock, "item" + index);
+                    if (rowItem == null) {
+                        continue;
+                    }
+                    ItemSpec item = parseItemProducer(rowItem, resolver, report);
+                    if (item == null || item.item().isBlank()) {
+                        continue;
+                    }
+                    LootTableModel.NumberProvider count = parseNumberValue(
+                            valueBlock(itemBlock, "count" + index), 1, false,
+                            "Container item count", report);
+                    if (isSimpleNumber(count) && count.isFloating()) {
+                        report.addError(itemType,
+                                "Container item count must be an integer literal; '" + count.getValue()
+                                        + "' was truncated.");
+                        count = LootTableModel.NumberProvider.number((long) count.getValue(), false);
+                    }
+                    LootTableModel.ContainerItem entry = new LootTableModel.ContainerItem();
+                    entry.setItem(item.item());
+                    entry.setCount(nonNegative(count, itemType, "Container item count", report));
+                    entry.getFunctions().addAll(item.functions());
+                    items.add(entry);
+                }
+                if (items.isEmpty()) {
+                    report.addWarning(itemType, "A container item has no valid rows and was skipped.");
+                    yield null;
+                }
+                LootTableModel.LootFunction value = new LootTableModel.LootFunction(itemType);
+                value.getProperties().put("component", component);
+                value.getProperties().put("items", items);
+                yield value;
+            }
             default -> {
                 report.addWarning(itemType, "Unsupported item value block " + itemType + " was skipped.");
                 yield null;
@@ -1092,6 +1166,9 @@ public final class BlocklyXmlParser {
 
     private static LootTableModel.NumberProvider parseNumberValue(Element valueBlock, double fallback,
             boolean fallbackFloating, String label, ValidationReport report) {
+        if (valueBlock == null) {
+            return LootTableModel.NumberProvider.number(fallback, fallbackFloating);
+        }
         String valueType = valueBlock.getAttribute("type");
         String raw;
         switch (valueType) {

@@ -12,9 +12,9 @@
   "inputsInline": true,
   "previousStatement": "LootTableCondition",
   "nextStatement": "LootTableCondition",
-  "colour": 120,
+  "colour": "%{BKY_LOGIC_HUE}",
   "mcreator": {
-    "toolbox_id": "loottable_conditions",
+    "toolbox_id": "loottable_logic",
     "toolbox_init": [],
     "fields": [
       "chance"

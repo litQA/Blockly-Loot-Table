@@ -21,7 +21,7 @@
   "inputsInline": false,
   "colour": 350,
   "mcreator": {
-    "toolbox_id": "loottable_items",
+    "toolbox_id": "loottable",
     "toolbox_init": [
       "<value name=\"item\"><block type=\"loottable_item_selector\"></block></value>",
       "<value name=\"levels\"><block type=\"loottable_integer\"><field name=\"value\">1</field></block></value>",

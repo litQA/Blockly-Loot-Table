@@ -1,0 +1,20 @@
+{
+  "type": "loottable_boolean",
+  "message0": "%1",
+  "args0": [
+    {
+      "type": "field_dropdown",
+      "name": "BOOL",
+      "options": [
+        ["true", "TRUE"],
+        ["false", "FALSE"]
+      ]
+    }
+  ],
+  "output": "Boolean",
+  "colour": "%{BKY_LOGIC_HUE}",
+  "tooltip": "A boolean value.",
+  "mcreator": {
+    "toolbox_id": "loottable_logic"
+  }
+}

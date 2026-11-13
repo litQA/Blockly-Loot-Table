@@ -1,5 +1,35 @@
 # Changelog
 
+## 1.0.3.44-beta
+
+### New Content
+
+- Added boolean, number and text custom-NBT item value blocks. They emit
+  `minecraft:set_custom_data` on 1.20.5+ and `minecraft:set_nbt` on older
+  generators.
+- Added an expandable item-with-contents block. Each row has an item socket and
+  a count provider; the block emits `minecraft:set_contents`.
+- Added a true/false selector to the Logic category and an empty text block to
+  Minecraft components.
+
+### Changed
+
+- Moved the A-1 item producers from the item-condition list to **Loot tables**.
+- Moved **Random chance** to the Logic category and gave it the native logic
+  colour.
+- Moved the main-hand item block to **Entity conditions**.
+
+### Fixed
+
+- String-aware NBT and container serialization for 1.20.5+ item components.
+- Container counts reject floating-point literals instead of emitting an
+  invalid `set_contents` entry.
+
+### Internal
+
+- Extended the self-check to 389 checks for NBT serialization, item containers,
+  category placement and number constraints.
+
 ## 1.0.3.41-beta
 
 ### Changed
