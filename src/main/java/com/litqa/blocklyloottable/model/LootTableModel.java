@@ -213,25 +213,19 @@ public final class LootTableModel {
     public static final class EnchantmentLevel {
 
         private final String enchantment;
-        private final int minLevel;
-        private final Integer maxLevel;
+        private final NumberProvider level;
 
-        public EnchantmentLevel(String enchantment, int minLevel, Integer maxLevel) {
+        public EnchantmentLevel(String enchantment, NumberProvider level) {
             this.enchantment = enchantment == null ? "" : enchantment;
-            this.minLevel = minLevel;
-            this.maxLevel = maxLevel;
+            this.level = level == null ? NumberProvider.number(1, false) : level;
         }
 
         public String getEnchantment() {
             return enchantment;
         }
 
-        public int getMinLevel() {
-            return minLevel;
-        }
-
-        public Integer getMaxLevel() {
-            return maxLevel;
+        public NumberProvider getLevel() {
+            return level;
         }
     }
 

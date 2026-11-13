@@ -1,0 +1,28 @@
+{
+  "type": "loottable_item_enchant_random_any",
+  "message0": "item %1 with any enchantment at a random level, including treasure %2",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "item",
+      "check": "MCItem"
+    },
+    {
+      "type": "field_checkbox",
+      "name": "treasure",
+      "checked": true
+    }
+  ],
+  "output": "MCItem",
+  "inputsInline": true,
+  "colour": 350,
+  "mcreator": {
+    "toolbox_id": "loottable_items",
+    "toolbox_init": [
+      "<value name=\"item\"><block type=\"loottable_item_selector\"></block></value>"
+    ],
+    "fields": [
+      "treasure"
+    ]
+  }
+}

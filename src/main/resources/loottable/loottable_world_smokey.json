@@ -1,0 +1,13 @@
+{
+  "type": "loottable_world_smokey",
+  "message0": "is above a campfire (smokey)",
+  "args0": [],
+  "previousStatement": "LootTableCondition",
+  "nextStatement": "LootTableCondition",
+  "inputsInline": true,
+  "colour": 210,
+  "mcreator": {
+    "toolbox_id": "loottable_world",
+    "toolbox_init": []
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "type": "loottable_item_enchant_levels",
+  "message0": "item %1 enchanted with %2 levels, including these enchantments",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "item",
+      "check": "MCItem"
+    },
+    {
+      "type": "input_value",
+      "name": "levels",
+      "check": [
+        "Number",
+        "NumberProvider"
+      ]
+    }
+  ],
+  "mutator": "loottable_item_enchant_list_mutator",
+  "output": "MCItem",
+  "inputsInline": false,
+  "colour": 350,
+  "mcreator": {
+    "toolbox_id": "loottable_items",
+    "toolbox_init": [
+      "<value name=\"item\"><block type=\"loottable_item_selector\"></block></value>",
+      "<value name=\"levels\"><block type=\"loottable_integer\"><field name=\"value\">1</field></block></value>",
+      "<mutation inputs=\"1\"></mutation>"
+    ],
+    "repeating_fields": [
+      {
+        "name": "enchantment",
+        "type": "field_data_list_selector",
+        "datalist": "enchantments",
+        "customEntryProviders": "enchantment"
+      }
+    ]
+  }
+}

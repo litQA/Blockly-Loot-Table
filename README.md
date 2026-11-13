@@ -19,8 +19,15 @@ Supported condition blocks:
 - block and entity NBT logic, number and text comparisons
 - item enchantment conditions with an item input, minimum level and optional
   maximum level
-- an enchanted-item value block with dynamic enchantment rows
+- enchanted-item value blocks with dynamic enchantment rows and NumberProvider
+  levels
+- time checks and location checks for dimension, biome, biome tag, structure,
+  structure tag, smokey, light level, block tag and x/y/z position
 - nested `and`, `or` and `not` logic conditions
+
+Same-level location checks are merged into one `minecraft:location_check`
+predicate when their keys do not conflict, so dimension, biome, position and
+block-tag tests become a single AND predicate.
 
 The **Minecraft components** category provides the empty item selector,
 provided-blockstate, block selector, event/target entity, source entity,
@@ -41,14 +48,21 @@ a warning.
 Pools support `rolls`, `bonus_rolls`, conditions and weighted item entries.
 Entries require an **Item selector** input, a number count input, a weight, a
 condition chain and a function chain. The item input also accepts the
-**Item with enchantment** value block, which writes a `minecraft:set_enchantments`
-function with dynamically added enchantment rows. The count input accepts a bare
-number or a number provider. The **Numbers** category contains the terminal
-`Integer` and `Float` blocks, the constant `Integer provider` and
-`Float provider` blocks, the `Uniform` and `Binomial` provider blocks, and the
-`Add value` function block. `Uniform` and `Binomial` can be nested inside one
-another, and their sockets accept either a bare number or a provider. `Add value`
-appends a `minecraft:set_count` function with `"add": true`.
+**Item with enchantment** value block and the four randomized enchantment item
+variants. **Item with enchantments** writes `minecraft:set_enchantments` with
+dynamic rows whose levels accept a bare number or a number provider. The four
+other variants write `minecraft:enchant_randomly` or
+`minecraft:enchant_with_levels`; their enchantment list rows use MCreator's
+`enchantments` datalist, and the treasure checkbox omits `options` when checked
+so treasure enchantments are eligible, while an unchecked box restricts to
+`#minecraft:on_random_loot`.
+
+The count input accepts a bare number or a number provider. The **Numbers**
+category contains the terminal `Integer` and `Float` blocks, the constant
+`Integer provider` and `Float provider` blocks, the `Uniform` and `Binomial`
+provider blocks, and the `Add value` function block. `Uniform` and `Binomial` can
+be nested inside one another, and their sockets accept either a bare number or a
+provider. `Add value` appends a `minecraft:set_count` function with `"add": true`.
 
 Bare integer and float blocks serialize as bare JSON numbers. The two provider
 constant blocks serialize as `{"type":"minecraft:constant","value":...}`.
@@ -193,6 +207,18 @@ longer ships a preset-template selector.
 - The minimum-only and range enchantment blocks accept Integer level inputs;
   the range block writes both `levels.min` and `levels.max`, and reversed
   bounds are swapped with a warning.
+- **Item with enchantments** accepts a Number/NumberProvider level socket for
+  every row and writes those providers under `minecraft:set_enchantments`.
+- The four randomized enchantment item blocks are available in **Items**:
+  random list, random any with treasure checkbox, level list, and level any with
+  treasure checkbox. The random-any unchecked case writes
+  `options: "#minecraft:on_random_loot"`; the checked case omits `options`.
+- Time-check blocks write `minecraft:time_check`; daily time also writes
+  `period: 24000`, and the periodic block accepts period/min/max number inputs.
+- Dimension, biome, biome tag, structure, structure tag, smokey, light and
+  position conditions at the same chain level merge into one
+  `minecraft:location_check` predicate instead of repeating the condition.
+- Block-tag conditions write `predicate.block.blocks` as `#<tag>`.
 - The item count socket accepts `Integer`, `Float`, `Integer provider`,
   `Float provider`, `Uniform` or `Binomial`; generated JSON uses a bare number
   for constants and a `minecraft:constant` object for provider constants.
@@ -232,5 +258,5 @@ longer ships a preset-template selector.
 See `MIGRATION-REPORT.md` for the full limitation list and
 `../dsh_docs/blockly_type.md` for the block type/usage reference. The main
 restrictions are the condition subset, concrete item entries only (item tags are
-skipped with a warning), and enchantment rows that set fixed levels rather than
-random per-row level ranges.
+skipped with a warning), and enchantment options that use the 1.21 enchantment
+registry lists rather than per-item compatibility filtering.

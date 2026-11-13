@@ -1,0 +1,47 @@
+{
+  "type": "loottable_time_periodic",
+  "message0": "time in period %1 between %2 and %3 ticks",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "period",
+      "check": [
+        "Number",
+        "NumberProvider"
+      ]
+    },
+    {
+      "type": "input_value",
+      "name": "min",
+      "check": [
+        "Number",
+        "NumberProvider"
+      ]
+    },
+    {
+      "type": "input_value",
+      "name": "max",
+      "check": [
+        "Number",
+        "NumberProvider"
+      ]
+    }
+  ],
+  "previousStatement": "LootTableCondition",
+  "nextStatement": "LootTableCondition",
+  "inputsInline": true,
+  "colour": 210,
+  "mcreator": {
+    "toolbox_id": "loottable_world",
+    "toolbox_init": [
+      "<value name=\"period\"><block type=\"loottable_integer\"><field name=\"value\">24000</field></block></value>",
+      "<value name=\"min\"><block type=\"loottable_integer\"><field name=\"value\">0</field></block></value>",
+      "<value name=\"max\"><block type=\"loottable_integer\"><field name=\"value\">12000</field></block></value>"
+    ],
+    "inputs": [
+      "period",
+      "min",
+      "max"
+    ]
+  }
+}

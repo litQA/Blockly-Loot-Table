@@ -1,0 +1,37 @@
+{
+  "type": "loottable_item_enchant_levels_any",
+  "message0": "item %1 enchanted with %2 levels, including treasure %3",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "item",
+      "check": "MCItem"
+    },
+    {
+      "type": "input_value",
+      "name": "levels",
+      "check": [
+        "Number",
+        "NumberProvider"
+      ]
+    },
+    {
+      "type": "field_checkbox",
+      "name": "treasure",
+      "checked": true
+    }
+  ],
+  "output": "MCItem",
+  "inputsInline": true,
+  "colour": 350,
+  "mcreator": {
+    "toolbox_id": "loottable_items",
+    "toolbox_init": [
+      "<value name=\"item\"><block type=\"loottable_item_selector\"></block></value>",
+      "<value name=\"levels\"><block type=\"loottable_integer\"><field name=\"value\">1</field></block></value>"
+    ],
+    "fields": [
+      "treasure"
+    ]
+  }
+}

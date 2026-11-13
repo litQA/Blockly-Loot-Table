@@ -53,6 +53,42 @@ public final class ConditionScopeRegistry {
                 ConditionScope.BLOCK_AND_ENTITY, "Item has enchantment at least"));
         register(new ConditionDefinition("loottable_item_has_enchantment_range", "minecraft:match_tool",
                 ConditionScope.BLOCK_AND_ENTITY, "Item has enchantment in range"));
+        register(new ConditionDefinition("loottable_time_check", "minecraft:time_check",
+                ConditionScope.BLOCK_AND_ENTITY, "World time"));
+        register(new ConditionDefinition("loottable_time_day", "minecraft:time_check",
+                ConditionScope.BLOCK_AND_ENTITY, "Time of day"));
+        register(new ConditionDefinition("loottable_time_periodic", "minecraft:time_check",
+                ConditionScope.BLOCK_AND_ENTITY, "Time in period"));
+        register(new ConditionDefinition("loottable_world_dimension", "minecraft:location_check",
+                ConditionScope.BLOCK_AND_ENTITY, "Dimension"));
+        register(new ConditionDefinition("loottable_world_biome", "minecraft:location_check",
+                ConditionScope.BLOCK_AND_ENTITY, "Biome"));
+        register(new ConditionDefinition("loottable_world_biome_tag", "minecraft:location_check",
+                ConditionScope.BLOCK_AND_ENTITY, "Biome tag"));
+        register(new ConditionDefinition("loottable_world_smokey", "minecraft:location_check",
+                ConditionScope.BLOCK_AND_ENTITY, "Smokey location"));
+        register(new ConditionDefinition("loottable_world_structure", "minecraft:location_check",
+                ConditionScope.BLOCK_AND_ENTITY, "Structure"));
+        register(new ConditionDefinition("loottable_world_structure_tag", "minecraft:location_check",
+                ConditionScope.BLOCK_AND_ENTITY, "Structure tag"));
+        register(new ConditionDefinition("loottable_world_light", "minecraft:location_check",
+                ConditionScope.BLOCK_AND_ENTITY, "Light level"));
+        register(new ConditionDefinition("loottable_world_light_range", "minecraft:location_check",
+                ConditionScope.BLOCK_AND_ENTITY, "Light level range"));
+        register(new ConditionDefinition("loottable_world_position_x", "minecraft:location_check",
+                ConditionScope.BLOCK_AND_ENTITY, "X position"));
+        register(new ConditionDefinition("loottable_world_position_y", "minecraft:location_check",
+                ConditionScope.BLOCK_AND_ENTITY, "Y position"));
+        register(new ConditionDefinition("loottable_world_position_z", "minecraft:location_check",
+                ConditionScope.BLOCK_AND_ENTITY, "Z position"));
+        register(new ConditionDefinition("loottable_world_position_x_range", "minecraft:location_check",
+                ConditionScope.BLOCK_AND_ENTITY, "X position range"));
+        register(new ConditionDefinition("loottable_world_position_y_range", "minecraft:location_check",
+                ConditionScope.BLOCK_AND_ENTITY, "Y position range"));
+        register(new ConditionDefinition("loottable_world_position_z_range", "minecraft:location_check",
+                ConditionScope.BLOCK_AND_ENTITY, "Z position range"));
+        register(new ConditionDefinition("loottable_world_block_tag", "minecraft:location_check",
+                ConditionScope.BLOCK_ONLY, "Block tag"));
     }
 
     private ConditionScopeRegistry() {

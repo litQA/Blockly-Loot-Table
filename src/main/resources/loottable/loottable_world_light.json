@@ -1,0 +1,25 @@
+{
+  "type": "loottable_world_light",
+  "message0": "light level is %1",
+  "args0": [
+    {
+      "type": "field_number",
+      "name": "value",
+      "value": 0,
+      "min": 0,
+      "max": 15,
+      "precision": 1
+    }
+  ],
+  "previousStatement": "LootTableCondition",
+  "nextStatement": "LootTableCondition",
+  "inputsInline": true,
+  "colour": 210,
+  "mcreator": {
+    "toolbox_id": "loottable_world",
+    "toolbox_init": [],
+    "fields": [
+      "value"
+    ]
+  }
+}

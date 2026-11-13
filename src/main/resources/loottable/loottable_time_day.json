@@ -1,0 +1,37 @@
+{
+  "type": "loottable_time_day",
+  "message0": "time of day between %1 and %2 ticks",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "min",
+      "check": [
+        "Number",
+        "NumberProvider"
+      ]
+    },
+    {
+      "type": "input_value",
+      "name": "max",
+      "check": [
+        "Number",
+        "NumberProvider"
+      ]
+    }
+  ],
+  "previousStatement": "LootTableCondition",
+  "nextStatement": "LootTableCondition",
+  "inputsInline": true,
+  "colour": 210,
+  "mcreator": {
+    "toolbox_id": "loottable_world",
+    "toolbox_init": [
+      "<value name=\"min\"><block type=\"loottable_integer\"><field name=\"value\">0</field></block></value>",
+      "<value name=\"max\"><block type=\"loottable_integer\"><field name=\"value\">12000</field></block></value>"
+    ],
+    "inputs": [
+      "min",
+      "max"
+    ]
+  }
+}

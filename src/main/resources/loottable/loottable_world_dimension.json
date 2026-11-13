@@ -1,0 +1,22 @@
+{
+  "type": "loottable_world_dimension",
+  "message0": "dimension is %1",
+  "args0": [
+    {
+      "type": "field_data_list_selector",
+      "name": "dimension",
+      "datalist": "dimensions"
+    }
+  ],
+  "previousStatement": "LootTableCondition",
+  "nextStatement": "LootTableCondition",
+  "inputsInline": true,
+  "colour": 210,
+  "mcreator": {
+    "toolbox_id": "loottable_world",
+    "toolbox_init": [],
+    "fields": [
+      "dimension"
+    ]
+  }
+}

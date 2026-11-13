@@ -33,6 +33,8 @@ public final class LootTableSelfCheck {
         validItemEnchantmentCondition();
         validLogicConditions();
         validEnchantedItem();
+        validEnchantItemFunctions();
+        validWorldConditions();
         entityAutoPath();
         manualPathProvidedBlock();
         validBlockSourceAliases();
@@ -95,6 +97,30 @@ public final class LootTableSelfCheck {
                 "blockly.block.loottable_item_with_enchantment.level",
                 "blockly.block.loottable_item_with_enchantment.mutator.container",
                 "blockly.block.loottable_item_with_enchantment.mutator.input",
+                "blockly.block.loottable_item_enchant_random",
+                "blockly.block.loottable_item_enchant_random_any",
+                "blockly.block.loottable_item_enchant_levels",
+                "blockly.block.loottable_item_enchant_levels_any",
+                "blockly.block.loottable_item_enchant_list.mutator.container",
+                "blockly.block.loottable_item_enchant_list.mutator.input",
+                "blockly.block.loottable_time_check",
+                "blockly.block.loottable_time_day",
+                "blockly.block.loottable_time_periodic",
+                "blockly.block.loottable_world_dimension",
+                "blockly.block.loottable_world_biome",
+                "blockly.block.loottable_world_biome_tag",
+                "blockly.block.loottable_world_smokey",
+                "blockly.block.loottable_world_structure",
+                "blockly.block.loottable_world_structure_tag",
+                "blockly.block.loottable_world_light",
+                "blockly.block.loottable_world_light_range",
+                "blockly.block.loottable_world_position_x",
+                "blockly.block.loottable_world_position_y",
+                "blockly.block.loottable_world_position_z",
+                "blockly.block.loottable_world_position_x_range",
+                "blockly.block.loottable_world_position_y_range",
+                "blockly.block.loottable_world_position_z_range",
+                "blockly.block.loottable_world_block_tag",
                 "blockly.block.loottable_logic_and",
                 "blockly.block.loottable_logic_or",
                 "blockly.block.loottable_logic_not",
@@ -503,6 +529,22 @@ public final class LootTableSelfCheck {
                 "enchanted item uses its mutator");
         check(enchantedItem.contains("\"repeating_fields\""),
                 "enchanted item has repeating fields");
+        check(resourceText("/loottable/loottable_item_enchant_random.json")
+                        .contains("\"output\": \"MCItem\""),
+                "random enchant item is an item value block");
+        check(resourceText("/loottable/loottable_item_enchant_random_any.json")
+                        .contains("\"field_checkbox\""),
+                "random any enchant item exposes a treasure checkbox");
+        check(resourceText("/loottable/loottable_item_enchant_levels.json")
+                        .contains("\"check\": [")
+                        && resourceText("/loottable/loottable_item_enchant_levels.json")
+                        .contains("\"NumberProvider\""),
+                "level enchant item accepts provider levels");
+        check(resourceText("/loottable/loottable_time_periodic.json")
+                        .contains("\"name\": \"period\""),
+                "periodic time check exposes a period input");
+        check(resourceText("/loottable/$loottable_world.json").contains("\"color\""),
+                "world condition category exists");
         check(resourceText("/loottable/loottable_integer.json").contains("\"output\": \"Number\""),
                 "integer number has a number output");
         check(resourceText("/loottable/loottable_float.json").contains("\"output\": \"Number\""),
@@ -570,8 +612,12 @@ public final class LootTableSelfCheck {
                 + "<mutation inputs=\"2\"></mutation>"
                 + "<value name=\"item\"><block type=\"loottable_item_selector\">"
                 + "<field name=\"item\">minecraft:diamond_sword</field></block></value>"
-                + "<field name=\"enchantment0\">sharpness</field><field name=\"level0\">2</field>"
-                + "<field name=\"enchantment1\">minecraft:unbreaking</field><field name=\"level1\">3</field>"
+                + "<field name=\"enchantment0\">sharpness</field>"
+                + "<value name=\"level0\"><block type=\"loottable_integer_provider\">"
+                + "<field name=\"value\">2</field></block></value>"
+                + "<field name=\"enchantment1\">minecraft:unbreaking</field>"
+                + "<value name=\"level1\"><block type=\"loottable_integer_provider\">"
+                + "<field name=\"value\">3</field></block></value>"
                 + "</block>";
         String entryXml = entryWithItem(enchanted,
                 "<value name=\"count\"><block type=\"loottable_integer\">"
@@ -582,11 +628,128 @@ public final class LootTableSelfCheck {
         String json = LootTableJsonWriter.write(result.model(), "test", "blocks/stone", false);
         check(json.contains("\"function\": \"minecraft:set_enchantments\""),
                 "enchanted item writes set_enchantments");
-        check(json.contains("\"minecraft:sharpness\": 2"),
-                "enchanted item writes the first row");
-        check(json.contains("\"minecraft:unbreaking\": 3"),
-                "enchanted item writes the second row");
+        check(json.contains("\"minecraft:sharpness\": {")
+                        && json.contains("\"type\": \"minecraft:constant\"")
+                        && json.contains("\"value\": 2"),
+                "enchanted item writes the first provider level");
+        check(json.contains("\"minecraft:unbreaking\": {")
+                        && json.contains("\"value\": 3"),
+                "enchanted item writes the second provider level");
         check(json.contains("\"add\": false"), "enchanted item replaces existing enchantments");
+    }
+
+    private static void validEnchantItemFunctions() {
+        String base = "<block type=\"loottable_item_selector\">"
+                + "<field name=\"item\">minecraft:book</field></block>";
+        String random = "<block type=\"loottable_item_enchant_random\">"
+                + "<mutation inputs=\"1\"></mutation>"
+                + "<value name=\"item\">" + base + "</value>"
+                + "<field name=\"enchantment0\">sharpness</field></block>";
+        String randomAny = "<block type=\"loottable_item_enchant_random_any\">"
+                + "<value name=\"item\">" + base + "</value>"
+                + "<field name=\"treasure\">FALSE</field></block>";
+        String levels = "<block type=\"loottable_item_enchant_levels\">"
+                + "<mutation inputs=\"1\"></mutation>"
+                + "<value name=\"item\">" + base + "</value>"
+                + "<value name=\"levels\"><block type=\"loottable_integer_provider\">"
+                + "<field name=\"value\">30</field></block></value>"
+                + "<field name=\"enchantment0\">minecraft:unbreaking</field></block>";
+        String levelsAny = "<block type=\"loottable_item_enchant_levels_any\">"
+                + "<value name=\"item\">" + base + "</value>"
+                + "<value name=\"levels\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">30</field></block></value>"
+                + "<field name=\"treasure\">TRUE</field></block>";
+
+        for (String item : List.of(random, randomAny, levels, levelsAny)) {
+            String entryXml = entryWithItem(item,
+                    "<value name=\"count\"><block type=\"loottable_integer\">"
+                            + "<field name=\"value\">1</field></block></value>", 1);
+            BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(blockTableXml(
+                    entryXml, ""), LootTableType.BLOCK, value -> value);
+            check(!result.report().hasErrors(), "enchant item function parses without errors");
+            String json = LootTableJsonWriter.write(result.model(), "test", "blocks/book", false);
+            check(json.contains("\"function\": \"minecraft:enchant_randomly\"")
+                            || json.contains("\"function\": \"minecraft:enchant_with_levels\""),
+                    "enchant item function writes a vanilla enchant function");
+        }
+
+        String randomJson = LootTableJsonWriter.write(BlocklyXmlParser.parse(blockTableXml(
+                entryWithItem(random, "<value name=\"count\"><block type=\"loottable_integer\">"
+                        + "<field name=\"value\">1</field></block></value>", 1), ""),
+                LootTableType.BLOCK, value -> value).model(), "test", "blocks/book", false);
+        check(randomJson.contains("\"options\": [")
+                        && randomJson.contains("\"minecraft:sharpness\""),
+                "enchant_randomly writes the enchantment list");
+
+        String anyJson = LootTableJsonWriter.write(BlocklyXmlParser.parse(blockTableXml(
+                entryWithItem(randomAny, "<value name=\"count\"><block type=\"loottable_integer\">"
+                        + "<field name=\"value\">1</field></block></value>", 1), ""),
+                LootTableType.BLOCK, value -> value).model(), "test", "blocks/book", false);
+        check(anyJson.contains("\"options\": \"#minecraft:on_random_loot\""),
+                "non-treasure random enchant restricts to the loot enchantment tag");
+
+        String levelsJson = LootTableJsonWriter.write(BlocklyXmlParser.parse(blockTableXml(
+                entryWithItem(levels, "<value name=\"count\"><block type=\"loottable_integer\">"
+                        + "<field name=\"value\">1</field></block></value>", 1), ""),
+                LootTableType.BLOCK, value -> value).model(), "test", "blocks/book", false);
+        check(levelsJson.contains("\"function\": \"minecraft:enchant_with_levels\""),
+                "enchant_with_levels function exists");
+        check(levelsJson.contains("\"levels\": {")
+                        && levelsJson.contains("\"type\": \"minecraft:constant\"")
+                        && levelsJson.contains("\"value\": 30"),
+                "enchant_with_levels writes its provider level");
+    }
+
+    private static void validWorldConditions() {
+        String time = condition("loottable_time_day",
+                "<value name=\"min\"><block type=\"loottable_integer\">"
+                        + "<field name=\"value\">0</field></block></value>"
+                        + "<value name=\"max\"><block type=\"loottable_integer\">"
+                        + "<field name=\"value\">12000</field></block></value>");
+        String location = chain(
+                condition("loottable_world_dimension",
+                        "<field name=\"dimension\">Surface</field>"),
+                condition("loottable_world_biome",
+                        "<field name=\"biome\">desert</field>"),
+                condition("loottable_world_block_tag",
+                        "<field name=\"tag\">minecraft:base_stone_overworld</field>"));
+        BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(blockTableXml(
+                entry("Blocks.STONE", 1, 1), chain(time, location)), LootTableType.BLOCK, value -> value);
+        check(!result.report().hasErrors(), "world conditions parse without errors");
+        String json = LootTableJsonWriter.write(result.model(), "test", "blocks/stone", false);
+        check(json.contains("\"condition\": \"minecraft:time_check\""), "time condition exists");
+        check(json.contains("\"period\": 24000"), "time-of-day period exists");
+        int locationCount = countOccurrences(json, "\"condition\": \"minecraft:location_check\"");
+        check(locationCount == 1, "same-level location checks merge into one predicate");
+        check(json.contains("\"dimension\": \"minecraft:overworld\""), "dimension predicate exists");
+        check(json.contains("\"biomes\": \"minecraft:desert\""), "biome predicate exists");
+        check(json.contains("\"blocks\": \"#minecraft:base_stone_overworld\""),
+                "block tag predicate exists");
+
+        String light = condition("loottable_world_light",
+                "<field name=\"value\">7</field>");
+        String position = condition("loottable_world_position_x_range",
+                "<field name=\"min\">-10</field><field name=\"max\">10</field>");
+        BlocklyXmlParser.ParseResult lightResult = BlocklyXmlParser.parse(blockTableXml(
+                entry("Blocks.STONE", 1, 1), chain(light, position)), LootTableType.BLOCK, value -> value);
+        String lightJson = LootTableJsonWriter.write(lightResult.model(), "test", "blocks/stone", false);
+        check(lightJson.contains("\"light\": {") && lightJson.contains("\"light\": 7"),
+                "light level predicate exists");
+        check(lightJson.contains("\"position\": {")
+                        && lightJson.contains("\"x\": {")
+                        && lightJson.contains("\"min\": -10")
+                        && lightJson.contains("\"max\": 10"),
+                "coordinate range predicate exists");
+    }
+
+    private static int countOccurrences(String text, String needle) {
+        int count = 0;
+        int index = 0;
+        while ((index = text.indexOf(needle, index)) >= 0) {
+            count++;
+            index += needle.length();
+        }
+        return count;
     }
 
     private static void validEntityPotionOnBlock() {

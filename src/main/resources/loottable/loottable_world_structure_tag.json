@@ -1,0 +1,22 @@
+{
+  "type": "loottable_world_structure_tag",
+  "message0": "structure is tagged %1",
+  "args0": [
+    {
+      "type": "field_input",
+      "name": "tag",
+      "text": "minecraft:village"
+    }
+  ],
+  "previousStatement": "LootTableCondition",
+  "nextStatement": "LootTableCondition",
+  "inputsInline": true,
+  "colour": 210,
+  "mcreator": {
+    "toolbox_id": "loottable_world",
+    "toolbox_init": [],
+    "fields": [
+      "tag"
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "type": "loottable_world_position_z",
+  "message0": "current Z coordinate is %1",
+  "args0": [
+    {
+      "type": "field_number",
+      "name": "value",
+      "value": 0,
+      "min": -30000000,
+      "max": 30000000,
+      "precision": 1
+    }
+  ],
+  "previousStatement": "LootTableCondition",
+  "nextStatement": "LootTableCondition",
+  "inputsInline": true,
+  "colour": 210,
+  "mcreator": {
+    "toolbox_id": "loottable_world",
+    "toolbox_init": [],
+    "fields": [
+      "value"
+    ]
+  }
+}

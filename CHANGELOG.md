@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.0.3.32-beta
+
+### New Content
+
+- **Item with enchantments** rows now take an A-type Number/NumberProvider
+  level socket, so enchantment levels can use integer, float, Uniform, Binomial
+  and nested providers.
+- Added four randomized enchantment item value blocks:
+  **item with one of those enchantments at a random level**, **item with any
+  enchantment at a random level, including treasure**, **item enchanted with
+  levels, including those enchantments**, and **item enchanted with levels,
+  including treasure**.
+- Added **World conditions**: absolute time, time of day, periodic time,
+  dimension, biome, biome tag, structure, structure tag, smokey, light level and
+  range, x/y/z position and ranges, and block tag.
+- Added automatic merging of same-level `minecraft:location_check` conditions
+  into one predicate when their keys do not conflict.
+
+### Changed
+
+- The treasure checkbox maps to 1.21.1's `enchant_randomly` /
+  `enchant_with_levels` `options` field: checked omits `options` (all
+  enchantments including treasure); unchecked limits to
+  `#minecraft:on_random_loot`.
+- Time-check periods must be constant numbers in 1.21.1; a non-constant period
+  produces a warning and skips that condition.
+
+### Internal
+
+- Extended the headless self-check to 329 checks, covering provider enchantment
+  levels, all four enchant item blocks, time/world predicates and location
+  predicate merging.
+
 ## 1.0.3.24-beta
 
 ### Breaking Changes

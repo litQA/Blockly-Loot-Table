@@ -6,25 +6,45 @@
     }
 
     var colour = 350;
+
+    // Enchantment rows with an A-type Number/NumberProvider level input.
     registerSimpleMutatorContainer('loottable_item_enchantments_mutator_container',
         'blockly.block.loottable_item_with_enchantment.mutator.container', colour);
     registerSimpleMutatorInput('loottable_item_enchantments_mutator_input',
         'blockly.block.loottable_item_with_enchantment.mutator.input', colour, true);
-
     Blockly.Extensions.registerMutator('loottable_item_with_enchantment_mutator',
         simpleRepeatingInputMixin(
             'loottable_item_enchantments_mutator_container',
             'loottable_item_enchantments_mutator_input',
-            'row',
+            'level',
             function (thisBlock, inputName, index) {
-                thisBlock.appendDummyInput(inputName + index)
-                    .appendField(new FieldDataListSelector('enchantments'), 'enchantment' + index)
-                    .appendField(javabridge.t('blockly.block.loottable_item_with_enchantment.level'))
-                    .appendField(new Blockly.FieldNumber(1, 1, 255, 1), 'level' + index);
+                thisBlock.appendValueInput(inputName + index)
+                    .setCheck(['Number', 'NumberProvider'])
+                    .appendField(new FieldDataListSelector('enchantments'), 'enchantment' + index);
             },
-            false,
-            ['enchantment', 'level'],
+            true,
+            ['enchantment'],
             true),
         undefined,
         ['loottable_item_enchantments_mutator_input']);
+
+    // Enchantment-id lists without a level input.
+    registerSimpleMutatorContainer('loottable_item_enchant_list_mutator_container',
+        'blockly.block.loottable_item_enchant_list.mutator.container', colour);
+    registerSimpleMutatorInput('loottable_item_enchant_list_mutator_input',
+        'blockly.block.loottable_item_enchant_list.mutator.input', colour, true);
+    Blockly.Extensions.registerMutator('loottable_item_enchant_list_mutator',
+        simpleRepeatingInputMixin(
+            'loottable_item_enchant_list_mutator_container',
+            'loottable_item_enchant_list_mutator_input',
+            'row',
+            function (thisBlock, inputName, index) {
+                thisBlock.appendDummyInput(inputName + index)
+                    .appendField(new FieldDataListSelector('enchantments'), 'enchantment' + index);
+            },
+            false,
+            ['enchantment'],
+            true),
+        undefined,
+        ['loottable_item_enchant_list_mutator_input']);
 })();

@@ -37,13 +37,7 @@ public final class LootTableJsonWriter {
         json.put("bonus_rolls", pool.getBonusRolls());
 
         if (!pool.getConditions().isEmpty()) {
-            List<Object> conditions = new ArrayList<>();
-            for (LootTableModel.Condition condition : pool.getConditions()) {
-                Map<String, Object> conditionJson = conditionToJson(condition);
-                if (conditionJson != null) {
-                    conditions.add(conditionJson);
-                }
-            }
+            List<Object> conditions = conditionsToJson(pool.getConditions());
             if (!conditions.isEmpty()) {
                 json.put("conditions", conditions);
             }
@@ -86,13 +80,7 @@ public final class LootTableJsonWriter {
         json.put("functions", functions);
 
         if (!entry.getConditions().isEmpty()) {
-            List<Object> conditions = new ArrayList<>();
-            for (LootTableModel.Condition condition : entry.getConditions()) {
-                Map<String, Object> conditionJson = conditionToJson(condition);
-                if (conditionJson != null) {
-                    conditions.add(conditionJson);
-                }
-            }
+            List<Object> conditions = conditionsToJson(entry.getConditions());
             if (!conditions.isEmpty()) {
                 json.put("conditions", conditions);
             }
@@ -146,7 +134,8 @@ public final class LootTableJsonWriter {
                 Map<String, Object> enchantments = new LinkedHashMap<>();
                 for (Object entry : entries) {
                     if (entry instanceof LootTableModel.EnchantmentLevel enchantment) {
-                        enchantments.put(enchantment.getEnchantment(), enchantment.getMinLevel());
+                        enchantments.put(enchantment.getEnchantment(),
+                                numberProviderToJson(enchantment.getLevel()));
                     }
                 }
                 if (enchantments.isEmpty()) {
@@ -156,6 +145,46 @@ public final class LootTableJsonWriter {
                 json.put("function", "minecraft:set_enchantments");
                 json.put("enchantments", enchantments);
                 json.put("add", false);
+                return json;
+            }
+            case "loottable_item_enchant_random" -> {
+                List<String> options = stringList(function.getProperties().get("options"));
+                if (options.isEmpty()) {
+                    return null;
+                }
+                Map<String, Object> json = new LinkedHashMap<>();
+                json.put("function", "minecraft:enchant_randomly");
+                json.put("options", options);
+                return json;
+            }
+            case "loottable_item_enchant_random_any" -> {
+                Map<String, Object> json = new LinkedHashMap<>();
+                json.put("function", "minecraft:enchant_randomly");
+                if (!bool(function.getProperties().get("treasure"), true)) {
+                    json.put("options", "#minecraft:on_random_loot");
+                }
+                return json;
+            }
+            case "loottable_item_enchant_levels" -> {
+                List<String> options = stringList(function.getProperties().get("options"));
+                if (options.isEmpty()) {
+                    return null;
+                }
+                Map<String, Object> json = new LinkedHashMap<>();
+                json.put("function", "minecraft:enchant_with_levels");
+                json.put("levels", numberProviderToJson(
+                        provider(function.getProperties().get("levels"), 1)));
+                json.put("options", options);
+                return json;
+            }
+            case "loottable_item_enchant_levels_any" -> {
+                Map<String, Object> json = new LinkedHashMap<>();
+                json.put("function", "minecraft:enchant_with_levels");
+                json.put("levels", numberProviderToJson(
+                        provider(function.getProperties().get("levels"), 1)));
+                if (!bool(function.getProperties().get("treasure"), true)) {
+                    json.put("options", "#minecraft:on_random_loot");
+                }
                 return json;
             }
             case "loottable_function_set_count_add" -> {
@@ -279,6 +308,107 @@ public final class LootTableJsonWriter {
                     json.put("predicate", itemPredicate);
                 }
             }
+            case "loottable_time_check", "loottable_time_day", "loottable_time_periodic" -> {
+                LootTableModel.NumberProvider minimum = provider(
+                        condition.getProperties().get("min"), 0);
+                LootTableModel.NumberProvider maximum = provider(
+                        condition.getProperties().get("max"), 12000);
+                Map<String, Object> value = new LinkedHashMap<>();
+                value.put("min", numberProviderToJson(minimum));
+                value.put("max", numberProviderToJson(maximum));
+                json.put("value", value);
+                if (condition.getProperties().get("period") instanceof Number period) {
+                    json.put("period", period.longValue());
+                }
+            }
+            case "loottable_world_dimension" -> {
+                String dimension = string(condition.getProperties().get("dimension"));
+                if (dimension.isBlank()) {
+                    return null;
+                }
+                json.put("condition", "minecraft:location_check");
+                json.put("predicate", locationPredicate("dimension", dimension));
+            }
+            case "loottable_world_biome" -> {
+                String biome = string(condition.getProperties().get("biome"));
+                if (biome.isBlank()) {
+                    return null;
+                }
+                json.put("condition", "minecraft:location_check");
+                json.put("predicate", locationPredicate("biomes", biome));
+            }
+            case "loottable_world_biome_tag" -> {
+                String tag = string(condition.getProperties().get("tag"));
+                if (tag.isBlank()) {
+                    return null;
+                }
+                json.put("condition", "minecraft:location_check");
+                json.put("predicate", locationPredicate("biomes", tagged(tag)));
+            }
+            case "loottable_world_structure" -> {
+                String structure = string(condition.getProperties().get("structure"));
+                if (structure.isBlank()) {
+                    return null;
+                }
+                json.put("condition", "minecraft:location_check");
+                json.put("predicate", locationPredicate("structures", structure));
+            }
+            case "loottable_world_structure_tag" -> {
+                String tag = string(condition.getProperties().get("tag"));
+                if (tag.isBlank()) {
+                    return null;
+                }
+                json.put("condition", "minecraft:location_check");
+                json.put("predicate", locationPredicate("structures", tagged(tag)));
+            }
+            case "loottable_world_smokey" -> {
+                json.put("condition", "minecraft:location_check");
+                json.put("predicate", locationPredicate("smokey", true));
+            }
+            case "loottable_world_light", "loottable_world_light_range" -> {
+                Map<String, Object> light = new LinkedHashMap<>();
+                int minimum = (int) Math.max(0, Math.min(15,
+                        number(condition.getProperties().get("min"), 0)));
+                int maximum = (int) Math.max(minimum, Math.min(15,
+                        number(condition.getProperties().get("max"), minimum)));
+                if ("loottable_world_light".equals(condition.getBlockType())) {
+                    light.put("light", minimum);
+                } else {
+                    Map<String, Object> range = new LinkedHashMap<>();
+                    range.put("min", minimum);
+                    range.put("max", maximum);
+                    light.put("light", range);
+                }
+                json.put("condition", "minecraft:location_check");
+                json.put("predicate", locationPredicate("light", light));
+            }
+            case "loottable_world_position_x", "loottable_world_position_y",
+                    "loottable_world_position_z", "loottable_world_position_x_range",
+                    "loottable_world_position_y_range", "loottable_world_position_z_range" -> {
+                String blockType = condition.getBlockType();
+                String axis = blockType.contains("_x") ? "x" : blockType.contains("_y") ? "y" : "z";
+                Map<String, Object> position = new LinkedHashMap<>();
+                if (blockType.endsWith("_range")) {
+                    Map<String, Object> range = new LinkedHashMap<>();
+                    range.put("min", number(condition.getProperties().get("min"), 0));
+                    range.put("max", number(condition.getProperties().get("max"), 0));
+                    position.put(axis, range);
+                } else {
+                    position.put(axis, number(condition.getProperties().get("value"), 0));
+                }
+                json.put("condition", "minecraft:location_check");
+                json.put("predicate", locationPredicate("position", position));
+            }
+            case "loottable_world_block_tag" -> {
+                String tag = string(condition.getProperties().get("tag"));
+                if (tag.isBlank()) {
+                    return null;
+                }
+                Map<String, Object> blocks = new LinkedHashMap<>();
+                blocks.put("blocks", tagged(tag));
+                json.put("condition", "minecraft:location_check");
+                json.put("predicate", locationPredicate("block", blocks));
+            }
             case "loottable_logic_and", "loottable_logic_or" -> {
                 List<Object> terms = conditionTermsToJson(condition.getTerms());
                 if (terms.isEmpty()) {
@@ -298,6 +428,69 @@ public final class LootTableJsonWriter {
             }
         }
         return json;
+    }
+
+    private static Map<String, Object> locationPredicate(String key, Object value) {
+        Map<String, Object> predicate = new LinkedHashMap<>();
+        predicate.put(key, value);
+        return predicate;
+    }
+
+    private static String tagged(String tag) {
+        String value = tag == null ? "" : tag.trim();
+        return value.startsWith("#") ? value : "#" + value;
+    }
+
+    private static List<Object> conditionsToJson(List<LootTableModel.Condition> input) {
+        List<Object> conditions = new ArrayList<>();
+        for (LootTableModel.Condition condition : input) {
+            Map<String, Object> conditionJson = conditionToJson(condition);
+            if (conditionJson == null) {
+                continue;
+            }
+            if ("minecraft:location_check".equals(conditionJson.get("condition"))
+                    && conditionJson.get("predicate") instanceof Map<?, ?> predicate) {
+                Map<String, Object> combined = findLocationPredicate(conditions);
+                if (combined != null && deepMerge(combined, predicate)) {
+                    continue;
+                }
+            }
+            conditions.add(conditionJson);
+        }
+        return conditions;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> findLocationPredicate(List<Object> conditions) {
+        for (Object condition : conditions) {
+            if (condition instanceof Map<?, ?> map
+                    && "minecraft:location_check".equals(map.get("condition"))
+                    && map.get("predicate") instanceof Map<?, ?> predicate) {
+                return (Map<String, Object>) predicate;
+            }
+        }
+        return null;
+    }
+
+    private static boolean deepMerge(Map<String, Object> target, Map<?, ?> source) {
+        for (Map.Entry<?, ?> entry : source.entrySet()) {
+            String key = String.valueOf(entry.getKey());
+            Object incoming = entry.getValue();
+            Object existing = target.get(key);
+            if (existing == null) {
+                target.put(key, incoming);
+            } else if (existing instanceof Map<?, ?> existingMap
+                    && incoming instanceof Map<?, ?> incomingMap) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> nested = (Map<String, Object>) existingMap;
+                if (!deepMerge(nested, incomingMap)) {
+                    return false;
+                }
+            } else if (!existing.equals(incoming)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static List<Object> conditionTermsToJson(List<LootTableModel.Condition> conditions) {
@@ -335,6 +528,19 @@ public final class LootTableJsonWriter {
             return LootTableModel.NumberProvider.number(number.doubleValue(), false);
         }
         return LootTableModel.NumberProvider.number(fallback, false);
+    }
+
+    private static List<String> stringList(Object value) {
+        List<String> result = new ArrayList<>();
+        if (value instanceof List<?> values) {
+            for (Object item : values) {
+                String text = string(item);
+                if (!text.isBlank()) {
+                    result.add(text);
+                }
+            }
+        }
+        return result;
     }
 
     private static boolean bool(Object value, boolean fallback) {

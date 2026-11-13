@@ -12,6 +12,25 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.0.3.32-beta
+
+- **Item with enchantments** now stores each row level as a NumberProvider. The
+  row level socket accepts terminal numbers or provider blocks and writes the
+  provider object under `minecraft:set_enchantments`.
+- Added four A-1 enchantment item producers. The random-any and level-any
+  variants expose a treasure checkbox. 1.21.1 has no `treasure` JSON field, so
+  checked omits `options` and unchecked writes
+  `options: "#minecraft:on_random_loot"`.
+- Added time and location condition blocks. Same-level `minecraft:location_check`
+  predicates are merged when their keys do not conflict; conflicting predicates
+  remain separate.
+- Limitation: `time_check.period` is a plain long in 1.21.1. The periodic block
+  accepts a number input, but a non-constant provider is rejected with a warning
+  and the condition is skipped.
+- Limitation: `locations` merging is shallow at the predicate level. Two
+  conditions that both write `block` (for example block NBT and a block tag)
+  remain separate instead of being combined incorrectly.
+
 ### 1.0.3.24-beta
 
 - Removed the preset-template selector and the template document class. The

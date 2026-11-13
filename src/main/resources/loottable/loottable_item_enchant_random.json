@@ -1,0 +1,30 @@
+{
+  "type": "loottable_item_enchant_random",
+  "message0": "item %1 with one of these enchantments at a random level",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "item",
+      "check": "MCItem"
+    }
+  ],
+  "mutator": "loottable_item_enchant_list_mutator",
+  "output": "MCItem",
+  "inputsInline": false,
+  "colour": 350,
+  "mcreator": {
+    "toolbox_id": "loottable_items",
+    "toolbox_init": [
+      "<value name=\"item\"><block type=\"loottable_item_selector\"></block></value>",
+      "<mutation inputs=\"1\"></mutation>"
+    ],
+    "repeating_fields": [
+      {
+        "name": "enchantment",
+        "type": "field_data_list_selector",
+        "datalist": "enchantments",
+        "customEntryProviders": "enchantment"
+      }
+    ]
+  }
+}
