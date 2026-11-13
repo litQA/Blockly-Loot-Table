@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.0.3.5-beta
+
+### Fixed
+
+- Fixed Blockly statement connections. `previousStatement` and
+  `nextStatement` now use Blockly's string check form; the object form prevented
+  pools, entries, conditions and functions from connecting.
+- Removed the `Block to test` prefix from the block selector; only the selector
+  field is shown.
+
+### New Content
+
+- Split the number block into `Integer`, `Float`, `Integer provider` and
+  `Float provider`. Integer blocks truncate decimal input at parse time and add a
+  validation warning; float blocks keep the decimal part.
+- Entry counts and the `set_count uniform`/`set_count add` inputs accept both
+  number values and number providers. Uniform and add count providers are
+  serialized recursively.
+- The default item count now uses the `Integer` block with value 1.
+
+### Internal
+
+- The number-provider model now stores nested minimum and maximum providers, so
+  generated uniform and add functions can use provider-shaped JSON.
+- Extended the headless self-check to 171 checks, including statement-check
+  syntax, provider sockets, float uniform bounds and integer truncation.
+
 ## 1.0.3.2-beta
 
 ### New Content

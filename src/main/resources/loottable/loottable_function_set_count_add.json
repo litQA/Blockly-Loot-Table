@@ -3,16 +3,15 @@
     {
       "type": "input_value",
       "name": "count",
-      "check": "Number"
+      "check": [
+        "Number",
+        "NumberProvider"
+      ]
     }
   ],
   "inputsInline": true,
-  "previousStatement": {
-    "check": "LootTableFunction"
-  },
-  "nextStatement": {
-    "check": "LootTableFunction"
-  },
+  "previousStatement": "LootTableFunction",
+  "nextStatement": "LootTableFunction",
   "colour": "%{BKY_MATH_HUE}",
   "mcreator": {
     "toolbox_id": "loottable_numbers",
@@ -20,7 +19,8 @@
       "count"
     ],
     "toolbox_init": [
-      "<value name=\"count\"><block type=\"loottable_number\"><field name=\"value\">1</field></block></value>"
+      "<value name=\"count\"><block type=\"loottable_integer\"><field name=\"value\">1</field></block></value>"
     ]
   }
 }
+

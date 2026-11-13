@@ -36,12 +36,8 @@
     }
   ],
   "inputsInline": true,
-  "previousStatement": {
-    "check": "LootTableCondition"
-  },
-  "nextStatement": {
-    "check": "LootTableCondition"
-  },
+  "previousStatement": "LootTableCondition",
+  "nextStatement": "LootTableCondition",
   "colour": "%{BKY_LOGIC_HUE}",
   "mcreator": {
     "toolbox_id": "loottable_blocks",
@@ -60,3 +56,4 @@
     ]
   }
 }
+

@@ -30,6 +30,7 @@ public final class LootTableSelfCheck {
         validNbtConditions();
         validItemEnchantmentCondition();
         validCountFunctions();
+        integerTruncation();
         strictConnectionChecks();
         invalidEntityBlockState();
         invalidBlockKilledByPlayer();
@@ -89,6 +90,10 @@ public final class LootTableSelfCheck {
                 "blockly.block.loottable_entity_nbt_number",
                 "blockly.block.loottable_entity_nbt_text",
                 "blockly.block.loottable_number",
+                "blockly.block.loottable_integer",
+                "blockly.block.loottable_float",
+                "blockly.block.loottable_integer_provider",
+                "blockly.block.loottable_float_provider",
                 "blockly.block.loottable_function_set_count_uniform",
                 "blockly.block.loottable_function_set_count_add")) {
             check(properties.containsKey(key), fileName + " contains " + key);
@@ -104,7 +109,7 @@ public final class LootTableSelfCheck {
         BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(blockTableXml(
                 "<block type=\"loottable_entry_item\">"
                         + "<field name=\"item\">Blocks.DIAMOND_ORE</field>"
-                        + "<value name=\"count\"><block type=\"loottable_number\">"
+                        + "<value name=\"count\"><block type=\"loottable_integer\">"
                         + "<field name=\"value\">1</field></block></value>"
                         + "<field name=\"weight\">1</field>"
                         + "</block>", ""), LootTableType.BLOCK, mapping::get);
@@ -292,13 +297,13 @@ public final class LootTableSelfCheck {
     private static void validCountFunctions() {
         String entryXml = entryWithFunctions(entry("Items.ROTTEN_FLESH", 2, 1), chain(
                 "<block type=\"loottable_function_set_count_uniform\">"
-                        + "<value name=\"min\"><block type=\"loottable_number\">"
+                        + "<value name=\"min\"><block type=\"loottable_integer\">"
                         + "<field name=\"value\">1</field></block></value>"
-                        + "<value name=\"max\"><block type=\"loottable_number\">"
-                        + "<field name=\"value\">3</field></block></value>"
+                        + "<value name=\"max\"><block type=\"loottable_float_provider\">"
+                        + "<field name=\"value\">3.5</field></block></value>"
                         + "</block>",
                 "<block type=\"loottable_function_set_count_add\">"
-                        + "<value name=\"count\"><block type=\"loottable_number\">"
+                        + "<value name=\"count\"><block type=\"loottable_integer_provider\">"
                         + "<field name=\"value\">2</field></block></value>"
                         + "</block>"));
         BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(entityTableXml(entryXml, ""),
@@ -308,24 +313,48 @@ public final class LootTableSelfCheck {
                 "both count functions were parsed");
         String json = LootTableJsonWriter.write(result.model(), "test", "entities/zombie", false);
         check(json.contains("\"type\": \"minecraft:uniform\""), "uniform count provider is written");
-        check(json.contains("\"min\": 1"), "uniform minimum is written");
-        check(json.contains("\"max\": 3"), "uniform maximum is written");
+        check(json.contains("\"min\": {"), "uniform minimum is written as a provider");
+        check(json.contains("\"max\": {"), "uniform maximum is written as a provider");
+        check(json.contains("\"value\": 3.5"), "uniform maximum accepts a float provider");
         check(json.contains("\"add\": true"), "add count function is written");
+    }
+
+    private static void integerTruncation() {
+        String entryXml = "<block type=\"loottable_entry_item\">"
+                + "<field name=\"item\">Items.ROTTEN_FLESH</field>"
+                + "<value name=\"count\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">2.9</field></block></value>"
+                + "<field name=\"weight\">1</field></block>";
+        BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(entityTableXml(entryXml, ""),
+                LootTableType.ENTITY, value -> value);
+        check(!result.report().hasErrors(), "integer truncation is a warning, not an error");
+        check(result.report().summary().contains("fractional part was removed"),
+                "integer truncation reports a warning");
+        String json = LootTableJsonWriter.write(result.model(), "test", "entities/zombie", false);
+        check(json.contains("\"value\": 2"), "integer count truncates the decimal part");
+        check(!json.contains("2.9"), "integer count does not keep the decimal part");
     }
 
     private static void strictConnectionChecks() {
         String start = resourceText("/loottable/loottable_start.json");
         String pool = resourceText("/loottable/loottable_pool.json");
         String entryBlock = resourceText("/loottable/loottable_entry_item.json");
-        check(start.contains("\"check\": \"LootTablePool\""), "start only accepts pools");
-        check(pool.contains("\"check\": \"LootTablePool\""), "pools only chain to pools");
+        check(start.contains("\"nextStatement\": \"LootTablePool\""), "start only accepts pools");
+        check(pool.contains("\"previousStatement\": \"LootTablePool\"")
+                        && pool.contains("\"nextStatement\": \"LootTablePool\""),
+                "pools only chain to pools");
         check(pool.contains("\"check\": \"LootTableEntry\""), "pool entries only accept entries");
         check(pool.contains("\"check\": \"LootTableCondition\""), "pool conditions only accept conditions");
-        check(entryBlock.contains("\"check\": \"LootTableEntry\""), "entries only chain to entries");
+        check(entryBlock.contains("\"previousStatement\": \"LootTableEntry\"")
+                        && entryBlock.contains("\"nextStatement\": \"LootTableEntry\""),
+                "entries only chain to entries");
         check(entryBlock.contains("\"check\": \"LootTableCondition\""),
                 "entry conditions only accept conditions");
         check(entryBlock.contains("\"check\": \"LootTableFunction\""),
                 "entry functions only accept functions");
+        check(!start.contains("\"nextStatement\": {") && !pool.contains("\"previousStatement\": {")
+                        && !entryBlock.contains("\"previousStatement\": {"),
+                "statement checks use Blockly string form");
         check(resourceText("/loottable/loottable_inverted.json").contains("\"check\": \"LootTableCondition\""),
                 "inverted terms only accept conditions");
         check(resourceText("/loottable/$loottable_components.json").contains("\"color\": 120"),
@@ -337,6 +366,20 @@ public final class LootTableSelfCheck {
         check(resourceText("/loottable/loottable_entity_has_potion.json").contains("\"colour\": 195"),
                 "entity condition uses the native entity color");
         check(entryBlock.contains("\"colour\": 350"), "item entry uses the native item color");
+        check(entryBlock.contains("\"NumberProvider\""), "item count accepts number providers");
+        check(resourceText("/loottable/loottable_function_set_count_uniform.json")
+                        .contains("\"NumberProvider\""),
+                "uniform inputs accept number providers");
+        check(resourceText("/loottable/loottable_integer.json").contains("\"output\": \"Number\""),
+                "integer number has a number output");
+        check(resourceText("/loottable/loottable_float.json").contains("\"output\": \"Number\""),
+                "float number has a number output");
+        check(resourceText("/loottable/loottable_integer_provider.json")
+                        .contains("\"output\": \"NumberProvider\""),
+                "integer provider has a provider output");
+        check(resourceText("/loottable/loottable_float_provider.json")
+                        .contains("\"output\": \"NumberProvider\""),
+                "float provider has a provider output");
     }
 
     private static void invalidEntityPotionOnBlock() {
@@ -484,7 +527,7 @@ public final class LootTableSelfCheck {
     private static String entry(String item, int count, int weight) {
         return "<block type=\"loottable_entry_item\">"
                 + "<field name=\"item\">" + item + "</field>"
-                + "<value name=\"count\"><block type=\"loottable_number\">"
+                + "<value name=\"count\"><block type=\"loottable_integer\">"
                 + "<field name=\"value\">" + count + "</field></block></value>"
                 + "<field name=\"weight\">" + weight + "</field>"
                 + "</block>";

@@ -12,7 +12,6 @@
   "output": "Number",
   "colour": "%{BKY_MATH_HUE}",
   "mcreator": {
-    "toolbox_id": "loottable_numbers",
     "fields": [
       "value"
     ],

@@ -30,12 +30,8 @@
     }
   ],
   "inputsInline": true,
-  "previousStatement": {
-    "check": "LootTableCondition"
-  },
-  "nextStatement": {
-    "check": "LootTableCondition"
-  },
+  "previousStatement": "LootTableCondition",
+  "nextStatement": "LootTableCondition",
   "colour": 210,
   "mcreator": {
     "toolbox_id": "loottable_world",
@@ -46,3 +42,4 @@
     ]
   }
 }
+

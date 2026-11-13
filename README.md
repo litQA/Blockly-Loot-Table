@@ -35,9 +35,12 @@ a warning.
 Pools support `rolls`, `bonus_rolls`, conditions and weighted item entries.
 Entries support an item selector, a number count input, a weight, a condition
 chain and a function chain. The function chain accepts `set_count uniform`
-(minimum and maximum) and `set_count add` (added count). Incompatible block
-types cannot be connected because pool, entry, condition and function
-connections use distinct Blockly types.
+(minimum and maximum) and `set_count add` (added count). Their numeric inputs,
+and the entry count input, accept either a number value or a number provider.
+The number category contains `Integer`, `Float`, `Integer provider` and
+`Float provider`; integer blocks truncate fractional input and report a warning.
+Incompatible block types cannot be connected because pool, entry, condition and
+function connections use distinct Blockly types.
 
 ## Supported generators
 
@@ -155,8 +158,12 @@ The template selector creates both documents automatically.
   `equipment.mainhand` predicate with the selected enchantment and level.
 - `set_count uniform` and `set_count add` on the entry function chain emit the
   expected count provider and `add` flag.
-- Pool, entry, condition and function blocks only connect to their own chain;
+- A number input accepts `Integer`, `Float`, `Integer provider` or
+  `Float provider`; an integer containing a decimal is truncated with a warning.
+- Pool, entry, condition and function blocks connect when their types match;
   pulling a condition onto an entry chain is rejected by Blockly.
+- The block selector displays only the selector field, without a
+  `Block to test` prefix.
 - Entity and item blocks use the native entity and item colors, and NBT blocks
   use the native logic, math and text hues.
 - An Entity table containing `block_state_property` (or a block-state

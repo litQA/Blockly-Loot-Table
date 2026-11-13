@@ -28,12 +28,8 @@
     }
   ],
   "inputsInline": false,
-  "previousStatement": {
-    "check": "LootTablePool"
-  },
-  "nextStatement": {
-    "check": "LootTablePool"
-  },
+  "previousStatement": "LootTablePool",
+  "nextStatement": "LootTablePool",
   "colour": 20,
   "mcreator": {
     "toolbox_id": "loottable",
@@ -52,3 +48,4 @@
     ]
   }
 }
+

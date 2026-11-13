@@ -8,7 +8,10 @@
     {
       "type": "input_value",
       "name": "count",
-      "check": "Number"
+      "check": [
+        "Number",
+        "NumberProvider"
+      ]
     },
     {
       "type": "field_number",
@@ -30,17 +33,13 @@
     }
   ],
   "inputsInline": true,
-  "previousStatement": {
-    "check": "LootTableEntry"
-  },
-  "nextStatement": {
-    "check": "LootTableEntry"
-  },
+  "previousStatement": "LootTableEntry",
+  "nextStatement": "LootTableEntry",
   "colour": 350,
   "mcreator": {
     "toolbox_id": "loottable",
     "toolbox_init": [
-      "<value name=\"count\"><block type=\"loottable_number\"><field name=\"value\">1</field></block></value>"
+      "<value name=\"count\"><block type=\"loottable_integer\"><field name=\"value\">1</field></block></value>"
     ],
     "fields": [
       "item",
@@ -59,3 +58,4 @@
     ]
   }
 }
+

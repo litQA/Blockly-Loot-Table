@@ -1,0 +1,21 @@
+{
+  "args0": [
+    {
+      "type": "field_number",
+      "name": "value",
+      "value": 1,
+      "min": 0,
+      "max": 64000,
+      "precision": 0.01
+    }
+  ],
+  "output": "Number",
+  "colour": "%{BKY_MATH_HUE}",
+  "mcreator": {
+    "toolbox_id": "loottable_numbers",
+    "fields": [
+      "value"
+    ],
+    "toolbox_init": []
+  }
+}

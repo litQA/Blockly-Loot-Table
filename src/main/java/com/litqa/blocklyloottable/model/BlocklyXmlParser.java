@@ -514,17 +514,16 @@ public final class BlocklyXmlParser {
         LootTableModel.LootFunction function = new LootTableModel.LootFunction(blockType);
         switch (blockType) {
             case "loottable_function_set_count_uniform" -> {
-                double min = parseNumberInput(block, "min", 1, "Uniform minimum", report);
-                double max = parseNumberInput(block, "max", 1, "Uniform maximum", report);
-                if (min < 0 || max < 0) {
-                    report.addWarning(blockType, "Uniform count cannot be negative; negative values were clamped to 0.");
-                    min = Math.max(0, min);
-                    max = Math.max(0, max);
-                }
-                if (max < min) {
+                LootTableModel.NumberProvider min = nonNegative(
+                        parseNumberInput(block, "min", 1, "Uniform minimum", report),
+                        blockType, "Uniform count", report);
+                LootTableModel.NumberProvider max = nonNegative(
+                        parseNumberInput(block, "max", 1, "Uniform maximum", report),
+                        blockType, "Uniform count", report);
+                if (isConstant(min) && isConstant(max) && max.getValue() < min.getValue()) {
                     report.addWarning(blockType,
                             "Uniform maximum was smaller than the minimum; the values were swapped.");
-                    double swap = min;
+                    LootTableModel.NumberProvider swap = min;
                     min = max;
                     max = swap;
                 }
@@ -532,11 +531,9 @@ public final class BlocklyXmlParser {
                 function.getProperties().put("max", max);
             }
             case "loottable_function_set_count_add" -> {
-                double count = parseNumberInput(block, "count", 1, "Added count", report);
-                if (count < 0) {
-                    report.addWarning(blockType, "Added count cannot be negative; the value was clamped to 0.");
-                    count = 0;
-                }
+                LootTableModel.NumberProvider count = nonNegative(
+                        parseNumberInput(block, "count", 1, "Added count", report),
+                        blockType, "Added count", report);
                 function.getProperties().put("count", count);
             }
             default -> {
@@ -547,26 +544,31 @@ public final class BlocklyXmlParser {
         return function;
     }
 
-    private static double parseNumberInput(Element block, String inputName, double fallback, String label,
-            ValidationReport report) {
+    private static LootTableModel.NumberProvider parseNumberInput(Element block, String inputName, double fallback,
+            String label, ValidationReport report) {
         Element valueBlock = valueBlock(block, inputName);
         if (valueBlock == null) {
-            return fallback;
+            return LootTableModel.NumberProvider.constant(fallback);
         }
-        LootTableModel.NumberProvider provider = parseNumberValue(valueBlock, fallback, label, report);
-        return provider.getValue();
+        return parseNumberValue(valueBlock, fallback, label, report);
     }
 
     private static LootTableModel.NumberProvider parseNumberValue(Element valueBlock, double fallback,
             String label, ValidationReport report) {
         String valueType = valueBlock.getAttribute("type");
         String raw;
+        boolean integer = false;
         switch (valueType) {
-            case "loottable_number" -> raw = fieldValue(valueBlock, "value");
+            case "loottable_integer", "loottable_integer_provider" -> {
+                raw = fieldValue(valueBlock, "value");
+                integer = true;
+            }
+            case "loottable_float", "loottable_float_provider", "loottable_number" ->
+                    raw = fieldValue(valueBlock, "value");
             case "math_number" -> raw = fieldValue(valueBlock, "NUM");
             default -> {
                 report.addWarning(valueType,
-                        label + " only supports a number block in this version; the default was used.");
+                        label + " only supports a number provider block; the default was used.");
                 return LootTableModel.NumberProvider.constant(fallback);
             }
         }
@@ -578,12 +580,33 @@ public final class BlocklyXmlParser {
             if (!Double.isFinite(value)) {
                 throw new NumberFormatException("not finite");
             }
+            if (integer) {
+                long truncated = (long) value;
+                if (value != truncated) {
+                    report.addWarning(valueType, label + " value '" + raw
+                            + "' is not an integer; the fractional part was removed.");
+                }
+                return LootTableModel.NumberProvider.constant(truncated);
+            }
             return LootTableModel.NumberProvider.constant(value);
         } catch (NumberFormatException exception) {
             report.addWarning(valueType,
                     label + " value '" + raw + "' is not a number; the default was used.");
             return LootTableModel.NumberProvider.constant(fallback);
         }
+    }
+
+    private static boolean isConstant(LootTableModel.NumberProvider provider) {
+        return provider != null && "constant".equals(provider.getType());
+    }
+
+    private static LootTableModel.NumberProvider nonNegative(LootTableModel.NumberProvider provider,
+            String blockType, String label, ValidationReport report) {
+        if (isConstant(provider) && provider.getValue() < 0) {
+            report.addWarning(blockType, label + " cannot be negative; the value was clamped to 0.");
+            return LootTableModel.NumberProvider.constant(0);
+        }
+        return provider;
     }
 
     private static String fieldValue(Element block, String name) {

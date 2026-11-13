@@ -111,10 +111,10 @@ public final class LootTableModel {
 
         private final String type;
         private final double value;
-        private final double min;
-        private final double max;
+        private final NumberProvider min;
+        private final NumberProvider max;
 
-        private NumberProvider(String type, double value, double min, double max) {
+        private NumberProvider(String type, double value, NumberProvider min, NumberProvider max) {
             this.type = type;
             this.value = value;
             this.min = min;
@@ -122,11 +122,17 @@ public final class LootTableModel {
         }
 
         public static NumberProvider constant(double value) {
-            return new NumberProvider("constant", value, 0, 0);
+            return new NumberProvider("constant", value, null, null);
         }
 
         public static NumberProvider uniform(double min, double max) {
-            return new NumberProvider("uniform", 0, min, max);
+            return uniform(constant(min), constant(max));
+        }
+
+        public static NumberProvider uniform(NumberProvider min, NumberProvider max) {
+            return new NumberProvider("uniform", 0,
+                    min == null ? constant(1) : min,
+                    max == null ? constant(1) : max);
         }
 
         public String getType() {
@@ -137,11 +143,11 @@ public final class LootTableModel {
             return value;
         }
 
-        public double getMin() {
+        public NumberProvider getMin() {
             return min;
         }
 
-        public double getMax() {
+        public NumberProvider getMax() {
             return max;
         }
     }

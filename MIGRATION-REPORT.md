@@ -12,6 +12,18 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.0.3.5-beta
+
+- Statement checks now use Blockly's string form instead of an object. The object
+  form was rejected by Blockly, which made all statement blocks unable to connect.
+- The single number block was split into `Integer`, `Float`, `Integer provider`
+  and `Float provider`. Integer values are truncated with a warning when they
+  contain a fractional part.
+- Entry counts and `set_count uniform`/`set_count add` inputs accept number
+  providers as well as number values. Existing workspaces that contain the
+  legacy `loottable_number` block continue to load and generate.
+- The block selector no longer displays the `Block to test` prefix.
+
 ### 1.0.3.2-beta
 
 - Added block and entity NBT logic/number/text conditions. Block NBT is emitted

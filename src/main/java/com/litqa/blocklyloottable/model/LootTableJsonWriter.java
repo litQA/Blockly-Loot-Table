@@ -107,8 +107,8 @@ public final class LootTableJsonWriter {
         if ("uniform".equals(provider.getType())) {
             Map<String, Object> json = new LinkedHashMap<>();
             json.put("type", "minecraft:uniform");
-            json.put("min", compactNumber(provider.getMin()));
-            json.put("max", compactNumber(provider.getMax()));
+            json.put("min", numberProviderToJson(provider.getMin()));
+            json.put("max", numberProviderToJson(provider.getMax()));
             return json;
         }
         Map<String, Object> json = new LinkedHashMap<>();
@@ -127,16 +127,15 @@ public final class LootTableJsonWriter {
                 json.put("function", "minecraft:set_count");
                 json.put("count", LootTableJsonWriter.numberProviderToJson(
                         LootTableModel.NumberProvider.uniform(
-                                number(function.getProperties().get("min"), 1),
-                                number(function.getProperties().get("max"), 1))));
+                                provider(function.getProperties().get("min"), 1),
+                                provider(function.getProperties().get("max"), 1))));
                 return json;
             }
             case "loottable_function_set_count_add" -> {
                 Map<String, Object> json = new LinkedHashMap<>();
                 json.put("function", "minecraft:set_count");
                 json.put("count", LootTableJsonWriter.numberProviderToJson(
-                        LootTableModel.NumberProvider.constant(
-                                number(function.getProperties().get("count"), 1))));
+                        provider(function.getProperties().get("count"), 1)));
                 json.put("add", true);
                 return json;
             }
@@ -284,6 +283,16 @@ public final class LootTableJsonWriter {
             return number.doubleValue();
         }
         return fallback;
+    }
+
+    private static LootTableModel.NumberProvider provider(Object value, double fallback) {
+        if (value instanceof LootTableModel.NumberProvider provider) {
+            return provider;
+        }
+        if (value instanceof Number number) {
+            return LootTableModel.NumberProvider.constant(number.doubleValue());
+        }
+        return LootTableModel.NumberProvider.constant(fallback);
     }
 
     private static boolean bool(Object value, boolean fallback) {
