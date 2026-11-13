@@ -1,6 +1,6 @@
 {
   "type": "loottable_world_structure_tag",
-  "message0": "structure is tagged %1",
+  "message0": "current structure is tagged %1",
   "args0": [
     {
       "type": "field_input",

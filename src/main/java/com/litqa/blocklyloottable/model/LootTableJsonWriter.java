@@ -159,7 +159,10 @@ public final class LootTableJsonWriter {
             }
             case "loottable_item_enchant_random_any" -> {
                 Map<String, Object> json = new LinkedHashMap<>();
-                json.put("function", "minecraft:enchant_randomly");
+                json.put("function", "minecraft:enchant_with_levels");
+                json.put("levels", numberProviderToJson(LootTableModel.NumberProvider.uniform(
+                        provider(function.getProperties().get("min"), 1),
+                        provider(function.getProperties().get("max"), 3))));
                 if (!bool(function.getProperties().get("treasure"), true)) {
                     json.put("options", "#minecraft:on_random_loot");
                 }
@@ -193,6 +196,34 @@ public final class LootTableJsonWriter {
                 json.put("count", LootTableJsonWriter.numberProviderToJson(
                         provider(function.getProperties().get("count"), 1)));
                 json.put("add", true);
+                return json;
+            }
+            case "loottable_function_apply_bonus_uniform" -> {
+                Map<String, Object> parameters = new LinkedHashMap<>();
+                parameters.put("bonusMultiplier", intProperty(function.getProperties().get("bonus"), 1));
+                return applyBonusJson(function, "minecraft:uniform_bonus_count", parameters);
+            }
+            case "loottable_function_apply_bonus_binomial" -> {
+                Map<String, Object> parameters = new LinkedHashMap<>();
+                parameters.put("extra", intProperty(function.getProperties().get("extra"), 1));
+                parameters.put("probability", JsonText.floating(
+                        doubleProperty(function.getProperties().get("probability"), 0.5)));
+                return applyBonusJson(function, "minecraft:binomial_with_bonus_count", parameters);
+            }
+            case "loottable_function_apply_bonus_ore" -> {
+                return applyBonusJson(function, "minecraft:ore_drops", null);
+            }
+            case "loottable_function_enchanted_count_increase" -> {
+                Map<String, Object> json = new LinkedHashMap<>();
+                json.put("function", "minecraft:enchanted_count_increase");
+                json.put("enchantment", string(function.getProperties().get("enchantment")));
+                json.put("count", numberProviderToJson(provider(function.getProperties().get("count"), 0)));
+                return json;
+            }
+            case "loottable_function_limit_count" -> {
+                Map<String, Object> json = new LinkedHashMap<>();
+                json.put("function", "minecraft:limit_count");
+                json.put("limit", numberProviderToJson(provider(function.getProperties().get("limit"), 9)));
                 return json;
             }
             default -> {
@@ -518,6 +549,27 @@ public final class LootTableJsonWriter {
             return number.doubleValue();
         }
         return fallback;
+    }
+
+    private static Map<String, Object> applyBonusJson(LootTableModel.LootFunction function, String formula,
+            Map<String, Object> parameters) {
+        Map<String, Object> json = new LinkedHashMap<>();
+        json.put("function", "minecraft:apply_bonus");
+        json.put("enchantment", string(function.getProperties().get("enchantment")));
+        json.put("formula", formula);
+        if (parameters != null) {
+            json.put("parameters", parameters);
+        }
+        return json;
+    }
+
+    private static int intProperty(Object value, int fallback) {
+        LootTableModel.NumberProvider provider = provider(value, fallback);
+        return (int) provider.getValue();
+    }
+
+    private static double doubleProperty(Object value, double fallback) {
+        return provider(value, fallback).getValue();
     }
 
     private static LootTableModel.NumberProvider provider(Object value, double fallback) {

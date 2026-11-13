@@ -1,0 +1,35 @@
+{
+  "args0": [
+    {
+      "type": "field_data_list_selector",
+      "name": "enchantment",
+      "datalist": "enchantments",
+      "customEntryProviders": "enchantment"
+    },
+    {
+      "type": "input_value",
+      "name": "count",
+      "check": [
+        "Number",
+        "NumberProvider"
+      ]
+    }
+  ],
+  "inputsInline": true,
+  "previousStatement": "LootTableFunction",
+  "nextStatement": "LootTableFunction",
+  "colour": 330,
+  "mcreator": {
+    "toolbox_id": "loottable_functions",
+    "toolbox_init": [
+      "<field name=\"enchantment\">minecraft:looting</field>",
+      "<value name=\"count\"><block type=\"loottable_uniform\"><value name=\"min\"><block type=\"loottable_integer\"><field name=\"value\">0</field></block></value><value name=\"max\"><block type=\"loottable_integer\"><field name=\"value\">1</field></block></value></block></value>"
+    ],
+    "fields": [
+      "enchantment"
+    ],
+    "inputs": [
+      "count"
+    ]
+  }
+}

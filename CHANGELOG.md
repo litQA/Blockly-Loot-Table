@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.0.3.38-beta
+
+### New Content
+
+- Added a **Functions** toolbox category and moved **Add value** into it.
+- Added five function blocks: uniform enchantment bonus, binomial enchantment
+  bonus, ore-drop enchantment bonus, enchanted count increase and limit count.
+- Added a simple item entry with only item and count sockets.
+- Added minimum/maximum level sockets to the random enchantment item with the
+  treasure checkbox.
+
+### Changed
+
+- **Block is tagged** now appears in the Block conditions category.
+- The structure-tag block is labelled **Current structure is tagged**.
+- The random-any enchantment item now emits `minecraft:enchant_with_levels` with
+  a uniform level range, because 1.21.1 `enchant_randomly` has no level bounds.
+
+### Internal
+
+- Extended the headless self-check to 366 checks, covering the simple entry,
+  function JSON, random-range generation and category placement.
+
 ## 1.0.3.32-beta
 
 ### New Content

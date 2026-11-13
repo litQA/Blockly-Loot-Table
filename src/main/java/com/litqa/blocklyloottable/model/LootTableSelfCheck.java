@@ -34,6 +34,7 @@ public final class LootTableSelfCheck {
         validLogicConditions();
         validEnchantedItem();
         validEnchantItemFunctions();
+        validFunctionBlocks();
         validWorldConditions();
         entityAutoPath();
         manualPathProvidedBlock();
@@ -138,6 +139,13 @@ public final class LootTableSelfCheck {
                 "blockly.block.loottable_float_provider",
                 "blockly.block.loottable_uniform",
                 "blockly.block.loottable_binomial",
+                "blockly.category.loottable_functions",
+                "blockly.block.loottable_entry_item_simple",
+                "blockly.block.loottable_function_apply_bonus_uniform",
+                "blockly.block.loottable_function_apply_bonus_binomial",
+                "blockly.block.loottable_function_apply_bonus_ore",
+                "blockly.block.loottable_function_enchanted_count_increase",
+                "blockly.block.loottable_function_limit_count",
                 "blockly.block.loottable_function_set_count_add")) {
             check(properties.containsKey(key), fileName + " contains " + key);
         }
@@ -501,6 +509,40 @@ public final class LootTableSelfCheck {
                 "number category exists");
         check(resourceText("/loottable/$loottable_logic.json").contains("\"color\": 210"),
                 "logic category exists");
+        check(resourceText("/loottable/$loottable_functions.json").contains("\"color\": 330"),
+                "function category exists");
+        check(resourceText("/loottable/loottable_function_set_count_add.json")
+                        .contains("\"toolbox_id\": \"loottable_functions\""),
+                "add value is in the function category");
+        String simpleEntry = resourceText("/loottable/loottable_entry_item_simple.json");
+        check(simpleEntry.contains("\"name\": \"item\"")
+                        && simpleEntry.contains("\"name\": \"count\"")
+                        && !simpleEntry.contains("LootTableCondition")
+                        && !simpleEntry.contains("LootTableFunction"),
+                "simple entry only has item and count inputs");
+        String bonusUniform = resourceText("/loottable/loottable_function_apply_bonus_uniform.json");
+        check(bonusUniform.contains("\"name\": \"bonus\"")
+                        && bonusUniform.contains("\"check\": \"Number\"")
+                        && bonusUniform.contains("\"toolbox_id\": \"loottable_functions\""),
+                "uniform bonus uses a literal number multiplier");
+        check(resourceText("/loottable/loottable_function_enchanted_count_increase.json")
+                        .contains("\"NumberProvider\""),
+                "enchanted count increase accepts a provider count");
+        check(resourceText("/loottable/loottable_function_limit_count.json")
+                        .contains("\"NumberProvider\""),
+                "limit count accepts a provider limit");
+        check(resourceText("/loottable/loottable_item_enchant_random_any.json")
+                        .contains("\"name\": \"min\"")
+                        && resourceText("/loottable/loottable_item_enchant_random_any.json")
+                        .contains("\"name\": \"max\""),
+                "random any enchant exposes a level range");
+        check(resourceText("/loottable/loottable_world_block_tag.json")
+                        .contains("\"toolbox_id\": \"loottable_blocks\"")
+                        && resourceText("/loottable/loottable_world_block_tag.json")
+                        .contains("\"colour\": 60"),
+                "block tag is a block condition");
+        check(resourceText("/lang/texts.properties").contains("Current structure is tagged"),
+                "structure tag label is current structure");
         check(resourceText("/loottable/loottable_item_selector.json")
                         .contains("\"output\": \"MCItem\""),
                 "item selector is an item value block");
@@ -647,6 +689,10 @@ public final class LootTableSelfCheck {
                 + "<field name=\"enchantment0\">sharpness</field></block>";
         String randomAny = "<block type=\"loottable_item_enchant_random_any\">"
                 + "<value name=\"item\">" + base + "</value>"
+                + "<value name=\"min\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">2</field></block></value>"
+                + "<value name=\"max\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">5</field></block></value>"
                 + "<field name=\"treasure\">FALSE</field></block>";
         String levels = "<block type=\"loottable_item_enchant_levels\">"
                 + "<mutation inputs=\"1\"></mutation>"
@@ -685,6 +731,12 @@ public final class LootTableSelfCheck {
                 entryWithItem(randomAny, "<value name=\"count\"><block type=\"loottable_integer\">"
                         + "<field name=\"value\">1</field></block></value>", 1), ""),
                 LootTableType.BLOCK, value -> value).model(), "test", "blocks/book", false);
+        check(anyJson.contains("\"function\": \"minecraft:enchant_with_levels\""),
+                "random any enchant uses bounded levels");
+        check(anyJson.contains("\"type\": \"minecraft:uniform\"")
+                        && anyJson.contains("\"min\": 2")
+                        && anyJson.contains("\"max\": 5"),
+                "random any enchant writes the requested level range");
         check(anyJson.contains("\"options\": \"#minecraft:on_random_loot\""),
                 "non-treasure random enchant restricts to the loot enchantment tag");
 
@@ -698,6 +750,93 @@ public final class LootTableSelfCheck {
                         && levelsJson.contains("\"type\": \"minecraft:constant\"")
                         && levelsJson.contains("\"value\": 30"),
                 "enchant_with_levels writes its provider level");
+    }
+
+    private static void validFunctionBlocks() {
+        String simple = "<block type=\"loottable_entry_item_simple\">"
+                + "<value name=\"item\"><block type=\"loottable_item_selector\">"
+                + "<field name=\"item\">minecraft:stone</field></block></value>"
+                + "<value name=\"count\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">2</field></block></value></block>";
+        BlocklyXmlParser.ParseResult simpleResult = BlocklyXmlParser.parse(blockTableXml(
+                simple, ""), LootTableType.BLOCK, value -> value);
+        check(!simpleResult.report().hasErrors(), "simple entry parses without errors");
+        String simpleJson = LootTableJsonWriter.write(simpleResult.model(), "test", "blocks/stone", false);
+        check(simpleJson.contains("\"name\": \"minecraft:stone\""), "simple entry resolves its item");
+        check(simpleJson.contains("\"count\": 2"), "simple entry writes its count");
+        check(!simpleJson.contains("\"conditions\""), "simple entry has no condition list");
+        check(countOccurrences(simpleJson, "\"function\":") == 1,
+                "simple entry writes only the base set_count function");
+
+        String uniform = "<block type=\"loottable_function_apply_bonus_uniform\">"
+                + "<field name=\"enchantment\">fortune</field>"
+                + "<value name=\"bonus\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">2</field></block></value></block>";
+        String binomial = "<block type=\"loottable_function_apply_bonus_binomial\">"
+                + "<field name=\"enchantment\">looting</field>"
+                + "<value name=\"extra\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">3</field></block></value>"
+                + "<value name=\"probability\"><block type=\"loottable_float\">"
+                + "<field name=\"value\">0.25</field></block></value></block>";
+        String ore = "<block type=\"loottable_function_apply_bonus_ore\">"
+                + "<field name=\"enchantment\">silk_touch</field></block>";
+        String increase = "<block type=\"loottable_function_enchanted_count_increase\">"
+                + "<field name=\"enchantment\">looting</field>"
+                + "<value name=\"count\"><block type=\"loottable_uniform\">"
+                + "<value name=\"min\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">0</field></block></value>"
+                + "<value name=\"max\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">2</field></block></value></block></value></block>";
+        String limit = "<block type=\"loottable_function_limit_count\">"
+                + "<value name=\"limit\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">5</field></block></value></block>";
+        String entry = "<block type=\"loottable_entry_item\">"
+                + "<value name=\"item\"><block type=\"loottable_item_selector\">"
+                + "<field name=\"item\">minecraft:diamond_ore</field></block></value>"
+                + "<value name=\"count\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">1</field></block></value>"
+                + "<field name=\"weight\">1</field><statement name=\"functions\">"
+                + chain(uniform, binomial, ore, increase, limit)
+                + "</statement></block>";
+        BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(blockTableXml(
+                entry, ""), LootTableType.BLOCK, value -> value);
+        check(!result.report().hasErrors(), "function blocks parse without errors");
+        String json = LootTableJsonWriter.write(result.model(), "test", "blocks/diamond_ore", false);
+        check(json.contains("\"formula\": \"minecraft:uniform_bonus_count\"")
+                        && json.contains("\"bonusMultiplier\": 2"),
+                "uniform bonus function writes its multiplier");
+        check(json.contains("\"formula\": \"minecraft:binomial_with_bonus_count\"")
+                        && json.contains("\"extra\": 3")
+                        && json.contains("\"probability\": 0.25"),
+                "binomial bonus function writes extra and probability");
+        check(json.contains("\"formula\": \"minecraft:ore_drops\""),
+                "ore bonus function uses the ore drops formula");
+        check(json.contains("\"function\": \"minecraft:enchanted_count_increase\"")
+                        && json.contains("\"enchantment\": \"minecraft:looting\"")
+                        && json.contains("\"type\": \"minecraft:uniform\""),
+                "enchanted count increase writes a provider count");
+        check(json.contains("\"function\": \"minecraft:limit_count\"")
+                        && json.contains("\"limit\": 5"),
+                "limit count function writes its limit");
+
+        String badBonus = "<block type=\"loottable_function_apply_bonus_uniform\">"
+                + "<field name=\"enchantment\">fortune</field>"
+                + "<value name=\"bonus\"><block type=\"loottable_uniform\">"
+                + "<value name=\"min\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">1</field></block></value>"
+                + "<value name=\"max\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">2</field></block></value></block></value></block>";
+        String badEntry = "<block type=\"loottable_entry_item\">"
+                + "<value name=\"item\"><block type=\"loottable_item_selector\">"
+                + "<field name=\"item\">minecraft:stone</field></block></value>"
+                + "<value name=\"count\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">1</field></block></value>"
+                + "<field name=\"weight\">1</field><statement name=\"functions\">"
+                + badBonus + "</statement></block>";
+        BlocklyXmlParser.ParseResult badResult = BlocklyXmlParser.parse(blockTableXml(
+                badEntry, ""), LootTableType.BLOCK, value -> value);
+        check(badResult.report().summary().contains("plain number"),
+                "apply bonus rejects provider multipliers");
     }
 
     private static void validWorldConditions() {

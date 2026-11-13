@@ -12,6 +12,25 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.0.3.38-beta
+
+- Added a **Functions** category and five loot-function blocks. `apply_bonus`
+  uses `uniform_bonus_count`, `binomial_with_bonus_count` or `ore_drops`;
+  `enchanted_count_increase` and `limit_count` cover the remaining requested
+  functions.
+- Added a simple item entry with only item and count sockets; it still emits the
+  normal base `minecraft:set_count` but has no conditions or functions.
+- Moved **Block is tagged** into the Block conditions category and renamed
+  **Structure is tagged** to **Current structure is tagged**.
+- The random-any enchantment item now exposes minimum and maximum levels and
+  emits `minecraft:enchant_with_levels` with a uniform provider. Vanilla
+  `enchant_randomly` has no level bounds, so this is the closest valid mapping.
+- Limitation: `apply_bonus` multipliers, extra rolls and probability are literal
+  numbers in 1.21.1. Their sockets therefore accept `Number` only; a provider is
+  rejected with a warning and the default is used.
+- Limitation: `enchanted_count_increase.count` and `limit_count.limit` accept
+  NumberProvider values because their vanilla codecs support them.
+
 ### 1.0.3.32-beta
 
 - **Item with enchantments** now stores each row level as a NumberProvider. The

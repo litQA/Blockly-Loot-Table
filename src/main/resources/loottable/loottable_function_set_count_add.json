@@ -14,7 +14,7 @@
   "nextStatement": "LootTableFunction",
   "colour": "%{BKY_MATH_HUE}",
   "mcreator": {
-    "toolbox_id": "loottable_numbers",
+    "toolbox_id": "loottable_functions",
     "inputs": [
       "count"
     ],

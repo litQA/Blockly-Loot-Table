@@ -11,9 +11,9 @@
   "previousStatement": "LootTableCondition",
   "nextStatement": "LootTableCondition",
   "inputsInline": true,
-  "colour": 210,
+  "colour": 60,
   "mcreator": {
-    "toolbox_id": "loottable_world",
+    "toolbox_id": "loottable_blocks",
     "toolbox_init": [],
     "fields": [
       "tag"

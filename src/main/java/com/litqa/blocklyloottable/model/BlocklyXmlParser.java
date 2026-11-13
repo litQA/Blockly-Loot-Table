@@ -169,7 +169,8 @@ public final class BlocklyXmlParser {
         int entryCount = 0;
         for (Element block = first; block != null; block = nextBlock(block)) {
             String blockType = block.getAttribute("type");
-            if (!"loottable_entry_item".equals(blockType)) {
+            if (!"loottable_entry_item".equals(blockType)
+                    && !"loottable_entry_item_simple".equals(blockType)) {
                 report.addWarning(blockType,
                         "Block " + blockType + " is not an item entry and was skipped in pool " + poolIndex + ".");
                 continue;
@@ -258,7 +259,22 @@ public final class BlocklyXmlParser {
                 yield value;
             }
             case "loottable_item_enchant_random_any" -> {
+                LootTableModel.NumberProvider min = nonNegative(
+                        parseNumberInput(itemBlock, "min", 1, "Random level minimum", report),
+                        itemType, "Random level minimum", report);
+                LootTableModel.NumberProvider max = nonNegative(
+                        parseNumberInput(itemBlock, "max", 3, "Random level maximum", report),
+                        itemType, "Random level maximum", report);
+                if (isSimpleNumber(min) && isSimpleNumber(max) && max.getValue() < min.getValue()) {
+                    report.addWarning(itemType,
+                            "Random level maximum was smaller than the minimum; the values were swapped.");
+                    LootTableModel.NumberProvider swap = min;
+                    min = max;
+                    max = swap;
+                }
                 LootTableModel.LootFunction value = new LootTableModel.LootFunction(itemType);
+                value.getProperties().put("min", min);
+                value.getProperties().put("max", max);
                 value.getProperties().put("treasure", readBoolean(itemBlock, "treasure", true,
                         "Include treasure enchantments", report));
                 yield value;
@@ -952,12 +968,107 @@ public final class BlocklyXmlParser {
                         blockType, "Added count", report);
                 function.getProperties().put("count", count);
             }
+            case "loottable_function_apply_bonus_uniform" -> {
+                function.getProperties().put("enchantment", parseEnchantmentField(block, "minecraft:fortune",
+                        "Bonus enchantment", report));
+                function.getProperties().put("bonus", readPlainIntegerInput(block, "bonus", 1,
+                        "Bonus multiplier", report));
+            }
+            case "loottable_function_apply_bonus_binomial" -> {
+                function.getProperties().put("enchantment", parseEnchantmentField(block, "minecraft:fortune",
+                        "Bonus enchantment", report));
+                function.getProperties().put("extra", readPlainIntegerInput(block, "extra", 1,
+                        "Extra rolls", report));
+                function.getProperties().put("probability", readPlainFloatInput(block, "probability", 0.5,
+                        "Bonus probability", report, 0.0, 1.0));
+            }
+            case "loottable_function_apply_bonus_ore" -> function.getProperties().put("enchantment",
+                    parseEnchantmentField(block, "minecraft:fortune", "Ore bonus enchantment", report));
+            case "loottable_function_enchanted_count_increase" -> {
+                function.getProperties().put("enchantment", parseEnchantmentField(block, "minecraft:looting",
+                        "Count increase enchantment", report));
+                function.getProperties().put("count", parseCountIncreaseInput(block, report));
+            }
+            case "loottable_function_limit_count" -> {
+                LootTableModel.NumberProvider limit = nonNegative(
+                        parseNumberInput(block, "limit", 9, "Count limit", report),
+                        blockType, "Count limit", report);
+                function.getProperties().put("limit", limit);
+            }
             default -> {
                 report.addWarning(blockType, "Unknown loot function " + blockType + " was skipped.");
                 return null;
             }
         }
         return function;
+    }
+
+    private static String parseEnchantmentField(Element block, String fallback, String label,
+            ValidationReport report) {
+        String raw = fieldValue(block, "enchantment").trim();
+        if (raw.isBlank()) {
+            return fallback;
+        }
+        String enchantment = normalizedEnchantment(raw);
+        if (enchantment.isBlank()) {
+            report.addWarning(block.getAttribute("type"), label + " is empty; the default was used.");
+            return fallback;
+        }
+        return enchantment;
+    }
+
+    private static int readPlainIntegerInput(Element block, String inputName, int fallback, String label,
+            ValidationReport report) {
+        LootTableModel.NumberProvider provider = valueBlock(block, inputName) == null
+                ? LootTableModel.NumberProvider.number(fallback, false)
+                : parseNumberValue(valueBlock(block, inputName), fallback, false, label, report);
+        if (!isSimpleNumber(provider)) {
+            report.addWarning(block.getAttribute("type"),
+                    label + " must be a plain number in Minecraft 1.21.1; the default was used.");
+            return fallback;
+        }
+        double raw = provider.getValue();
+        int value = (int) raw;
+        if (raw != value) {
+            report.addWarning(block.getAttribute("type"),
+                    label + " must be an integer; the fractional part was removed.");
+        }
+        if (value < 0) {
+            report.addWarning(block.getAttribute("type"),
+                    label + " cannot be negative; the value was clamped to 0.");
+            return 0;
+        }
+        return value;
+    }
+
+    private static double readPlainFloatInput(Element block, String inputName, double fallback, String label,
+            ValidationReport report, double minimum, double maximum) {
+        LootTableModel.NumberProvider provider = valueBlock(block, inputName) == null
+                ? LootTableModel.NumberProvider.number(fallback, true)
+                : parseNumberValue(valueBlock(block, inputName), fallback, true, label, report);
+        if (!isSimpleNumber(provider)) {
+            report.addWarning(block.getAttribute("type"),
+                    label + " must be a plain number in Minecraft 1.21.1; the default was used.");
+            return fallback;
+        }
+        double value = provider.getValue();
+        if (value < minimum || value > maximum) {
+            report.addWarning(block.getAttribute("type"),
+                    label + " must be between " + minimum + " and " + maximum + "; the value was clamped.");
+            value = Math.max(minimum, Math.min(maximum, value));
+        }
+        return value;
+    }
+
+    private static LootTableModel.NumberProvider parseCountIncreaseInput(Element block, ValidationReport report) {
+        Element value = valueBlock(block, "count");
+        if (value == null) {
+            return LootTableModel.NumberProvider.uniform(
+                    LootTableModel.NumberProvider.number(0, false),
+                    LootTableModel.NumberProvider.number(1, false));
+        }
+        return nonNegative(parseNumberValue(value, 0, false, "Count increase", report),
+                block.getAttribute("type"), "Count increase", report);
     }
 
     private static LootTableModel.NumberProvider parseNumberInput(Element block, String inputName, double fallback,

@@ -1,0 +1,25 @@
+{
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "limit",
+      "check": [
+        "Number",
+        "NumberProvider"
+      ]
+    }
+  ],
+  "inputsInline": true,
+  "previousStatement": "LootTableFunction",
+  "nextStatement": "LootTableFunction",
+  "colour": 330,
+  "mcreator": {
+    "toolbox_id": "loottable_functions",
+    "toolbox_init": [
+      "<value name=\"limit\"><block type=\"loottable_integer\"><field name=\"value\">9</field></block></value>"
+    ],
+    "inputs": [
+      "limit"
+    ]
+  }
+}

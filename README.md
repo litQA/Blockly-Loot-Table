@@ -59,10 +59,20 @@ so treasure enchantments are eligible, while an unchecked box restricts to
 
 The count input accepts a bare number or a number provider. The **Numbers**
 category contains the terminal `Integer` and `Float` blocks, the constant
-`Integer provider` and `Float provider` blocks, the `Uniform` and `Binomial`
-provider blocks, and the `Add value` function block. `Uniform` and `Binomial` can
-be nested inside one another, and their sockets accept either a bare number or a
-provider. `Add value` appends a `minecraft:set_count` function with `"add": true`.
+`Integer provider` and `Float provider` blocks, and the `Uniform` and `Binomial`
+provider blocks. `Uniform` and `Binomial` can be nested inside one another, and
+their sockets accept either a bare number or a provider.
+
+The **Functions** category contains `Add value` and five loot-function blocks:
+`Add enchantment bonus` (uniform), `Add binomial enchantment bonus`, `Apply ore
+bonus`, `Increase count by enchantment level` and `Limit final count`. These
+append `minecraft:apply_bonus`, `minecraft:enchanted_count_increase` and
+`minecraft:limit_count` functions to the entry function chain. The three
+`apply_bonus` numeric parameters are literal numbers in 1.21.1; their sockets
+reject number providers with a warning.
+
+The simple item entry is a shorter B-shaped entry with only item and count
+sockets. It is useful when no conditions or functions are needed.
 
 Bare integer and float blocks serialize as bare JSON numbers. The two provider
 constant blocks serialize as `{"type":"minecraft:constant","value":...}`.
@@ -211,14 +221,24 @@ longer ships a preset-template selector.
   every row and writes those providers under `minecraft:set_enchantments`.
 - The four randomized enchantment item blocks are available in **Items**:
   random list, random any with treasure checkbox, level list, and level any with
-  treasure checkbox. The random-any unchecked case writes
+  treasure checkbox. The random-any block also has minimum and maximum level
+  sockets and writes a uniform `levels` provider. The unchecked case writes
   `options: "#minecraft:on_random_loot"`; the checked case omits `options`.
+- The simple item entry has only item and count sockets and emits no condition or
+  function arrays beyond the base `set_count`.
+- The **Functions** category is present and `Add value` is inside it.
+- The five function blocks emit their expected JSON: uniform/binomial/ore
+  `apply_bonus`, `enchanted_count_increase` and `limit_count`.
+- A provider placed in an `apply_bonus` multiplier/extra/probability socket is
+  rejected with a warning and the literal default is used.
 - Time-check blocks write `minecraft:time_check`; daily time also writes
   `period: 24000`, and the periodic block accepts period/min/max number inputs.
 - Dimension, biome, biome tag, structure, structure tag, smokey, light and
   position conditions at the same chain level merge into one
   `minecraft:location_check` predicate instead of repeating the condition.
-- Block-tag conditions write `predicate.block.blocks` as `#<tag>`.
+- Block-tag conditions write `predicate.block.blocks` as `#<tag>` and appear in
+  the Block conditions category.
+- The structure-tag block is labelled **Current structure is tagged**.
 - The item count socket accepts `Integer`, `Float`, `Integer provider`,
   `Float provider`, `Uniform` or `Binomial`; generated JSON uses a bare number
   for constants and a `minecraft:constant` object for provider constants.
