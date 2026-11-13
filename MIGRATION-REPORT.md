@@ -12,6 +12,25 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.0.3.24-beta
+
+- Removed the preset-template selector and the template document class. The
+  editor now starts from the fixed empty workspace.
+- Split the target control: Block tables use an icon selector backed by
+  `ElementUtil.loadBlocks`, while Entity tables use a text button that opens the
+  native `DataListSelectorDialog` entity list.
+- **Provided blockstate** now derives from the effective block loot path. For a
+  manual path such as `mymod:blocks/custom_ore`, the provided block is
+  `mymod:custom_ore`; this keeps it aligned with custom paths.
+- Replaced the multi-enchantment condition with an **Item with enchantment**
+  A-1 value block that outputs an `MCItem` and writes `minecraft:set_enchantments`
+  when used in an entry item slot.
+- Removed the legacy number, inverted, block-state-property, single-level
+  enchantment and uniform-function blocks from the parser, writer, registry and
+  toolbox.
+- Limitation: the enchanted-item rows set enchantment levels with
+  `minecraft:set_enchantments`; they do not add random per-row level ranges.
+
 ### 1.0.3.21-beta
 
 - The editor target is now an icon selector. Manual path mode disables the

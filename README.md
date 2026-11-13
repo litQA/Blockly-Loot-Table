@@ -19,13 +19,15 @@ Supported condition blocks:
 - block and entity NBT logic, number and text comparisons
 - item enchantment conditions with an item input, minimum level and optional
   maximum level
-- multi-enchantment item condition with dynamic enchantment rows
+- an enchanted-item value block with dynamic enchantment rows
 - nested `and`, `or` and `not` logic conditions
 
 The **Minecraft components** category provides the empty item selector,
 provided-blockstate, block selector, event/target entity, source entity,
 immediate source entity, source player and entity main-hand item blocks. The
-provided blockstate resolves to the block selected by the loot table element.
+provided blockstate resolves to the block named by the effective loot table
+path, so an element with manual path `mymod:blocks/custom_ore` supplies
+`mymod:custom_ore` even when the selected target differs.
 In Entity tables, source entity is the indirect damage source (`attacker`),
 immediate source entity is `direct_attacker`, and source player is
 `attacking_player`. In Block tables all three source aliases refer to the player
@@ -38,14 +40,15 @@ a warning.
 
 Pools support `rolls`, `bonus_rolls`, conditions and weighted item entries.
 Entries require an **Item selector** input, a number count input, a weight, a
-condition chain and a function chain. The count input accepts a bare number or a
-number provider. The **Numbers** category contains the terminal `Integer` and
-`Float` blocks, the constant `Integer provider` and `Float provider` blocks, the
-`Uniform` and `Binomial` provider blocks, and the `Add value` function block.
-`Uniform` and `Binomial` can be nested inside one another, and their sockets
-accept either a bare number or a provider. `Add value` appends a
-`minecraft:set_count` function with `"add": true`. The old hidden uniform
-function and all other legacy blocks were removed in 1.0.3.21.
+condition chain and a function chain. The item input also accepts the
+**Item with enchantment** value block, which writes a `minecraft:set_enchantments`
+function with dynamically added enchantment rows. The count input accepts a bare
+number or a number provider. The **Numbers** category contains the terminal
+`Integer` and `Float` blocks, the constant `Integer provider` and
+`Float provider` blocks, the `Uniform` and `Binomial` provider blocks, and the
+`Add value` function block. `Uniform` and `Binomial` can be nested inside one
+another, and their sockets accept either a bare number or a provider. `Add value`
+appends a `minecraft:set_count` function with `"add": true`.
 
 Bare integer and float blocks serialize as bare JSON numbers. The two provider
 constant blocks serialize as `{"type":"minecraft:constant","value":...}`.
@@ -109,16 +112,15 @@ gradlew.bat selfCheck
 ## Usage
 
 1. Choose `Block` or `Entity`.
-2. Select the target block/entity with the icon selector next to the type. The
-   button shows the selected icon. Leave it empty to derive the path from the
-   element name.
+2. For a Block table, select the target block with the icon selector next to the
+   type. For an Entity table, the selector becomes a text button that opens
+   MCreator's native entity selector.
 3. The path is generated automatically as
    `<target namespace>:<blocks|entities>/<target path>`. Check **Manual path** to
    disable the selector and enter a path yourself; uncheck it to restore the
-   automatic path.
+   automatic path. Manual block paths also drive **Provided blockstate**.
 4. Build the pool/entry/condition chain below the fixed start block.
-5. Use the template selector for the two built-in examples.
-6. Save. Invalid condition scopes are marked in the Blockly workspace, shown in
+5. Save. Invalid condition scopes are marked in the Blockly workspace, shown in
    the compile notes panel, and block saving and generation.
 
 The context dependencies shown in the editor are:
@@ -146,7 +148,8 @@ Loot table start
         └── conditions: Killed by player
 ```
 
-The template selector creates both documents automatically.
+The template examples are documented here only for reference; the plugin no
+longer ships a preset-template selector.
 
 ## Manual test checklist
 
@@ -155,7 +158,8 @@ The template selector creates both documents automatically.
   paint exceptions or repeated WebView execution timeouts in `mcreator.log`.
 - The element can be created, saved and reopened with its Blockly document.
 - The start block is not in the toolbox and cannot be deleted.
-- The header shows the target icon selector next to the type. Manual path
+- The header shows one target control next to the type: an icon button for Block
+  tables and a native entity-selection button for Entity tables. Manual path
   disables the selector and enables path editing; automatic mode disables the
   path field and regenerates the path.
 - Selecting a zombie creates `minecraft:entities/zombie`, not
@@ -164,8 +168,9 @@ The template selector creates both documents automatically.
 - A Block table with `survives_explosion` saves.
 - A Block table with boolean/integer/enum property comparisons saves, and the
   generated condition names the selected block and property value.
-- A Block table using **Provided blockstate** emits the element target block,
-  not an empty or placeholder block id.
+- A Block table using **Provided blockstate** emits the block derived from its
+  effective path. With manual path `mymod:blocks/custom_ore`, the emitted block is
+  `mymod:custom_ore`.
 - An Entity table with `killed_by_player` saves.
 - An Entity table with the potion condition and **Source entity** emits
   `minecraft:entity_properties`, `entity: "attacker"` and a non-empty
@@ -206,14 +211,14 @@ The template selector creates both documents automatically.
 - The **Logic** category contains `and`, `or` and `not`; all three can be nested
   in each other. `and` emits `all_of`, `or` emits `any_of`, and `not` with
   multiple children emits `inverted(all_of(...))`.
-- The entry item socket only accepts the empty item selector. The selector
-  appears in **Minecraft components** and shows the selected item icon.
-- The multi-enchantment condition starts with one row and allows adding/removing
-  rows. Each row has an enchantment selector and an integer minimum level.
+- The entry item socket accepts the empty item selector and the **Item with
+  enchantment** value block. The enchanted item block starts with one row, adds
+  and removes rows dynamically, and emits `minecraft:set_enchantments` with the
+  selected item and all rows.
 - Removed legacy blocks are absent from the toolbox. A workspace containing
   `loottable_inverted`, `loottable_number`, the old uniform function, the old
-  single-level enchantment block or `loottable_block_state_property` requires
-  rebuilding that part of the table.
+  single-level enchantment block, the old multi-enchantment condition or
+  `loottable_block_state_property` requires rebuilding that part of the table.
 - A Block table containing `killed_by_player` shows a Blockly warning, a compile
   notes error, and saving is blocked.
 - Build output places the JSON in `loot_tables/` before 1.21 and `loot_table/`
@@ -227,5 +232,5 @@ The template selector creates both documents automatically.
 See `MIGRATION-REPORT.md` for the full limitation list and
 `../dsh_docs/blockly_type.md` for the block type/usage reference. The main
 restrictions are the condition subset, concrete item entries only (item tags are
-skipped with a warning), and the fact that the multi-enchantment block emits a
-single predicate entry per row rather than a full nested predicate editor.
+skipped with a warning), and enchantment rows that set fixed levels rather than
+random per-row level ranges.

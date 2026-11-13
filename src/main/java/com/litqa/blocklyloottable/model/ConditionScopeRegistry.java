@@ -53,8 +53,6 @@ public final class ConditionScopeRegistry {
                 ConditionScope.BLOCK_AND_ENTITY, "Item has enchantment at least"));
         register(new ConditionDefinition("loottable_item_has_enchantment_range", "minecraft:match_tool",
                 ConditionScope.BLOCK_AND_ENTITY, "Item has enchantment in range"));
-        register(new ConditionDefinition("loottable_item_has_enchantments", "minecraft:match_tool",
-                ConditionScope.BLOCK_AND_ENTITY, "Item has several enchantments"));
     }
 
     private ConditionScopeRegistry() {

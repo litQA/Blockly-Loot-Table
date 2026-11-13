@@ -6,10 +6,9 @@
       "check": "MCItem"
     }
   ],
-  "mutator": "loottable_item_has_enchantments_mutator",
+  "mutator": "loottable_item_with_enchantment_mutator",
   "inputsInline": false,
-  "previousStatement": "LootTableCondition",
-  "nextStatement": "LootTableCondition",
+  "output": "MCItem",
   "colour": 350,
   "mcreator": {
     "toolbox_id": "loottable_items",

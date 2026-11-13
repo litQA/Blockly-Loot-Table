@@ -138,6 +138,26 @@ public final class LootTableJsonWriter {
             return null;
         }
         switch (function.getBlockType()) {
+            case "loottable_item_with_enchantment" -> {
+                Object value = function.getProperties().get("enchantments");
+                if (!(value instanceof List<?> entries) || entries.isEmpty()) {
+                    return null;
+                }
+                Map<String, Object> enchantments = new LinkedHashMap<>();
+                for (Object entry : entries) {
+                    if (entry instanceof LootTableModel.EnchantmentLevel enchantment) {
+                        enchantments.put(enchantment.getEnchantment(), enchantment.getMinLevel());
+                    }
+                }
+                if (enchantments.isEmpty()) {
+                    return null;
+                }
+                Map<String, Object> json = new LinkedHashMap<>();
+                json.put("function", "minecraft:set_enchantments");
+                json.put("enchantments", enchantments);
+                json.put("add", false);
+                return json;
+            }
             case "loottable_function_set_count_add" -> {
                 Map<String, Object> json = new LinkedHashMap<>();
                 json.put("function", "minecraft:set_count");
@@ -248,59 +268,6 @@ public final class LootTableJsonWriter {
                     }
                     Map<String, Object> mainhand = new LinkedHashMap<>();
                     mainhand.put("predicates", predicates);
-                    Map<String, Object> equipment = new LinkedHashMap<>();
-                    equipment.put("mainhand", mainhand);
-                    Map<String, Object> predicate = new LinkedHashMap<>();
-                    predicate.put("equipment", equipment);
-                    json.put("condition", "minecraft:entity_properties");
-                    json.put("entity", entity);
-                    json.put("predicate", predicate);
-                } else {
-                    json.put("predicate", itemPredicate);
-                }
-            }
-            case "loottable_item_has_enchantments" -> {
-                Object value = condition.getProperties().get("enchantments");
-                if (!(value instanceof List<?> entries) || entries.isEmpty()) {
-                    return null;
-                }
-                List<Object> enchantmentPredicates = new ArrayList<>();
-                for (Object entry : entries) {
-                    if (!(entry instanceof LootTableModel.EnchantmentLevel enchantment)) {
-                        continue;
-                    }
-                    Map<String, Object> levels = new LinkedHashMap<>();
-                    levels.put("min", enchantment.getMinLevel());
-                    if (enchantment.getMaxLevel() != null) {
-                        levels.put("max", Math.max(enchantment.getMinLevel(), enchantment.getMaxLevel()));
-                    }
-                    Map<String, Object> predicate = new LinkedHashMap<>();
-                    predicate.put("enchantments", List.of(enchantment.getEnchantment()));
-                    predicate.put("levels", levels);
-                    enchantmentPredicates.add(predicate);
-                }
-                if (enchantmentPredicates.isEmpty()) {
-                    return null;
-                }
-                Map<String, Object> predicates = new LinkedHashMap<>();
-                predicates.put("minecraft:enchantments", enchantmentPredicates);
-                Map<String, Object> itemPredicate = new LinkedHashMap<>();
-                itemPredicate.put("predicates", predicates);
-                String item = string(condition.getProperties().get("item"));
-                if (!item.isBlank()) {
-                    itemPredicate.put("items", List.of(item));
-                }
-
-                if ("entity".equals(string(condition.getProperties().get("mode")))) {
-                    String entity = string(condition.getProperties().get("entity"));
-                    if (entity.isBlank()) {
-                        return null;
-                    }
-                    Map<String, Object> mainhand = new LinkedHashMap<>();
-                    mainhand.put("predicates", predicates);
-                    if (!item.isBlank()) {
-                        mainhand.put("items", List.of(item));
-                    }
                     Map<String, Object> equipment = new LinkedHashMap<>();
                     equipment.put("mainhand", mainhand);
                     Map<String, Object> predicate = new LinkedHashMap<>();

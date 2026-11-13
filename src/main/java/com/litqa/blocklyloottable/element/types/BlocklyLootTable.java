@@ -112,7 +112,28 @@ public class BlocklyLootTable extends GeneratableElement {
 
     private BlocklyXmlParser.ParseResult parseDocument() {
         return BlocklyXmlParser.parse(blocklyXml, getLootTableTypeEnum(), createResolver(),
-                getTargetRegistryName());
+                getProvidedBlockRegistryName());
+    }
+
+    /**
+     * Resolves the block used by the provided-blockstate block. Manual block
+     * paths are authoritative because they may intentionally target a block
+     * that is not the selector value.
+     *
+     * @return registry name of the provided block, or the selected target
+     */
+    public String getProvidedBlockRegistryName() {
+        String configured = path == null ? "" : path.trim();
+        if (!configured.isEmpty()) {
+            RegistryNames.PathCheck check = RegistryNames.checkPath(configured, workspaceModId());
+            if (check.valid()) {
+                String providedBlock = RegistryNames.blockFromLootTablePath(check.normalized());
+                if (!providedBlock.isBlank()) {
+                    return providedBlock;
+                }
+            }
+        }
+        return getTargetRegistryName();
     }
 
     private ValidationReport validate(BlocklyXmlParser.ParseResult parseResult) {

@@ -1,5 +1,40 @@
 # Changelog
 
+## 1.0.3.24-beta
+
+### Breaking Changes
+
+- Removed the preset-template selector and the multi-enchantment condition
+  block. Existing tables that used the old condition must replace it with the
+  new **Item with enchantment** value block.
+- Removed the legacy `loottable_number`, `loottable_inverted`,
+  `loottable_block_state_property`, old single-level enchantment and old uniform
+  function blocks.
+
+### New Content
+
+- Added the **Item with enchantment** A-1 value block. It outputs `MCItem`, starts
+  with one enchantment row, supports dynamic add/remove rows and emits
+  `minecraft:set_enchantments`.
+- Added nested `and`, `or` and `not` controls, the **Item selector** value block
+  and the **Item selector** entry input.
+
+### Changed
+
+- The editor header now uses separate target controls: a block icon selector for
+  Block tables and a native entity-selector text button for Entity tables.
+- The template controls were removed from the header.
+- **Provided blockstate** now follows the effective manual block path
+  (`mymod:blocks/custom_ore` -> `mymod:custom_ore`).
+- Entity automatic paths continue to normalize mapped names such as
+  `minecraft:entities/EntityType.ZOMBIE` to `minecraft:entities/zombie`.
+
+### Internal
+
+- Updated the headless self-check to 255 checks, covering the removed legacy
+  blocks, logic terms, item selector, enchanted item output and manual-path
+  provided blockstate.
+
 ## 1.0.3.21-beta
 
 ### Breaking Changes

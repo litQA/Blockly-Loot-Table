@@ -7,11 +7,11 @@
 
     var colour = 350;
     registerSimpleMutatorContainer('loottable_item_enchantments_mutator_container',
-        'blockly.block.loottable_item_has_enchantments.mutator.container', colour);
+        'blockly.block.loottable_item_with_enchantment.mutator.container', colour);
     registerSimpleMutatorInput('loottable_item_enchantments_mutator_input',
-        'blockly.block.loottable_item_has_enchantments.mutator.input', colour, true);
+        'blockly.block.loottable_item_with_enchantment.mutator.input', colour, true);
 
-    Blockly.Extensions.registerMutator('loottable_item_has_enchantments_mutator',
+    Blockly.Extensions.registerMutator('loottable_item_with_enchantment_mutator',
         simpleRepeatingInputMixin(
             'loottable_item_enchantments_mutator_container',
             'loottable_item_enchantments_mutator_input',
@@ -19,7 +19,7 @@
             function (thisBlock, inputName, index) {
                 thisBlock.appendDummyInput(inputName + index)
                     .appendField(new FieldDataListSelector('enchantments'), 'enchantment' + index)
-                    .appendField(javabridge.t('blockly.block.loottable_item_has_enchantments.level'))
+                    .appendField(javabridge.t('blockly.block.loottable_item_with_enchantment.level'))
                     .appendField(new Blockly.FieldNumber(1, 1, 255, 1), 'level' + index);
             },
             false,

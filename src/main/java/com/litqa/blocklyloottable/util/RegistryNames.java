@@ -251,6 +251,24 @@ public final class RegistryNames {
         return colon < 0 ? normalizedPath : normalizedPath.substring(colon + 1);
     }
 
+    /**
+     * Derives the provided block registry name from a normalized block loot table path.
+     *
+     * @param normalizedPath namespaced loot table path such as {@code mymod:blocks/custom_ore}
+     * @return block registry name such as {@code mymod:custom_ore}, or an empty string
+     */
+    public static String blockFromLootTablePath(String normalizedPath) {
+        if (normalizedPath == null || normalizedPath.isBlank()) {
+            return "";
+        }
+        String path = pathPart(normalizedPath);
+        String prefix = "blocks/";
+        if (!path.startsWith(prefix) || path.length() == prefix.length()) {
+            return "";
+        }
+        return namespace(normalizedPath) + ":" + path.substring(prefix.length());
+    }
+
     public static String sanitizePathSegment(String value) {
         if (value == null) {
             return "loot_table";

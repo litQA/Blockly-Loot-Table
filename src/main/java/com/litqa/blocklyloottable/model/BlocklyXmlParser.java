@@ -186,12 +186,29 @@ public final class BlocklyXmlParser {
     private static LootTableModel.Entry parseEntry(Element block, LootTableType type, ItemNameResolver resolver,
             String providedBlock, ValidationReport report) {
         Element itemBlock = valueBlock(block, "item");
-        if (itemBlock == null || !"loottable_item_selector".equals(itemBlock.getAttribute("type"))) {
+        if (itemBlock == null) {
             report.addWarning("loottable_entry_item",
-                    "An item entry must use the item selector block; the entry was skipped.");
+                    "An item entry must use an item block; the entry was skipped.");
             return null;
         }
-        String rawItem = fieldValue(itemBlock, "item");
+
+        String itemType = itemBlock.getAttribute("type");
+        String rawItem;
+        if ("loottable_item_selector".equals(itemType)) {
+            rawItem = fieldValue(itemBlock, "item").trim();
+        } else if ("loottable_item_with_enchantment".equals(itemType)) {
+            Element baseItem = valueBlock(itemBlock, "item");
+            if (baseItem == null || !"loottable_item_selector".equals(baseItem.getAttribute("type"))) {
+                report.addWarning("loottable_entry_item",
+                        "An enchanted item must contain an item selector; the entry was skipped.");
+                return null;
+            }
+            rawItem = fieldValue(baseItem, "item").trim();
+        } else {
+            report.addWarning("loottable_entry_item",
+                    "Unsupported entry item block " + itemType + "; the entry was skipped.");
+            return null;
+        }
         if (rawItem.isBlank()) {
             report.addWarning("loottable_entry_item", "An item entry has no selected item and was skipped.");
             return null;
@@ -217,6 +234,19 @@ public final class BlocklyXmlParser {
         entry.setItem(item);
         entry.setCount(parseCount(block, report));
         entry.setWeight(readWholeNumber(block, "weight", 1, 1, "Entry weight", report));
+
+        if ("loottable_item_with_enchantment".equals(itemType)) {
+            List<LootTableModel.EnchantmentLevel> enchantments = parseEnchantmentRows(itemBlock, report);
+            if (enchantments.isEmpty()) {
+                report.addWarning("loottable_entry_item",
+                        "An enchanted item has no enchantment rows; the entry was skipped.");
+                return null;
+            }
+            LootTableModel.LootFunction enchantmentFunction =
+                    new LootTableModel.LootFunction("loottable_item_with_enchantment");
+            enchantmentFunction.getProperties().put("enchantments", enchantments);
+            entry.getFunctions().add(enchantmentFunction);
+        }
 
         parseConditionChain(statementFirstBlock(block, "conditions"), type, resolver, providedBlock,
                 entry.getConditions(), report);
@@ -320,11 +350,6 @@ public final class BlocklyXmlParser {
             }
             case "loottable_item_has_enchantment_min", "loottable_item_has_enchantment_range" -> {
                 if (!parseItemEnchantmentCondition(block, blockType, type, condition, report)) {
-                    return null;
-                }
-            }
-            case "loottable_item_has_enchantments" -> {
-                if (!parseMultiEnchantmentCondition(block, type, resolver, condition, report)) {
                     return null;
                 }
             }
@@ -458,41 +483,8 @@ public final class BlocklyXmlParser {
         return true;
     }
 
-    private static boolean parseMultiEnchantmentCondition(Element block, LootTableType type,
-            ItemNameResolver resolver, LootTableModel.Condition condition, ValidationReport report) {
-        String blockType = block.getAttribute("type");
-        Element itemBlock = valueBlock(block, "item");
-        if (itemBlock != null) {
-            if ("loottable_entity_mainhand_item".equals(itemBlock.getAttribute("type"))) {
-                String entity = parseEntityValue(itemBlock, "entity", type, report);
-                if (entity.isBlank()) {
-                    return false;
-                }
-                condition.getProperties().put("mode", "entity");
-                condition.getProperties().put("entity", entity);
-            } else if ("loottable_item_selector".equals(itemBlock.getAttribute("type"))) {
-                String rawItem = fieldValue(itemBlock, "item").trim();
-                if (!rawItem.isBlank()) {
-                    String resolvedItem = resolver.resolve(rawItem);
-                    if (resolvedItem.isBlank() || resolvedItem.startsWith("#")) {
-                        report.addWarning(blockType,
-                                "Enchantment condition item '" + rawItem + "' is not a concrete item and was skipped.");
-                        return false;
-                    }
-                    condition.getProperties().put("mode", "tool");
-                    condition.getProperties().put("item", resolvedItem);
-                } else {
-                    condition.getProperties().put("mode", "tool");
-                }
-            } else {
-                report.addWarning(itemBlock.getAttribute("type"),
-                        "Enchantment condition only supports the item selector or a main-hand item source; the condition was skipped.");
-                return false;
-            }
-        } else {
-            condition.getProperties().put("mode", "tool");
-        }
-
+    private static List<LootTableModel.EnchantmentLevel> parseEnchantmentRows(Element block,
+            ValidationReport report) {
         int count = mutationInputCount(block);
         List<LootTableModel.EnchantmentLevel> enchantments = new ArrayList<>();
         for (int index = 0; index < count; index++) {
@@ -507,13 +499,7 @@ public final class BlocklyXmlParser {
             int level = readEnchantmentLevelField(block, index, report);
             enchantments.add(new LootTableModel.EnchantmentLevel(enchantment, level, null));
         }
-        if (enchantments.isEmpty()) {
-            report.addWarning(blockType,
-                    "Enchantment condition has no enchantment selected and was skipped.");
-            return false;
-        }
-        condition.getProperties().put("enchantments", enchantments);
-        return true;
+        return enchantments;
     }
 
     private static int mutationInputCount(Element block) {
@@ -539,22 +525,22 @@ public final class BlocklyXmlParser {
             double number = Double.parseDouble(raw);
             int level = (int) number;
             if (number != level) {
-                report.addWarning("loottable_item_has_enchantments",
+                report.addWarning("loottable_item_with_enchantment",
                         "Enchantment level '" + raw + "' is not an integer; the fractional part was removed.");
             }
             if (level < 1) {
-                report.addWarning("loottable_item_has_enchantments",
+                report.addWarning("loottable_item_with_enchantment",
                         "Enchantment level cannot be lower than 1; the minimum was used.");
                 level = 1;
             }
             if (level > 255) {
-                report.addWarning("loottable_item_has_enchantments",
+                report.addWarning("loottable_item_with_enchantment",
                         "Enchantment level cannot exceed 255; the value was clamped.");
                 level = 255;
             }
             return level;
         } catch (NumberFormatException exception) {
-            report.addWarning("loottable_item_has_enchantments",
+            report.addWarning("loottable_item_with_enchantment",
                     "Enchantment level '" + raw + "' is not a number; the default value was used.");
             return 1;
         }

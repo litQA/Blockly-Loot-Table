@@ -1,7 +1,6 @@
 package com.litqa.blocklyloottable.ui;
 
 import com.litqa.blocklyloottable.BlocklyLootTablePlugin;
-import com.litqa.blocklyloottable.blockly.LootTableTemplates;
 import com.litqa.blocklyloottable.element.types.BlocklyLootTable;
 import com.litqa.blocklyloottable.model.Issue;
 import com.litqa.blocklyloottable.model.JsonText;
@@ -21,7 +20,6 @@ import net.mcreator.ui.blockly.CompileNotesPanel;
 import net.mcreator.ui.component.util.PanelUtils;
 import net.mcreator.ui.dialogs.DataListSelectorDialog;
 import net.mcreator.ui.dialogs.MCItemSelectorDialog;
-import net.mcreator.ui.init.BlockItemIcons;
 import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.modgui.ModElementGUI;
 import net.mcreator.ui.validation.AggregatedValidationResult;
@@ -38,7 +36,6 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
@@ -65,13 +62,12 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
     private final MCreator mcreatorRef;
 
     private final JComboBox<String> lootTableType = new JComboBox<>(new String[]{"Block", "Entity"});
-    private final JButton targetSelector = new JButton();
+    private final JButton blockTargetSelector = new JButton();
+    private final JButton entityTargetSelector = new JButton();
     private final JCheckBox manualPath = new JCheckBox();
     private final VTextField path = new VTextField(30);
     private String targetValue = "";
     private final JLabel dependencyLabel = new JLabel();
-    private final JComboBox<String> templateChoice = new JComboBox<>();
-    private final JButton applyTemplate = new JButton();
 
     private final CompileNotesPanel compileNotesPanel = new CompileNotesPanel();
     private final JLabel statusLabel = new JLabel();
@@ -151,10 +147,13 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
 
         path.setValidator(this::validatePathField);
         path.enableRealtimeValidation();
-        targetSelector.setToolTipText(L10N.t("elementgui.blockly_loot_table.target.tooltip"));
-        targetSelector.setPreferredSize(new Dimension(38, 30));
-        targetSelector.setFocusPainted(false);
-        updateTargetIcon();
+        blockTargetSelector.setToolTipText(L10N.t("elementgui.blockly_loot_table.target.tooltip"));
+        blockTargetSelector.setPreferredSize(new Dimension(38, 30));
+        blockTargetSelector.setFocusPainted(false);
+        entityTargetSelector.setToolTipText(L10N.t("elementgui.blockly_loot_table.target.tooltip"));
+        entityTargetSelector.setPreferredSize(new Dimension(180, 30));
+        entityTargetSelector.setFocusPainted(false);
+        updateTargetSelectorState();
         path.setToolTipText(L10N.t("elementgui.blockly_loot_table.path.tooltip"));
         manualPath.setSelected(false);
         updateManualPathState();
@@ -167,8 +166,8 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
             updateManualPathState();
             refreshValidation();
         });
-        targetSelector.addActionListener(event -> openTargetSelector());
-        applyTemplate.addActionListener(event -> applySelectedTemplate());
+        blockTargetSelector.addActionListener(event -> openTargetSelector());
+        entityTargetSelector.addActionListener(event -> openTargetSelector());
         path.getDocument().addDocumentListener(new SimpleDocumentListener(() -> {
             if (!refreshing) {
                 refreshValidation();
@@ -194,7 +193,8 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
 
         constraints.gridx = 2;
         constraints.fill = GridBagConstraints.NONE;
-        header.add(targetSelector, constraints);
+        header.add(blockTargetSelector, constraints);
+        header.add(entityTargetSelector, constraints);
 
         constraints.gridx = 3;
         constraints.gridwidth = 2;
@@ -213,29 +213,6 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
 
         constraints.gridy = 1;
         constraints.gridx = 0;
-        constraints.gridwidth = 1;
-        constraints.weightx = 0;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        header.add(L10N.label("elementgui.blockly_loot_table.template"), constraints);
-
-        constraints.gridx = 1;
-        constraints.gridwidth = 2;
-        constraints.weightx = 0.25;
-        templateChoice.removeAllItems();
-        templateChoice.addItem(L10N.t("elementgui.blockly_loot_table.template.empty"));
-        templateChoice.addItem(L10N.t("elementgui.blockly_loot_table.template.ore"));
-        templateChoice.addItem(L10N.t("elementgui.blockly_loot_table.template.entity"));
-        header.add(templateChoice, constraints);
-
-        constraints.gridx = 3;
-        constraints.gridwidth = 1;
-        constraints.weightx = 0;
-        constraints.fill = GridBagConstraints.NONE;
-        applyTemplate.setText(L10N.t("elementgui.blockly_loot_table.apply_template"));
-        header.add(applyTemplate, constraints);
-
-        constraints.gridy = 2;
-        constraints.gridx = 0;
         constraints.gridwidth = 7;
         constraints.weightx = 1;
         constraints.fill = GridBagConstraints.HORIZONTAL;
@@ -248,6 +225,7 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
             return;
         }
         setTargetValue("");
+        updateTargetSelectorState();
         updateDependencies();
         updateAutomaticPath();
         refreshValidation();
@@ -259,34 +237,59 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
             targetValue = RegistryNames.normalizeEntityName(targetValue);
         }
         updateTargetIcon();
+        updateEntityTargetText();
         if (!manualPath.isSelected()) {
             updateAutomaticPath();
         }
         refreshValidation();
     }
 
+    private void updateTargetSelectorState() {
+        boolean entity = currentType() == LootTableType.ENTITY;
+        blockTargetSelector.setVisible(!entity);
+        entityTargetSelector.setVisible(entity);
+        updateTargetIcon();
+        updateEntityTargetText();
+    }
+
     private void updateTargetIcon() {
         ImageIcon icon = new EmptyIcon.ImageIcon(24, 24);
         Workspace workspace = mcreatorRef.getWorkspace();
         if (!targetValue.isBlank() && workspace != null) {
-            if (currentType() == LootTableType.ENTITY) {
-                for (DataListEntry entry : ElementUtil.loadAllEntities(workspace)) {
-                    String resolved = RegistryNames.resolveEntity(workspace, entry.getName());
-                    if (targetValue.equals(resolved) || targetValue.equals(entry.getName())) {
-                        if (entry.getTexture() != null) {
-                            icon = new ImageIcon(ImageUtils.resizeAA(
-                                    BlockItemIcons.getIconForItem(entry.getTexture()).getImage(), 24, 24));
-                        }
-                        break;
+            for (MCItem item : ElementUtil.loadBlocks(workspace)) {
+                String resolved = RegistryNames.resolveBlockOrItem(workspace, item.getName());
+                if (targetValue.equals(item.getName()) || targetValue.equals(resolved)) {
+                    if (item.icon != null) {
+                        icon = new ImageIcon(ImageUtils.resizeAA(item.icon.getImage(), 24, 24));
                     }
+                    break;
                 }
-            } else {
-                icon = new ImageIcon(ImageUtils.resizeAA(
-                        MCItem.getBlockIconBasedOnName(workspace, targetValue).getImage(), 24, 24));
             }
         }
-        targetSelector.setIcon(icon);
-        targetSelector.setText("");
+        blockTargetSelector.setIcon(icon);
+        blockTargetSelector.setText("");
+    }
+
+    private void updateEntityTargetText() {
+        if (currentType() != LootTableType.ENTITY) {
+            entityTargetSelector.setText("");
+            return;
+        }
+        String display = targetValue;
+        Workspace workspace = mcreatorRef.getWorkspace();
+        if (!targetValue.isBlank() && workspace != null) {
+            for (DataListEntry entry : ElementUtil.loadAllEntities(workspace)) {
+                String resolved = RegistryNames.resolveEntity(workspace, entry.getName());
+                if (targetValue.equals(resolved) || targetValue.equals(entry.getName())) {
+                    display = entry.getReadableName();
+                    break;
+                }
+            }
+        }
+        entityTargetSelector.setText(display.isBlank()
+                ? L10N.t("elementgui.blockly_loot_table.target.select_entity")
+                : display);
+        entityTargetSelector.setIcon(null);
     }
 
     private void updateDependencies() {
@@ -298,7 +301,8 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
 
     private void updateManualPathState() {
         boolean manual = manualPath.isSelected();
-        targetSelector.setEnabled(!manual);
+        blockTargetSelector.setEnabled(!manual);
+        entityTargetSelector.setEnabled(!manual);
         path.setEditable(manual);
         if (!manual) {
             updateAutomaticPath();
@@ -350,48 +354,9 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
         } else {
             MCItem selected = MCItemSelectorDialog.openSelectorDialog(mcreatorRef, ElementUtil::loadBlocks);
             if (selected != null) {
-                setTargetValue(RegistryNames.resolveBlockOrItem(workspace, selected.getName()));
+                setTargetValue(selected.getName());
             }
         }
-    }
-
-    private void applySelectedTemplate() {
-        int index = templateChoice.getSelectedIndex();
-        if (index <= 0) {
-            return;
-        }
-        String xml = LootTableTemplates.byIndex(index);
-        if (xml == null) {
-            return;
-        }
-        int answer = JOptionPane.showConfirmDialog(this,
-                L10N.t("elementgui.blockly_loot_table.template.confirm"),
-                L10N.t("elementgui.blockly_loot_table.template"),
-                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-        if (answer != JOptionPane.YES_OPTION) {
-            return;
-        }
-
-        LootTableType templateType = LootTableTemplates.typeByIndex(index);
-        refreshing = true;
-        try {
-            lootTableType.setSelectedItem(templateType == LootTableType.ENTITY ? "Entity" : "Block");
-            targetValue = "";
-            updateTargetIcon();
-            if (!manualPath.isSelected()) {
-                updateAutomaticPath();
-            }
-        } finally {
-            refreshing = false;
-        }
-        updateDependencies();
-
-        blocklyPanel.addTaskToRunAfterLoaded(() -> {
-            blocklyPanel.executeLocalScript("workspace.clear();"
-                    + "Blockly.Xml.domToWorkspace(Blockly.Xml.textToDom('" + escapeJsString(xml) + "'), workspace);"
-                    + "workspace.clearUndo();");
-            refreshValidation();
-        });
     }
 
     private ValidationResult validatePathField() {
@@ -516,7 +481,7 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
         if (element.getLootTableTypeEnum() == LootTableType.ENTITY) {
             targetValue = RegistryNames.normalizeEntityName(targetValue);
         }
-        updateTargetIcon();
+        updateTargetSelectorState();
         manualPath.setSelected(element.manualPath);
         path.setText(element.path == null ? "" : element.path);
         updateManualPathState();
@@ -571,10 +536,6 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
     @Override
     public URI contextURL() throws URISyntaxException {
         return new URI("https://mcreator.net/wiki/how-make-loot-table");
-    }
-
-    private static String escapeJsString(String value) {
-        return value.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "\\r");
     }
 
     private static final class SimpleDocumentListener implements DocumentListener {
