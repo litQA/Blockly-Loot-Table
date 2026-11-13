@@ -25,7 +25,6 @@
   "nextStatement": "LootTableCondition",
   "colour": 350,
   "mcreator": {
-    "toolbox_id": "loottable_items",
     "toolbox_init": [
       "<value name=\"item\"><block type=\"loottable_entity_mainhand_item\"><value name=\"entity\"><block type=\"loottable_source_entity_dependency\"></block></value></block></value>"
     ],

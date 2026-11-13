@@ -18,16 +18,19 @@ Supported condition blocks:
 - entity potion-effect predicate (Block tables test the player who breaks the
   block; Entity tables test the selected entity)
 - block and entity NBT logic, number and text comparisons
-- item enchantment condition with an item input (Entity or tool context)
+- item enchantment condition with an item input, minimum level and optional
+  maximum level
 - legacy `block_state_property` (parseable for existing workspaces; hidden from the toolbox)
 
 The **minecraft components** category provides the provided-blockstate, block
 selector, event/target entity, source entity, immediate source entity, source
 player and entity main-hand item blocks. The provided blockstate resolves to the
-block selected by the loot table element. Source entity is the indirect damage
-source (`attacker`), immediate source entity is `direct_attacker`, and source
-player is `attacking_player`. The main-hand item block takes an entity input and
-can feed the enchantment condition.
+block selected by the loot table element. In Entity tables, source entity is the
+indirect damage source (`attacker`), immediate source entity is
+`direct_attacker`, and source player is `attacking_player`. In Block tables all
+three source aliases refer to the player who broke the block (`this`). The
+main-hand item block takes an entity input and can feed the enchantment
+condition.
 
 The `loottable_start` block is hidden from the toolbox and cannot be deleted.
 Each loot table has exactly one start block; extra start blocks are ignored with
@@ -160,16 +163,24 @@ The template selector creates both documents automatically.
 - An Entity table with the potion condition and **Source entity** emits
   `minecraft:entity_properties`, `entity: "attacker"` and a non-empty
   `predicate.effects` map.
+- A Block table with **Source entity**, **Immediate source entity** or **Source
+  player** accepts the block and emits `entity: "this"` without an
+  unavailable-parameter warning.
 - A Block table with the potion condition and **Event/target entity** emits
   `entity: "this"` and shows a warning that the entity is only present when a
   player breaks the block.
+- A Block table using the breaker's main-hand item and an enchantment condition
+  emits the `equipment.mainhand` predicate with `entity: "this"`.
 - Block and entity NBT logic/number/text conditions emit `location_check` and
   `entity_properties` with the expected SNBT value.
-- An entity main-hand item enchantment condition emits the
+- The enchantment condition emits the
   `equipment.mainhand` predicate with the selected enchantment and level.
   The enchantment id is lower case, and the predicate entry uses the official
   1.21 `enchantments` list with a `levels` range object, for example
   `{"enchantments":["minecraft:vanishing_curse"],"levels":{"min":1}}`.
+- The minimum-only and range enchantment blocks accept Integer level inputs;
+  the range block writes both `levels.min` and `levels.max`, and reversed
+  bounds are swapped with a warning.
 - The item count socket accepts `Integer`, `Float`, `Integer provider`,
   `Float provider`, `Uniform` or `Binomial`; generated JSON uses a bare number
   for constants and a `minecraft:constant` object for provider constants.

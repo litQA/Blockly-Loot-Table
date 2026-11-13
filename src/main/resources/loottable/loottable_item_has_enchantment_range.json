@@ -1,0 +1,45 @@
+{
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "item",
+      "check": "MCItem"
+    },
+    {
+      "type": "field_data_list_selector",
+      "name": "enhancement",
+      "datalist": "enchantments",
+      "customEntryProviders": "enchantment"
+    },
+    {
+      "type": "input_value",
+      "name": "min",
+      "check": "Number"
+    },
+    {
+      "type": "input_value",
+      "name": "max",
+      "check": "Number"
+    }
+  ],
+  "inputsInline": true,
+  "previousStatement": "LootTableCondition",
+  "nextStatement": "LootTableCondition",
+  "colour": 350,
+  "mcreator": {
+    "toolbox_id": "loottable_items",
+    "toolbox_init": [
+      "<value name=\"item\"><block type=\"loottable_entity_mainhand_item\"><value name=\"entity\"><block type=\"loottable_source_entity_dependency\"></block></value></block></value>",
+      "<value name=\"min\"><block type=\"loottable_integer\"><field name=\"value\">1</field></block></value>",
+      "<value name=\"max\"><block type=\"loottable_integer\"><field name=\"value\">3</field></block></value>"
+    ],
+    "fields": [
+      "enhancement"
+    ],
+    "inputs": [
+      "item",
+      "min",
+      "max"
+    ]
+  }
+}

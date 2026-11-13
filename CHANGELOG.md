@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.0.3.16-beta
+
+### Fixed
+
+- Block loot tables can now use **Source entity**, **Immediate source entity**
+  and **Source player** to test the block breaker. These aliases resolve to
+  `this`; they are no longer rejected or skipped.
+- Block tables can now test the breaker's main-hand tool enchantment. The item
+  input, equipment predicate and `match_tool` fallback work in both table types.
+
+### New Content
+
+- Added minimum-only and range enchantment condition blocks. Both take an item
+  input, an enchantment selector and integer level inputs; the range block
+  writes `levels` with both `min` and `max`. The older single-level condition is
+  kept for existing workspaces and hidden from the toolbox.
+
+### Internal
+
+- Extended the headless self-check to 224 checks, including block source
+  aliases, block main-hand enchantment output and the new level sockets.
+
 ## 1.0.3.14-beta
 
 ### Fixed

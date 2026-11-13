@@ -29,6 +29,7 @@ public final class LootTableSelfCheck {
         validEntityPotionCondition();
         validNbtConditions();
         validItemEnchantmentCondition();
+        validBlockSourceAliases();
         validCountFunctions();
         integerTruncation();
         strictConnectionChecks();
@@ -83,6 +84,8 @@ public final class LootTableSelfCheck {
                 "blockly.block.loottable_source_player_dependency",
                 "blockly.block.loottable_entity_mainhand_item",
                 "blockly.block.loottable_item_has_enchantment",
+                "blockly.block.loottable_item_has_enchantment_min",
+                "blockly.block.loottable_item_has_enchantment_range",
                 "blockly.block.loottable_block_nbt_logic",
                 "blockly.block.loottable_block_nbt_number",
                 "blockly.block.loottable_block_nbt_text",
@@ -265,39 +268,98 @@ public final class LootTableSelfCheck {
     }
 
     private static void validItemEnchantmentCondition() {
-        BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(entityTableXml(
+        BlocklyXmlParser.ParseResult rangeResult = BlocklyXmlParser.parse(entityTableXml(
                 entry("Items.ROTTEN_FLESH", 1, 1),
-                condition("loottable_item_has_enchantment",
+                condition("loottable_item_has_enchantment_range",
                         "<value name=\"item\"><block type=\"loottable_entity_mainhand_item\">"
                                 + "<value name=\"entity\"><block type=\"loottable_source_entity_dependency\"></block></value>"
                                 + "</block></value>"
                                 + "<field name=\"enhancement\">minecraft:SHARPNESS</field>"
-                                + "<field name=\"level\">3</field>")),
+                                + "<value name=\"min\"><block type=\"loottable_integer\">"
+                                + "<field name=\"value\">2</field></block></value>"
+                                + "<value name=\"max\"><block type=\"loottable_integer\">"
+                                + "<field name=\"value\">5</field></block></value>")),
                 LootTableType.ENTITY, value -> value);
-        check(!result.report().hasErrors(), "item enchantment condition has no errors");
-        String json = LootTableJsonWriter.write(result.model(), "test", "entities/zombie", false);
-        check(json.contains("\"condition\": \"minecraft:entity_properties\""),
+        check(!rangeResult.report().hasErrors(), "range enchantment condition has no errors");
+        String rangeJson = LootTableJsonWriter.write(rangeResult.model(), "test", "entities/zombie", false);
+        check(rangeJson.contains("\"condition\": \"minecraft:entity_properties\""),
                 "main-hand enchantment uses entity_properties");
-        check(json.contains("\"entity\": \"attacker\""), "main-hand enchantment uses the source entity");
-        check(json.contains("\"equipment\""), "main-hand enchantment uses equipment");
-        check(json.contains("\"mainhand\""), "main-hand enchantment uses the mainhand slot");
-        check(json.contains("\"minecraft:enchantments\": [\n"), "enchantment predicate list exists");
-        check(json.contains("\"enchantments\": [\n") && json.contains("\"minecraft:sharpness\""),
+        check(rangeJson.contains("\"entity\": \"attacker\""),
+                "main-hand enchantment uses the entity source");
+        check(rangeJson.contains("\"equipment\"") && rangeJson.contains("\"mainhand\""),
+                "main-hand enchantment uses the mainhand slot");
+        check(rangeJson.contains("\"enchantments\": [\n")
+                        && rangeJson.contains("\"minecraft:sharpness\""),
                 "enchantment id is lower-case and uses the official plural list");
-        check(json.contains("\"levels\": {") && json.contains("\"min\": 3"),
-                "enchantment level is a minimum range object");
-        check(!json.contains("\"enchantment\":"), "enchantment predicate does not use a singular field");
+        check(rangeJson.contains("\"levels\": {") && rangeJson.contains("\"min\": 2"),
+                "range enchantment has a minimum level");
+        check(rangeJson.contains("\"max\": 5"), "range enchantment has a maximum level");
+        check(!rangeJson.contains("\"enchantment\":"),
+                "enchantment predicate does not use a singular field");
+
+        BlocklyXmlParser.ParseResult blockResult = BlocklyXmlParser.parse(blockTableXml(
+                entry("Blocks.STONE", 1, 1),
+                condition("loottable_item_has_enchantment_min",
+                        "<value name=\"item\"><block type=\"loottable_entity_mainhand_item\">"
+                                + "<value name=\"entity\"><block type=\"loottable_source_entity_dependency\"></block></value>"
+                                + "</block></value>"
+                                + "<field name=\"enhancement\">minecraft:fortune</field>"
+                                + "<value name=\"min\"><block type=\"loottable_integer\">"
+                                + "<field name=\"value\">1</field></block></value>")),
+                LootTableType.BLOCK, value -> value);
+        check(!blockResult.report().hasErrors(), "block main-hand enchantment has no errors");
+        check(!blockResult.report().summary().contains("unavailable"),
+                "block source entity is available for the breaker");
+        String blockJson = LootTableJsonWriter.write(blockResult.model(), "test", "blocks/stone", false);
+        check(blockJson.contains("\"entity\": \"this\""),
+                "block main-hand enchantment uses the breaker as this");
+        check(blockJson.contains("\"equipment\"") && blockJson.contains("\"mainhand\""),
+                "block main-hand enchantment uses the breaker equipment");
+        check(blockJson.contains("\"min\": 1"), "minimum enchantment level is written");
 
         BlocklyXmlParser.ParseResult toolResult = BlocklyXmlParser.parse(blockTableXml(
                 entry("Blocks.STONE", 1, 1),
-                condition("loottable_item_has_enchantment",
+                condition("loottable_item_has_enchantment_min",
                         "<field name=\"enhancement\">minecraft:fortune</field>"
-                                + "<field name=\"level\">2</field>")),
+                                + "<value name=\"min\"><block type=\"loottable_integer\">"
+                                + "<field name=\"value\">2</field></block></value>")),
                 LootTableType.BLOCK, value -> value);
         check(!toolResult.report().hasErrors(), "tool enchantment condition has no errors");
         String toolJson = LootTableJsonWriter.write(toolResult.model(), "test", "blocks/stone", false);
         check(toolJson.contains("\"condition\": \"minecraft:match_tool\""),
                 "tool enchantment uses match_tool");
+        check(toolJson.contains("\"min\": 2"), "tool enchantment has a minimum level");
+    }
+
+    private static void validBlockSourceAliases() {
+        assertEntityAlias("loottable_source_entity_dependency", "this", "block source entity is this");
+        assertEntityAlias("loottable_immediate_source_entity_dependency", "this",
+                "block immediate source entity is this");
+        assertEntityAlias("loottable_source_player_dependency", "this", "block source player is this");
+        assertEntityAlias("loottable_source_entity_dependency", "attacker",
+                "entity source entity is the attacker");
+        assertEntityAlias("loottable_immediate_source_entity_dependency", "direct_attacker",
+                "entity immediate source is the direct attacker");
+        assertEntityAlias("loottable_source_player_dependency", "attacking_player",
+                "entity source player is the attacking player");
+    }
+
+    private static void assertEntityAlias(String dependency, String expected, String message) {
+        LootTableType type = "this".equals(expected) ? LootTableType.BLOCK : LootTableType.ENTITY;
+        String xml = type == LootTableType.BLOCK
+                ? blockTableXml(entry("Blocks.STONE", 1, 1), condition("loottable_entity_has_potion",
+                        "<value name=\"entity\"><block type=\"" + dependency + "\"></block></value>"
+                                + "<field name=\"potion\">minecraft:fire_resistance</field>"))
+                : entityTableXml(entry("Items.ROTTEN_FLESH", 1, 1), condition("loottable_entity_has_potion",
+                        "<value name=\"entity\"><block type=\"" + dependency + "\"></block></value>"
+                                + "<field name=\"potion\">minecraft:fire_resistance</field>"));
+        BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(xml, type, value -> value);
+        check(!result.report().hasErrors(), message + " has no errors");
+        check(!result.report().summary().contains("unavailable"),
+                message + " is available");
+        String json = LootTableJsonWriter.write(result.model(), "test",
+                type == LootTableType.BLOCK ? "blocks/stone" : "entities/zombie", false);
+        check(json.contains("\"entity\": \"" + expected + "\""), message + " is written");
     }
 
     private static void validCountFunctions() {
@@ -427,6 +489,20 @@ public final class LootTableSelfCheck {
         check(resourceText("/blockly/js/loottable_float_field.js")
                         .contains("fieldRegistry.register('field_loottable_float'"),
                 "custom float field is registered");
+        String enchantmentMin = resourceText("/loottable/loottable_item_has_enchantment_min.json");
+        String enchantmentRange = resourceText("/loottable/loottable_item_has_enchantment_range.json");
+        check(enchantmentMin.contains("\"name\": \"min\"")
+                        && enchantmentMin.contains("\"check\": \"Number\""),
+                "minimum enchantment block has an integer level socket");
+        check(enchantmentRange.contains("\"name\": \"min\"")
+                        && enchantmentRange.contains("\"name\": \"max\""),
+                "range enchantment block has minimum and maximum sockets");
+        check(enchantmentMin.contains("\"check\": \"MCItem\"")
+                        && enchantmentRange.contains("\"check\": \"MCItem\""),
+                "enchantment blocks have an item input");
+        check(!resourceText("/loottable/loottable_item_has_enchantment.json")
+                        .contains("\"toolbox_id\""),
+                "legacy enchantment block is hidden from the toolbox");
     }
 
     private static void validEntityPotionOnBlock() {

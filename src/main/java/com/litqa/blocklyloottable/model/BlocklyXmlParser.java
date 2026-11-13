@@ -336,7 +336,8 @@ public final class BlocklyXmlParser {
                     return null;
                 }
             }
-            case "loottable_item_has_enchantment" -> {
+            case "loottable_item_has_enchantment", "loottable_item_has_enchantment_min",
+                    "loottable_item_has_enchantment_range" -> {
                 if (!parseItemEnchantmentCondition(block, blockType, type, condition, report)) {
                     return null;
                 }
@@ -412,10 +413,27 @@ public final class BlocklyXmlParser {
         if (!enchantment.contains(":")) {
             enchantment = "minecraft:" + enchantment;
         }
-        double level = readWholeNumber(block, "level", 1, 1, "Enchantment level", report);
-        if (level > 255) {
-            report.addWarning(blockType, "Enchantment level cannot exceed 255; the value was clamped.");
-            level = 255;
+
+        int minimum;
+        Integer maximum = null;
+        if ("loottable_item_has_enchantment".equals(blockType)) {
+            minimum = (int) readWholeNumber(block, "level", 1, 1, "Enchantment level", report);
+            if (minimum > 255) {
+                report.addWarning(blockType, "Enchantment level cannot exceed 255; the value was clamped.");
+                minimum = 255;
+            }
+        } else {
+            minimum = readEnchantmentLevelInput(block, "min", 1, "Minimum enchantment level", report);
+            if ("loottable_item_has_enchantment_range".equals(blockType)) {
+                maximum = readEnchantmentLevelInput(block, "max", 3, "Maximum enchantment level", report);
+                if (maximum < minimum) {
+                    report.addWarning(blockType,
+                            "Maximum enchantment level is lower than the minimum; the bounds were swapped.");
+                    int swap = minimum;
+                    minimum = maximum;
+                    maximum = swap;
+                }
+            }
         }
 
         Element itemBlock = valueBlock(block, "item");
@@ -435,8 +453,51 @@ public final class BlocklyXmlParser {
         }
 
         condition.getProperties().put("enchantment", enchantment);
-        condition.getProperties().put("level", level);
+        condition.getProperties().put("minLevel", minimum);
+        if (maximum != null) {
+            condition.getProperties().put("maxLevel", maximum);
+        }
         return true;
+    }
+
+    private static int readEnchantmentLevelInput(Element block, String inputName, int fallback, String label,
+            ValidationReport report) {
+        Element value = valueBlock(block, inputName);
+        if (value == null) {
+            return fallback;
+        }
+        String valueType = value.getAttribute("type");
+        if (!"loottable_integer".equals(valueType) && !"loottable_integer_provider".equals(valueType)) {
+            report.addWarning(valueType,
+                    label + " must use an Integer block; the default value was used.");
+            return fallback;
+        }
+        String raw = fieldValue(value, "value").trim();
+        if (raw.isBlank()) {
+            report.addWarning(valueType, label + " is empty; the default value was used.");
+            return fallback;
+        }
+        try {
+            double number = Double.parseDouble(raw);
+            int level = (int) number;
+            if (number != level) {
+                report.addWarning(valueType,
+                        label + " value '" + raw + "' is not an integer; the fractional part was removed.");
+            }
+            if (level < 1) {
+                report.addWarning(valueType, label + " cannot be lower than 1; the minimum was used.");
+                level = 1;
+            }
+            if (level > 255) {
+                report.addWarning(valueType, label + " cannot exceed 255; the value was clamped.");
+                level = 255;
+            }
+            return level;
+        } catch (NumberFormatException exception) {
+            report.addWarning(valueType,
+                    label + " value '" + raw + "' is not a number; the default value was used.");
+            return fallback;
+        }
     }
 
     /**
@@ -783,29 +844,13 @@ public final class BlocklyXmlParser {
                 yield "this";
             }
             case "loottable_source_entity_dependency", "source_entity_from_deps" -> {
-                if (type == LootTableType.BLOCK) {
-                    report.addWarning(valueType,
-                            "Source entity is not available in a block loot table context; the condition was skipped.");
-                    yield "";
-                }
-                yield "attacker";
+                yield type == LootTableType.BLOCK ? "this" : "attacker";
             }
             case "loottable_immediate_source_entity_dependency", "immediate_source_entity_from_deps" -> {
-                if (type == LootTableType.BLOCK) {
-                    report.addWarning(valueType,
-                            "Immediate source entity is not available in a block loot table context; "
-                                    + "the condition was skipped.");
-                    yield "";
-                }
-                yield "direct_attacker";
+                yield type == LootTableType.BLOCK ? "this" : "direct_attacker";
             }
             case "loottable_source_player_dependency", "source_player_from_deps" -> {
-                if (type == LootTableType.BLOCK) {
-                    report.addWarning(valueType,
-                            "Source player is not available in a block loot table context; the condition was skipped.");
-                    yield "";
-                }
-                yield "attacking_player";
+                yield type == LootTableType.BLOCK ? "this" : "attacking_player";
             }
             default -> {
                 report.addWarning(valueType, "Entity value " + valueType + " is not supported and was skipped.");

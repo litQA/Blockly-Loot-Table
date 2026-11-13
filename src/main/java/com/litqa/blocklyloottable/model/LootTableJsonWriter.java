@@ -237,15 +237,22 @@ public final class LootTableJsonWriter {
                 predicate.put("nbt", nbt);
                 json.put("predicate", predicate);
             }
-            case "loottable_item_has_enchantment" -> {
+            case "loottable_item_has_enchantment", "loottable_item_has_enchantment_min",
+                    "loottable_item_has_enchantment_range" -> {
                 String enchantment = string(condition.getProperties().get("enchantment"));
                 if (enchantment.isBlank()) {
                     return null;
                 }
-                int level = (int) Math.max(1, Math.min(255,
-                        number(condition.getProperties().get("level"), 1)));
+                int minimum = (int) Math.max(1, Math.min(255,
+                        number(condition.getProperties().get("minLevel"),
+                                number(condition.getProperties().get("level"), 1))));
                 Map<String, Object> levels = new LinkedHashMap<>();
-                levels.put("min", level);
+                levels.put("min", minimum);
+                if (condition.getProperties().containsKey("maxLevel")) {
+                    int maximum = (int) Math.max(minimum, Math.min(255,
+                            number(condition.getProperties().get("maxLevel"), minimum)));
+                    levels.put("max", maximum);
+                }
                 Map<String, Object> enchantmentPredicate = new LinkedHashMap<>();
                 enchantmentPredicate.put("enchantments", List.of(enchantment));
                 enchantmentPredicate.put("levels", levels);

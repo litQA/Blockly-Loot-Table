@@ -12,6 +12,22 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.0.3.16-beta
+
+- Block loot tables provide the target entity when a player breaks the block.
+  Therefore the **Source entity**, **Immediate source entity** and **Source
+  player** aliases resolve to `this` in Block tables instead of being skipped.
+  Entity tables keep `attacker`, `direct_attacker` and `attacking_player`.
+- Enchantment conditions can use the breaker's main-hand item in Block tables.
+  They emit an `equipment.mainhand` predicate targeting `this`; a condition with
+  no item input falls back to `minecraft:match_tool`.
+- Added minimum-only and range enchantment conditions. The range condition
+  writes `levels` with both `min` and `max`; the minimum condition writes
+  `levels.min`. The legacy single-level block remains parseable but is hidden
+  from the toolbox.
+- Integer level sockets truncate fractional input with a warning, clamp levels
+  to `1..255`, and swap reversed range bounds with a warning.
+
 ### 1.0.3.14-beta
 
 - `Float` and `Float provider` no longer rely on Blockly's numeric field
