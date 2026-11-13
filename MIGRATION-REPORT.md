@@ -12,6 +12,13 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.0.3.13-beta
+
+- `Float` and `Float provider` no longer rely on Blockly's numeric field
+  formatting, which renders `1.0` as `1`. A custom text field validates the
+  numeric value, normalizes whole numbers to one decimal place, and keeps the
+  parser's existing numeric handling unchanged.
+
 ### 1.0.3.11-beta
 
 - The potion-effect condition is valid in both Block and Entity loot tables.

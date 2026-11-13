@@ -418,6 +418,15 @@ public final class LootTableSelfCheck {
         check(resourceText("/loottable/loottable_float_provider.json")
                         .contains("\"output\": \"NumberProvider\""),
                 "float provider has a provider output");
+        check(resourceText("/loottable/loottable_float.json").contains("\"field_loottable_float\"")
+                        && resourceText("/loottable/loottable_float.json").contains("\"text\": \"1.0\""),
+                "float number defaults to a visible 1.0");
+        check(resourceText("/loottable/loottable_float_provider.json").contains("\"field_loottable_float\"")
+                        && resourceText("/loottable/loottable_float_provider.json").contains("\"text\": \"1.0\""),
+                "float provider defaults to a visible 1.0");
+        check(resourceText("/blockly/js/loottable_float_field.js")
+                        .contains("fieldRegistry.register('field_loottable_float'"),
+                "custom float field is registered");
     }
 
     private static void validEntityPotionOnBlock() {

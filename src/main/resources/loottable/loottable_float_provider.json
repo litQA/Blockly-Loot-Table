@@ -1,12 +1,9 @@
 {
   "args0": [
     {
-      "type": "field_number",
+      "type": "field_loottable_float",
       "name": "value",
-      "value": 1.0,
-      "min": 0,
-      "max": 64000,
-      "precision": 0.01
+      "text": "1.0"
     }
   ],
   "output": "NumberProvider",

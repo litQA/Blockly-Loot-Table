@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.3.13-beta
+
+### Fixed
+
+- `Float` and `Float provider` use a dedicated Blockly field that keeps an
+  explicit decimal point. Their default value is now visibly `1.0` instead of
+  `1`; loading an older whole-number value also normalizes it to `X.0`.
+
+### Internal
+
+- Extended the headless self-check to 193 checks, including the custom float
+  field registration and the visible `1.0` defaults.
+
 ## 1.0.3.11-beta
 
 ### Fixed
