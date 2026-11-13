@@ -1,9 +1,9 @@
 {
   "args0": [
     {
-      "type": "field_mcitem_selector",
+      "type": "input_value",
       "name": "item",
-      "supported_mcitems": "all"
+      "check": "MCItem"
     },
     {
       "type": "input_value",
@@ -39,13 +39,14 @@
   "mcreator": {
     "toolbox_id": "loottable",
     "toolbox_init": [
+      "<value name=\"item\"><block type=\"loottable_item_selector\"></block></value>",
       "<value name=\"count\"><block type=\"loottable_integer\"><field name=\"value\">1</field></block></value>"
     ],
     "fields": [
-      "item",
       "weight"
     ],
     "inputs": [
+      "item",
       "count"
     ],
     "statements": [
@@ -58,4 +59,3 @@
     ]
   }
 }
-

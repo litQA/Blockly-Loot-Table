@@ -210,11 +210,37 @@ public final class LootTableModel {
         }
     }
 
+    public static final class EnchantmentLevel {
+
+        private final String enchantment;
+        private final int minLevel;
+        private final Integer maxLevel;
+
+        public EnchantmentLevel(String enchantment, int minLevel, Integer maxLevel) {
+            this.enchantment = enchantment == null ? "" : enchantment;
+            this.minLevel = minLevel;
+            this.maxLevel = maxLevel;
+        }
+
+        public String getEnchantment() {
+            return enchantment;
+        }
+
+        public int getMinLevel() {
+            return minLevel;
+        }
+
+        public Integer getMaxLevel() {
+            return maxLevel;
+        }
+    }
+
     public static final class Condition {
 
         private final String blockType;
         private final String jsonType;
         private final Map<String, Object> properties = new LinkedHashMap<>();
+        private final List<Condition> terms = new ArrayList<>();
         private Condition term;
 
         public Condition(String blockType, String jsonType) {
@@ -232,6 +258,10 @@ public final class LootTableModel {
 
         public Map<String, Object> getProperties() {
             return properties;
+        }
+
+        public List<Condition> getTerms() {
+            return terms;
         }
 
         public Condition getTerm() {

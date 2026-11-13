@@ -13,39 +13,39 @@ Supported condition blocks:
 - `killed_by_player` (Entity loot tables only)
 - `survives_explosion` (Block loot tables only)
 - `weather_check`
-- `inverted`
 - block-state boolean, integer and enum comparisons (Block loot tables only)
 - entity potion-effect predicate (Block tables test the player who breaks the
   block; Entity tables test the selected entity)
 - block and entity NBT logic, number and text comparisons
-- item enchantment condition with an item input, minimum level and optional
+- item enchantment conditions with an item input, minimum level and optional
   maximum level
-- legacy `block_state_property` (parseable for existing workspaces; hidden from the toolbox)
+- multi-enchantment item condition with dynamic enchantment rows
+- nested `and`, `or` and `not` logic conditions
 
-The **minecraft components** category provides the provided-blockstate, block
-selector, event/target entity, source entity, immediate source entity, source
-player and entity main-hand item blocks. The provided blockstate resolves to the
-block selected by the loot table element. In Entity tables, source entity is the
-indirect damage source (`attacker`), immediate source entity is
-`direct_attacker`, and source player is `attacking_player`. In Block tables all
-three source aliases refer to the player who broke the block (`this`). The
-main-hand item block takes an entity input and can feed the enchantment
-condition.
+The **Minecraft components** category provides the empty item selector,
+provided-blockstate, block selector, event/target entity, source entity,
+immediate source entity, source player and entity main-hand item blocks. The
+provided blockstate resolves to the block selected by the loot table element.
+In Entity tables, source entity is the indirect damage source (`attacker`),
+immediate source entity is `direct_attacker`, and source player is
+`attacking_player`. In Block tables all three source aliases refer to the player
+who broke the block (`this`). The main-hand item block takes an entity input and
+can feed the enchantment conditions.
 
 The `loottable_start` block is hidden from the toolbox and cannot be deleted.
 Each loot table has exactly one start block; extra start blocks are ignored with
 a warning.
 
 Pools support `rolls`, `bonus_rolls`, conditions and weighted item entries.
-Entries support an item selector, a number count input, a weight, a condition
-chain and a function chain. The count input accepts a bare number or a number
-provider. The **Numbers** category contains the terminal `Integer` and `Float`
-blocks, the constant `Integer provider` and `Float provider` blocks, the
+Entries require an **Item selector** input, a number count input, a weight, a
+condition chain and a function chain. The count input accepts a bare number or a
+number provider. The **Numbers** category contains the terminal `Integer` and
+`Float` blocks, the constant `Integer provider` and `Float provider` blocks, the
 `Uniform` and `Binomial` provider blocks, and the `Add value` function block.
 `Uniform` and `Binomial` can be nested inside one another, and their sockets
 accept either a bare number or a provider. `Add value` appends a
-`minecraft:set_count` function with `"add": true`; the old `Set count uniform`
-function is kept only for existing workspaces and is hidden from the toolbox.
+`minecraft:set_count` function with `"add": true`. The old hidden uniform
+function and all other legacy blocks were removed in 1.0.3.21.
 
 Bare integer and float blocks serialize as bare JSON numbers. The two provider
 constant blocks serialize as `{"type":"minecraft:constant","value":...}`.
@@ -109,11 +109,13 @@ gradlew.bat selfCheck
 ## Usage
 
 1. Choose `Block` or `Entity`.
-2. Select a block/entity with **Select...**, or type a registry name. Leave the
-   target empty to derive the path from the element name.
+2. Select the target block/entity with the icon selector next to the type. The
+   button shows the selected icon. Leave it empty to derive the path from the
+   element name.
 3. The path is generated automatically as
    `<target namespace>:<blocks|entities>/<target path>`. Check **Manual path** to
-   disable the target selector and enter a path yourself.
+   disable the selector and enter a path yourself; uncheck it to restore the
+   automatic path.
 4. Build the pool/entry/condition chain below the fixed start block.
 5. Use the template selector for the two built-in examples.
 6. Save. Invalid condition scopes are marked in the Blockly workspace, shown in
@@ -153,6 +155,11 @@ The template selector creates both documents automatically.
   paint exceptions or repeated WebView execution timeouts in `mcreator.log`.
 - The element can be created, saved and reopened with its Blockly document.
 - The start block is not in the toolbox and cannot be deleted.
+- The header shows the target icon selector next to the type. Manual path
+  disables the selector and enables path editing; automatic mode disables the
+  path field and regenerates the path.
+- Selecting a zombie creates `minecraft:entities/zombie`, not
+  `minecraft:entities/EntityType.ZOMBIE`.
 - A Block table with `random_chance` and a diamond ore entry saves.
 - A Block table with `survives_explosion` saves.
 - A Block table with boolean/integer/enum property comparisons saves, and the
@@ -196,10 +203,19 @@ The template selector creates both documents automatically.
   `Block to test` prefix.
 - Entity and item blocks use the native entity and item colors, and NBT blocks
   use the native logic, math and text hues.
-- An Entity table containing `block_state_property` (or a block-state
-  comparison) shows a Blockly warning, shows an error in the compile notes
-  panel, and saving is blocked.
-- A Block table containing `killed_by_player` behaves the same way.
+- The **Logic** category contains `and`, `or` and `not`; all three can be nested
+  in each other. `and` emits `all_of`, `or` emits `any_of`, and `not` with
+  multiple children emits `inverted(all_of(...))`.
+- The entry item socket only accepts the empty item selector. The selector
+  appears in **Minecraft components** and shows the selected item icon.
+- The multi-enchantment condition starts with one row and allows adding/removing
+  rows. Each row has an enchantment selector and an integer minimum level.
+- Removed legacy blocks are absent from the toolbox. A workspace containing
+  `loottable_inverted`, `loottable_number`, the old uniform function, the old
+  single-level enchantment block or `loottable_block_state_property` requires
+  rebuilding that part of the table.
+- A Block table containing `killed_by_player` shows a Blockly warning, a compile
+  notes error, and saving is blocked.
 - Build output places the JSON in `loot_tables/` before 1.21 and `loot_table/`
   from 1.21 onward.
 - Empty, partially filled and malformed workspaces still produce a valid empty
@@ -208,6 +224,8 @@ The template selector creates both documents automatically.
 
 ## Notes and limitations
 
-See `MIGRATION-REPORT.md` for the full limitation list. The main restrictions in
-this first phase are the condition subset, concrete item entries only (item tags
-are skipped with a warning), and basic (not nested) predicate editors.
+See `MIGRATION-REPORT.md` for the full limitation list and
+`../dsh_docs/blockly_type.md` for the block type/usage reference. The main
+restrictions are the condition subset, concrete item entries only (item tags are
+skipped with a warning), and the fact that the multi-enchantment block emits a
+single predicate entry per row rather than a full nested predicate editor.

@@ -2,24 +2,23 @@
   "args0": [
     {
       "type": "input_statement",
-      "name": "term",
+      "name": "conditions",
       "check": "LootTableCondition"
     }
   ],
   "inputsInline": false,
   "previousStatement": "LootTableCondition",
   "nextStatement": "LootTableCondition",
-  "colour": 120,
+  "colour": 210,
   "mcreator": {
-    "toolbox_id": "loottable_conditions",
+    "toolbox_id": "loottable_logic",
     "toolbox_init": [
-      "<statement name=\"term\"><block type=\"loottable_random_chance\"><field name=\"chance\">0.5</field></block></statement>"
+      "<statement name=\"conditions\"><block type=\"loottable_random_chance\"><field name=\"chance\">0.5</field></block></statement>"
     ],
     "statements": [
       {
-        "name": "term"
+        "name": "conditions"
       }
     ]
   }
 }
-

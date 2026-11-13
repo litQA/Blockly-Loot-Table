@@ -1,5 +1,40 @@
 # Changelog
 
+## 1.0.3.21-beta
+
+### Breaking Changes
+
+- Removed the legacy `loottable_inverted`, `loottable_number`,
+  `loottable_function_set_count_uniform`, `loottable_item_has_enchantment` and
+  `loottable_block_state_property` blocks. Existing workspaces must rebuild
+  those parts with the current logic, number, enchantment or block-state
+  blocks.
+
+### New Content
+
+- Added the **Logic** category with nested `and`, `or` and `not` conditions.
+  `and`/`or` emit `all_of`/`any_of`; `not` with multiple children emits
+  `inverted(all_of(...))`.
+- Added the empty **Item selector** block to **Minecraft components**. Item
+  entries now use an item input with the selector as the default.
+- Added the multi-enchantment item condition with dynamic add/remove rows and
+  per-row enchantment selector plus minimum level.
+
+### Changed
+
+- Reworked the editor header: the target text field and Select button are
+  replaced by an icon selector, the path field moved next to **Manual path**, and
+  manual/automatic mode now disables the opposite control.
+- Entity automatic paths normalize mapped names such as
+  `minecraft:entities/EntityType.ZOMBIE` to `minecraft:entities/zombie`.
+
+### Internal
+
+- Extended the headless self-check to 255 checks, covering logic terms, the item
+  selector, the multi-enchantment mutator, automatic entity paths and strict
+  statement connections.
+- Added the block type and usage reference at `../dsh_docs/blockly_type.md`.
+
 ## 1.0.3.16-beta
 
 ### Fixed

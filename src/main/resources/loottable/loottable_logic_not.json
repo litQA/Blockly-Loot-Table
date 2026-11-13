@@ -1,0 +1,24 @@
+{
+  "args0": [
+    {
+      "type": "input_statement",
+      "name": "conditions",
+      "check": "LootTableCondition"
+    }
+  ],
+  "inputsInline": false,
+  "previousStatement": "LootTableCondition",
+  "nextStatement": "LootTableCondition",
+  "colour": 210,
+  "mcreator": {
+    "toolbox_id": "loottable_logic",
+    "toolbox_init": [
+      "<statement name=\"conditions\"><block type=\"loottable_random_chance\"><field name=\"chance\">0.5</field></block></statement>"
+    ],
+    "statements": [
+      {
+        "name": "conditions"
+      }
+    ]
+  }
+}

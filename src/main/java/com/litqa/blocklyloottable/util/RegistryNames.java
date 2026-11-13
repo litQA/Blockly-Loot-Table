@@ -81,7 +81,7 @@ public final class RegistryNames {
             value = value.substring("EXTERNAL:".length()).trim();
         }
         if (RESOURCE_LOCATION.matcher(value).matches()) {
-            return value;
+            return entity ? normalizeEntityName(value) : value;
         }
         if (workspace == null || workspace.getGenerator() == null) {
             return "";
@@ -97,6 +97,9 @@ public final class RegistryNames {
             mapped = mapped.trim();
             if (mapped.startsWith("#")) {
                 return mapped;
+            }
+            if (entity) {
+                return normalizeEntityName(mapped);
             }
             if (mapped.contains(":")) {
                 return mapped;
@@ -132,6 +135,38 @@ public final class RegistryNames {
     }
 
     /**
+     * Normalizes entity mappings such as {@code minecraft:entities/EntityType.ZOMBIE}
+     * into the registry id {@code minecraft:zombie}.
+     */
+    public static String normalizeEntityName(String value) {
+        if (value == null) {
+            return "";
+        }
+        String normalized = value.trim();
+        if (normalized.isEmpty() || normalized.startsWith("#")) {
+            return normalized;
+        }
+        String namespace = "minecraft";
+        String path = normalized;
+        int colon = normalized.indexOf(':');
+        if (colon >= 0) {
+            namespace = normalized.substring(0, colon);
+            path = normalized.substring(colon + 1);
+        }
+        boolean mappedEntity = path.startsWith("entities/");
+        if (mappedEntity) {
+            path = path.substring("entities/".length());
+        }
+        if (mappedEntity || path.startsWith("EntityType.")) {
+            int dot = path.lastIndexOf('.');
+            if (dot >= 0) {
+                path = path.substring(dot + 1);
+            }
+        }
+        return namespace + ":" + path.toLowerCase(Locale.ENGLISH);
+    }
+
+    /**
      * Builds the automatic loot table path for a selected target.
      *
      * @param workspace    current workspace
@@ -146,6 +181,9 @@ public final class RegistryNames {
         String effectiveTarget = target == null ? "" : target.trim();
         if (effectiveTarget.isEmpty() || effectiveTarget.startsWith("#")) {
             return modid + ":" + folder + "/" + sanitizePathSegment(fallbackName);
+        }
+        if (type == LootTableType.ENTITY) {
+            effectiveTarget = normalizeEntityName(effectiveTarget);
         }
 
         String namespace = modid;

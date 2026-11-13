@@ -185,7 +185,13 @@ public final class BlocklyXmlParser {
 
     private static LootTableModel.Entry parseEntry(Element block, LootTableType type, ItemNameResolver resolver,
             String providedBlock, ValidationReport report) {
-        String rawItem = fieldValue(block, "item");
+        Element itemBlock = valueBlock(block, "item");
+        if (itemBlock == null || !"loottable_item_selector".equals(itemBlock.getAttribute("type"))) {
+            report.addWarning("loottable_entry_item",
+                    "An item entry must use the item selector block; the entry was skipped.");
+            return null;
+        }
+        String rawItem = fieldValue(itemBlock, "item");
         if (rawItem.isBlank()) {
             report.addWarning("loottable_entry_item", "An item entry has no selected item and was skipped.");
             return null;
@@ -263,30 +269,6 @@ public final class BlocklyXmlParser {
                 condition.getProperties().put("thundering", readBoolean(block, "thundering", false,
                         "Weather check thundering", report));
             }
-            case "loottable_block_state_property" -> {
-                String rawBlock = fieldValue(block, "block");
-                if (rawBlock.isBlank()) {
-                    report.addWarning(blockType, "Block state property has no block and was skipped.");
-                    return null;
-                }
-                String resolvedBlock = resolver.resolve(rawBlock);
-                if (resolvedBlock.isBlank() || resolvedBlock.startsWith("#")) {
-                    report.addWarning(blockType,
-                            "Block state property block '" + rawBlock + "' is not a concrete block and was skipped.");
-                    return null;
-                }
-                condition.getProperties().put("block", resolvedBlock);
-
-                String property = fieldValue(block, "property");
-                String value = fieldValue(block, "value");
-                if (property.isBlank()) {
-                    report.addWarning(blockType,
-                            "Block state property has no property name; it will match any block state.");
-                } else {
-                    condition.getProperties().put("property", property);
-                    condition.getProperties().put("value", value);
-                }
-            }
             case "loottable_block_state_boolean", "loottable_block_state_integer", "loottable_block_state_enum" -> {
                 String resolvedBlock = parseBlockValue(block, "block", providedBlock, resolver, report);
                 if (resolvedBlock.isBlank()) {
@@ -336,30 +318,55 @@ public final class BlocklyXmlParser {
                     return null;
                 }
             }
-            case "loottable_item_has_enchantment", "loottable_item_has_enchantment_min",
-                    "loottable_item_has_enchantment_range" -> {
+            case "loottable_item_has_enchantment_min", "loottable_item_has_enchantment_range" -> {
                 if (!parseItemEnchantmentCondition(block, blockType, type, condition, report)) {
                     return null;
                 }
             }
-            case "loottable_inverted" -> {
-                Element termBlock = statementFirstBlock(block, "term");
-                if (termBlock == null) {
-                    report.addWarning(blockType, "Inverted condition has no nested condition and was skipped.");
+            case "loottable_item_has_enchantments" -> {
+                if (!parseMultiEnchantmentCondition(block, type, resolver, condition, report)) {
                     return null;
                 }
-                LootTableModel.Condition term = parseCondition(termBlock, type, resolver, providedBlock, report);
-                if (term == null) {
-                    report.addWarning(blockType, "Inverted condition has no valid nested condition and was skipped.");
+            }
+            case "loottable_logic_and", "loottable_logic_or" -> {
+                if (!parseLogicTerms(block, blockType, type, resolver, providedBlock, condition, report)) {
                     return null;
                 }
-                condition.setTerm(term);
+            }
+            case "loottable_logic_not" -> {
+                if (!parseLogicTerms(block, blockType, type, resolver, providedBlock, condition, report)) {
+                    return null;
+                }
+                if (condition.getTerms().size() == 1) {
+                    condition.setTerm(condition.getTerms().get(0));
+                } else {
+                    LootTableModel.Condition allOf = new LootTableModel.Condition(
+                            "loottable_logic_and", "minecraft:all_of");
+                    allOf.getTerms().addAll(condition.getTerms());
+                    condition.setTerm(allOf);
+                }
             }
             default -> {
                 // Killed by player and survives explosion carry no extra fields.
             }
         }
         return condition;
+    }
+
+    private static boolean parseLogicTerms(Element block, String blockType, LootTableType type,
+            ItemNameResolver resolver, String providedBlock, LootTableModel.Condition condition,
+            ValidationReport report) {
+        Element first = statementFirstBlock(block, "conditions");
+        if (first == null) {
+            report.addWarning(blockType, "Logic condition has no nested condition and was skipped.");
+            return false;
+        }
+        parseConditionChain(first, type, resolver, providedBlock, condition.getTerms(), report);
+        if (condition.getTerms().isEmpty()) {
+            report.addWarning(blockType, "Logic condition has no valid nested condition and was skipped.");
+            return false;
+        }
+        return true;
     }
 
     private static boolean parseBlockNbtCondition(Element block, String blockType, String providedBlock,
@@ -414,25 +421,16 @@ public final class BlocklyXmlParser {
             enchantment = "minecraft:" + enchantment;
         }
 
-        int minimum;
+        int minimum = readEnchantmentLevelInput(block, "min", 1, "Minimum enchantment level", report);
         Integer maximum = null;
-        if ("loottable_item_has_enchantment".equals(blockType)) {
-            minimum = (int) readWholeNumber(block, "level", 1, 1, "Enchantment level", report);
-            if (minimum > 255) {
-                report.addWarning(blockType, "Enchantment level cannot exceed 255; the value was clamped.");
-                minimum = 255;
-            }
-        } else {
-            minimum = readEnchantmentLevelInput(block, "min", 1, "Minimum enchantment level", report);
-            if ("loottable_item_has_enchantment_range".equals(blockType)) {
-                maximum = readEnchantmentLevelInput(block, "max", 3, "Maximum enchantment level", report);
-                if (maximum < minimum) {
-                    report.addWarning(blockType,
-                            "Maximum enchantment level is lower than the minimum; the bounds were swapped.");
-                    int swap = minimum;
-                    minimum = maximum;
-                    maximum = swap;
-                }
+        if ("loottable_item_has_enchantment_range".equals(blockType)) {
+            maximum = readEnchantmentLevelInput(block, "max", 3, "Maximum enchantment level", report);
+            if (maximum < minimum) {
+                report.addWarning(blockType,
+                        "Maximum enchantment level is lower than the minimum; the bounds were swapped.");
+                int swap = minimum;
+                minimum = maximum;
+                maximum = swap;
             }
         }
 
@@ -458,6 +456,108 @@ public final class BlocklyXmlParser {
             condition.getProperties().put("maxLevel", maximum);
         }
         return true;
+    }
+
+    private static boolean parseMultiEnchantmentCondition(Element block, LootTableType type,
+            ItemNameResolver resolver, LootTableModel.Condition condition, ValidationReport report) {
+        String blockType = block.getAttribute("type");
+        Element itemBlock = valueBlock(block, "item");
+        if (itemBlock != null) {
+            if ("loottable_entity_mainhand_item".equals(itemBlock.getAttribute("type"))) {
+                String entity = parseEntityValue(itemBlock, "entity", type, report);
+                if (entity.isBlank()) {
+                    return false;
+                }
+                condition.getProperties().put("mode", "entity");
+                condition.getProperties().put("entity", entity);
+            } else if ("loottable_item_selector".equals(itemBlock.getAttribute("type"))) {
+                String rawItem = fieldValue(itemBlock, "item").trim();
+                if (!rawItem.isBlank()) {
+                    String resolvedItem = resolver.resolve(rawItem);
+                    if (resolvedItem.isBlank() || resolvedItem.startsWith("#")) {
+                        report.addWarning(blockType,
+                                "Enchantment condition item '" + rawItem + "' is not a concrete item and was skipped.");
+                        return false;
+                    }
+                    condition.getProperties().put("mode", "tool");
+                    condition.getProperties().put("item", resolvedItem);
+                } else {
+                    condition.getProperties().put("mode", "tool");
+                }
+            } else {
+                report.addWarning(itemBlock.getAttribute("type"),
+                        "Enchantment condition only supports the item selector or a main-hand item source; the condition was skipped.");
+                return false;
+            }
+        } else {
+            condition.getProperties().put("mode", "tool");
+        }
+
+        int count = mutationInputCount(block);
+        List<LootTableModel.EnchantmentLevel> enchantments = new ArrayList<>();
+        for (int index = 0; index < count; index++) {
+            String enchantment = fieldValue(block, "enchantment" + index).trim();
+            if (enchantment.isBlank()) {
+                continue;
+            }
+            enchantment = enchantment.toLowerCase(Locale.ROOT);
+            if (!enchantment.contains(":")) {
+                enchantment = "minecraft:" + enchantment;
+            }
+            int level = readEnchantmentLevelField(block, index, report);
+            enchantments.add(new LootTableModel.EnchantmentLevel(enchantment, level, null));
+        }
+        if (enchantments.isEmpty()) {
+            report.addWarning(blockType,
+                    "Enchantment condition has no enchantment selected and was skipped.");
+            return false;
+        }
+        condition.getProperties().put("enchantments", enchantments);
+        return true;
+    }
+
+    private static int mutationInputCount(Element block) {
+        for (Element mutation : directChildren(block, "mutation")) {
+            String inputs = mutation.getAttribute("inputs");
+            if (!inputs.isBlank()) {
+                try {
+                    return Math.max(1, Math.min(64, Integer.parseInt(inputs)));
+                } catch (NumberFormatException ignored) {
+                    return 1;
+                }
+            }
+        }
+        return 1;
+    }
+
+    private static int readEnchantmentLevelField(Element block, int index, ValidationReport report) {
+        String raw = fieldValue(block, "level" + index).trim();
+        if (raw.isBlank()) {
+            return 1;
+        }
+        try {
+            double number = Double.parseDouble(raw);
+            int level = (int) number;
+            if (number != level) {
+                report.addWarning("loottable_item_has_enchantments",
+                        "Enchantment level '" + raw + "' is not an integer; the fractional part was removed.");
+            }
+            if (level < 1) {
+                report.addWarning("loottable_item_has_enchantments",
+                        "Enchantment level cannot be lower than 1; the minimum was used.");
+                level = 1;
+            }
+            if (level > 255) {
+                report.addWarning("loottable_item_has_enchantments",
+                        "Enchantment level cannot exceed 255; the value was clamped.");
+                level = 255;
+            }
+            return level;
+        } catch (NumberFormatException exception) {
+            report.addWarning("loottable_item_has_enchantments",
+                    "Enchantment level '" + raw + "' is not a number; the default value was used.");
+            return 1;
+        }
     }
 
     private static int readEnchantmentLevelInput(Element block, String inputName, int fallback, String label,
@@ -576,23 +676,6 @@ public final class BlocklyXmlParser {
         String blockType = block.getAttribute("type");
         LootTableModel.LootFunction function = new LootTableModel.LootFunction(blockType);
         switch (blockType) {
-            case "loottable_function_set_count_uniform" -> {
-                LootTableModel.NumberProvider min = nonNegative(
-                        parseNumberInput(block, "min", 1, "Uniform minimum", report),
-                        blockType, "Uniform count", report);
-                LootTableModel.NumberProvider max = nonNegative(
-                        parseNumberInput(block, "max", 1, "Uniform maximum", report),
-                        blockType, "Uniform count", report);
-                if (isSimpleNumber(min) && isSimpleNumber(max) && max.getValue() < min.getValue()) {
-                    report.addWarning(blockType,
-                            "Uniform maximum was smaller than the minimum; the values were swapped.");
-                    LootTableModel.NumberProvider swap = min;
-                    min = max;
-                    max = swap;
-                }
-                function.getProperties().put("min", min);
-                function.getProperties().put("max", max);
-            }
             case "loottable_function_set_count_add" -> {
                 LootTableModel.NumberProvider count = nonNegative(
                         parseNumberInput(block, "count", 1, "Added count", report),
@@ -636,7 +719,7 @@ public final class BlocklyXmlParser {
                 return integerNumber(valueBlock, raw, fallback, fallbackFloating, label, report,
                         "loottable_integer_provider".equals(valueType));
             }
-            case "loottable_float", "loottable_float_provider", "loottable_number" -> {
+            case "loottable_float", "loottable_float_provider" -> {
                 raw = fieldValue(valueBlock, "value");
                 return floatingNumber(valueBlock, raw, fallback, fallbackFloating, label, report,
                         "loottable_float_provider".equals(valueType));

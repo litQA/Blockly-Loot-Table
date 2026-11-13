@@ -12,6 +12,30 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.0.3.21-beta
+
+- The editor target is now an icon selector. Manual path mode disables the
+  selector and enables path editing; automatic mode disables the field and
+  regenerates the path. This also removes the old free-form target text field.
+- Entity automatic paths normalize registry mappings such as
+  `minecraft:entities/EntityType.ZOMBIE` to `minecraft:entities/zombie`.
+- Added nested `and`, `or` and `not` conditions. `not` with one term emits
+  `inverted`; with multiple terms it emits `inverted(all_of(...))`, matching the
+  requested all-false semantics.
+- Item entries now require an **Item selector** data input. The empty selector is
+  available in **Minecraft components**, so entries no longer embed a selector
+  field directly.
+- Added a multi-enchantment condition using a `simpleRepeatingInputMixin`-style
+  mutator. Rows are added/removed dynamically and each row has an enchantment
+  id plus a minimum level.
+- Removed the legacy inverted, number, uniform-function, single-level
+  enchantment and block-state-property blocks. They are not parseable in this
+  version and are not present in the toolbox. Rebuild those parts with the
+  current blocks.
+- Limitation: the multi-enchantment block groups all rows into one
+  `minecraft:enchantments` predicate list; it does not expose independent
+  per-row level ranges or arbitrary nested item predicates.
+
 ### 1.0.3.16-beta
 
 - Block loot tables provide the target entity when a player breaks the block.

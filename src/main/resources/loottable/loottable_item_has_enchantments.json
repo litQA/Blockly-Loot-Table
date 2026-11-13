@@ -1,0 +1,46 @@
+{
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "item",
+      "check": "MCItem"
+    }
+  ],
+  "mutator": "loottable_item_has_enchantments_mutator",
+  "inputsInline": false,
+  "previousStatement": "LootTableCondition",
+  "nextStatement": "LootTableCondition",
+  "colour": 350,
+  "mcreator": {
+    "toolbox_id": "loottable_items",
+    "toolbox_init": [
+      "<value name=\"item\"><block type=\"loottable_item_selector\"></block></value>",
+      "<mutation inputs=\"1\"></mutation>"
+    ],
+    "inputs": [
+      "item"
+    ],
+    "repeating_fields": [
+      {
+        "name": "enchantment",
+        "field_definition": {
+          "testCount": 0,
+          "type": "field_data_list_selector",
+          "datalist": "enchantments",
+          "customEntryProviders": "enchantment"
+        }
+      },
+      {
+        "name": "level",
+        "field_definition": {
+          "testCount": 0,
+          "type": "field_number",
+          "value": 1,
+          "min": 1,
+          "max": 255,
+          "precision": 1
+        }
+      }
+    ]
+  }
+}

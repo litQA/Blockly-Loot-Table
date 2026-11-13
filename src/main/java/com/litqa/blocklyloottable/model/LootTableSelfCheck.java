@@ -1,5 +1,8 @@
 package com.litqa.blocklyloottable.model;
 
+import com.litqa.blocklyloottable.blockly.LootTableTemplates;
+import com.litqa.blocklyloottable.util.RegistryNames;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -29,6 +32,10 @@ public final class LootTableSelfCheck {
         validEntityPotionCondition();
         validNbtConditions();
         validItemEnchantmentCondition();
+        validLogicConditions();
+        validMultiEnchantmentCondition();
+        entityAutoPath();
+        templateDocumentsUseItemInput();
         validBlockSourceAliases();
         validCountFunctions();
         integerTruncation();
@@ -76,6 +83,7 @@ public final class LootTableSelfCheck {
                 "blockly.category.loottable_components",
                 "blockly.category.loottable_items",
                 "blockly.category.loottable_numbers",
+                "blockly.category.loottable_logic",
                 "blockly.block.loottable_block_state_boolean",
                 "blockly.block.loottable_block_state_integer",
                 "blockly.block.loottable_block_state_enum",
@@ -83,7 +91,14 @@ public final class LootTableSelfCheck {
                 "blockly.block.loottable_immediate_source_entity_dependency",
                 "blockly.block.loottable_source_player_dependency",
                 "blockly.block.loottable_entity_mainhand_item",
-                "blockly.block.loottable_item_has_enchantment",
+                "blockly.block.loottable_item_selector",
+                "blockly.block.loottable_item_has_enchantments",
+                "blockly.block.loottable_item_has_enchantments.level",
+                "blockly.block.loottable_item_has_enchantments.mutator.container",
+                "blockly.block.loottable_item_has_enchantments.mutator.input",
+                "blockly.block.loottable_logic_and",
+                "blockly.block.loottable_logic_or",
+                "blockly.block.loottable_logic_not",
                 "blockly.block.loottable_item_has_enchantment_min",
                 "blockly.block.loottable_item_has_enchantment_range",
                 "blockly.block.loottable_block_nbt_logic",
@@ -92,14 +107,12 @@ public final class LootTableSelfCheck {
                 "blockly.block.loottable_entity_nbt_logic",
                 "blockly.block.loottable_entity_nbt_number",
                 "blockly.block.loottable_entity_nbt_text",
-                "blockly.block.loottable_number",
                 "blockly.block.loottable_integer",
                 "blockly.block.loottable_float",
                 "blockly.block.loottable_integer_provider",
                 "blockly.block.loottable_float_provider",
                 "blockly.block.loottable_uniform",
                 "blockly.block.loottable_binomial",
-                "blockly.block.loottable_function_set_count_uniform",
                 "blockly.block.loottable_function_set_count_add")) {
             check(properties.containsKey(key), fileName + " contains " + key);
         }
@@ -112,12 +125,7 @@ public final class LootTableSelfCheck {
         mapping.put("Blocks.OAK_LOG", "minecraft:oak_log");
 
         BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(blockTableXml(
-                "<block type=\"loottable_entry_item\">"
-                        + "<field name=\"item\">Blocks.DIAMOND_ORE</field>"
-                        + "<value name=\"count\"><block type=\"loottable_integer\">"
-                        + "<field name=\"value\">1</field></block></value>"
-                        + "<field name=\"weight\">1</field>"
-                        + "</block>", ""), LootTableType.BLOCK, mapping::get);
+                entry("Blocks.DIAMOND_ORE", 1, 1), ""), LootTableType.BLOCK, mapping::get);
         check(!result.report().hasErrors(), "valid block table has no errors");
         check(result.model().getPools().size() == 1, "block table has one pool");
         check(result.model().getPools().get(0).getEntries().size() == 1, "block table has one entry");
@@ -331,6 +339,23 @@ public final class LootTableSelfCheck {
         check(toolJson.contains("\"min\": 2"), "tool enchantment has a minimum level");
     }
 
+    private static void entityAutoPath() {
+        String path = RegistryNames.autoPath(null, LootTableType.ENTITY,
+                "minecraft:entities/EntityType.ZOMBIE", "test");
+        check("minecraft:entities/zombie".equals(path),
+                "entity automatic path strips the EntityType mapping");
+    }
+
+    private static void templateDocumentsUseItemInput() {
+        for (int i = 1; i <= 2; i++) {
+            String xml = LootTableTemplates.byIndex(i);
+            check(xml != null && xml.contains("<value name=\"item\"><block type=\"loottable_item_selector\">"),
+                    "template " + i + " uses the item selector input");
+            check(xml != null && !xml.contains("<block type=\"loottable_entry_item\"><field name=\"item\">"),
+                    "template " + i + " has no legacy entry item field");
+        }
+    }
+
     private static void validBlockSourceAliases() {
         assertEntityAlias("loottable_source_entity_dependency", "this", "block source entity is this");
         assertEntityAlias("loottable_immediate_source_entity_dependency", "this",
@@ -443,14 +468,21 @@ public final class LootTableSelfCheck {
         check(!start.contains("\"nextStatement\": {") && !pool.contains("\"previousStatement\": {")
                         && !entryBlock.contains("\"previousStatement\": {"),
                 "statement checks use Blockly string form");
-        check(resourceText("/loottable/loottable_inverted.json").contains("\"check\": \"LootTableCondition\""),
-                "inverted terms only accept conditions");
+        check(resourceText("/loottable/loottable_logic_not.json").contains("\"check\": \"LootTableCondition\""),
+                "logic terms only accept conditions");
         check(resourceText("/loottable/$loottable_components.json").contains("\"color\": 120"),
                 "minecraft components category exists");
         check(resourceText("/loottable/$loottable_items.json").contains("\"color\": 350"),
                 "item category exists");
         check(resourceText("/loottable/$loottable_numbers.json").contains("\"color\": 230"),
                 "number category exists");
+        check(resourceText("/loottable/$loottable_logic.json").contains("\"color\": 210"),
+                "logic category exists");
+        check(resourceText("/loottable/loottable_item_selector.json")
+                        .contains("\"output\": \"MCItem\""),
+                "item selector is an item value block");
+        check(entryBlock.contains("\"name\": \"item\""),
+                "item entry has an item input");
         check(resourceText("/loottable/loottable_entity_has_potion.json").contains("\"colour\": 195"),
                 "entity condition uses the native entity color");
         check(entryBlock.contains("\"colour\": 350"), "item entry uses the native item color");
@@ -467,9 +499,12 @@ public final class LootTableSelfCheck {
         check(resourceText("/loottable/loottable_binomial.json")
                         .contains("\"NumberProvider\""),
                 "binomial inputs accept nested providers");
-        check(!resourceText("/loottable/loottable_function_set_count_uniform.json")
-                        .contains("\"toolbox_id\""),
-                "legacy uniform function is hidden from the toolbox");
+        check(resourceText("/loottable/loottable_item_has_enchantments.json")
+                        .contains("\"mutator\": \"loottable_item_has_enchantments_mutator\""),
+                "multi-enchantment block uses its mutator");
+        check(resourceText("/loottable/loottable_item_has_enchantments.json")
+                        .contains("\"repeating_fields\""),
+                "multi-enchantment block has repeating fields");
         check(resourceText("/loottable/loottable_integer.json").contains("\"output\": \"Number\""),
                 "integer number has a number output");
         check(resourceText("/loottable/loottable_float.json").contains("\"output\": \"Number\""),
@@ -500,9 +535,54 @@ public final class LootTableSelfCheck {
         check(enchantmentMin.contains("\"check\": \"MCItem\"")
                         && enchantmentRange.contains("\"check\": \"MCItem\""),
                 "enchantment blocks have an item input");
-        check(!resourceText("/loottable/loottable_item_has_enchantment.json")
-                        .contains("\"toolbox_id\""),
-                "legacy enchantment block is hidden from the toolbox");
+        check(resourceText("/blockly/js/loottable_mutators.js")
+                        .contains("loottable_item_has_enchantments_mutator"),
+                "multi-enchantment mutator script is registered");
+    }
+
+    private static void validLogicConditions() {
+        String logic = condition("loottable_logic_and",
+                "<statement name=\"conditions\">"
+                        + chain(condition("loottable_random_chance", "<field name=\"chance\">0.5</field>"),
+                        condition("loottable_survives_explosion", ""))
+                        + "</statement>");
+        BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(blockTableXml(
+                entry("Blocks.STONE", 1, 1), logic), LootTableType.BLOCK, value -> value);
+        check(!result.report().hasErrors(), "logic blocks parse without errors");
+        String json = LootTableJsonWriter.write(result.model(), "test", "blocks/stone", false);
+        check(json.contains("\"condition\": \"minecraft:all_of\""), "and emits all_of");
+        check(json.contains("\"terms\": ["), "and emits a term list");
+
+        String not = condition("loottable_logic_not",
+                "<statement name=\"conditions\">"
+                        + chain(condition("loottable_random_chance", "<field name=\"chance\">0.5</field>"),
+                        condition("loottable_survives_explosion", ""))
+                        + "</statement>");
+        BlocklyXmlParser.ParseResult notResult = BlocklyXmlParser.parse(blockTableXml(
+                entry("Blocks.STONE", 1, 1), not), LootTableType.BLOCK, value -> value);
+        check(!notResult.report().hasErrors(), "multi-term not parses without errors");
+        String notJson = LootTableJsonWriter.write(notResult.model(), "test", "blocks/stone", false);
+        check(notJson.contains("\"condition\": \"minecraft:inverted\""), "not emits inverted");
+        check(notJson.contains("\"condition\": \"minecraft:all_of\""),
+                "multi-term not wraps its terms in all_of");
+    }
+
+    private static void validMultiEnchantmentCondition() {
+        String multi = "<block type=\"loottable_item_has_enchantments\">"
+                + "<mutation inputs=\"2\"></mutation>"
+                + "<value name=\"item\"><block type=\"loottable_item_selector\">"
+                + "<field name=\"item\">minecraft:diamond_sword</field></block></value>"
+                + "<field name=\"enchantment0\">sharpness</field><field name=\"level0\">2</field>"
+                + "<field name=\"enchantment1\">minecraft:unbreaking</field><field name=\"level1\">3</field>"
+                + "</block>";
+        BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(blockTableXml(
+                entry("Blocks.STONE", 1, 1), multi), LootTableType.BLOCK, value -> value);
+        check(!result.report().hasErrors(), "multi-enchantment condition parses without errors");
+        String json = LootTableJsonWriter.write(result.model(), "test", "blocks/stone", false);
+        check(json.contains("\"minecraft:sharpness\""), "multi-enchantment writes the first row");
+        check(json.contains("\"minecraft:unbreaking\""), "multi-enchantment writes the second row");
+        check(json.contains("\"min\": 2") && json.contains("\"min\": 3"),
+                "multi-enchantment writes each minimum level");
     }
 
     private static void validEntityPotionOnBlock() {
@@ -557,12 +637,9 @@ public final class LootTableSelfCheck {
     private static void invalidEntityBlockState() {
         BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(entityTableXml(
                 entry("Items.ROTTEN_FLESH", 1, 1),
-                condition("loottable_block_state_property",
-                        "<field name=\"block\">Blocks.OAK_LOG</field>" +
-                                "<field name=\"property\">axis</field>" +
-                                "<field name=\"value\">x</field>")), LootTableType.ENTITY, value -> value);
+                condition("loottable_block_state_boolean", "")), LootTableType.ENTITY, value -> value);
         check(result.report().hasErrors(), "entity table with block state property is an error");
-        check(result.report().summary().contains("block_state_property"), "error names the block");
+        check(result.report().summary().contains("block_state"), "error names the block");
         check(result.report().summary().contains("Entity"), "error names the current type");
     }
 
@@ -656,17 +733,16 @@ public final class LootTableSelfCheck {
     }
 
     private static String entry(String item, int count, int weight) {
-        return "<block type=\"loottable_entry_item\">"
-                + "<field name=\"item\">" + item + "</field>"
-                + "<value name=\"count\"><block type=\"loottable_integer\">"
-                + "<field name=\"value\">" + count + "</field></block></value>"
-                + "<field name=\"weight\">" + weight + "</field>"
-                + "</block>";
+        return entryWithCount(item,
+                "<value name=\"count\"><block type=\"loottable_integer\">"
+                        + "<field name=\"value\">" + count + "</field></block></value>",
+                weight);
     }
 
     private static String entryWithCount(String item, String countXml, int weight) {
         return "<block type=\"loottable_entry_item\">"
-                + "<field name=\"item\">" + item + "</field>"
+                + "<value name=\"item\"><block type=\"loottable_item_selector\">"
+                + "<field name=\"item\">" + item + "</field></block></value>"
                 + countXml
                 + "<field name=\"weight\">" + weight + "</field>"
                 + "</block>";

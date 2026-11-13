@@ -23,10 +23,12 @@ public final class ConditionScopeRegistry {
                 ConditionScope.BLOCK_ONLY, "Survives explosion"));
         register(new ConditionDefinition("loottable_weather_check", "minecraft:weather_check",
                 ConditionScope.BLOCK_AND_ENTITY, "Weather check"));
-        register(new ConditionDefinition("loottable_inverted", "minecraft:inverted",
-                ConditionScope.BLOCK_AND_ENTITY, "Inverted condition"));
-        register(new ConditionDefinition("loottable_block_state_property", "minecraft:block_state_property",
-                ConditionScope.BLOCK_ONLY, "Block state property"));
+        register(new ConditionDefinition("loottable_logic_and", "minecraft:all_of",
+                ConditionScope.BLOCK_AND_ENTITY, "All conditions"));
+        register(new ConditionDefinition("loottable_logic_or", "minecraft:any_of",
+                ConditionScope.BLOCK_AND_ENTITY, "Any condition"));
+        register(new ConditionDefinition("loottable_logic_not", "minecraft:inverted",
+                ConditionScope.BLOCK_AND_ENTITY, "Negated conditions"));
         register(new ConditionDefinition("loottable_block_state_boolean", "minecraft:block_state_property",
                 ConditionScope.BLOCK_ONLY, "Block state boolean property"));
         register(new ConditionDefinition("loottable_block_state_integer", "minecraft:block_state_property",
@@ -47,12 +49,12 @@ public final class ConditionScopeRegistry {
                 ConditionScope.ENTITY_ONLY, "Entity number NBT"));
         register(new ConditionDefinition("loottable_entity_nbt_text", "minecraft:entity_properties",
                 ConditionScope.ENTITY_ONLY, "Entity text NBT"));
-        register(new ConditionDefinition("loottable_item_has_enchantment", "minecraft:match_tool",
-                ConditionScope.BLOCK_AND_ENTITY, "Item has enchantment"));
         register(new ConditionDefinition("loottable_item_has_enchantment_min", "minecraft:match_tool",
                 ConditionScope.BLOCK_AND_ENTITY, "Item has enchantment at least"));
         register(new ConditionDefinition("loottable_item_has_enchantment_range", "minecraft:match_tool",
                 ConditionScope.BLOCK_AND_ENTITY, "Item has enchantment in range"));
+        register(new ConditionDefinition("loottable_item_has_enchantments", "minecraft:match_tool",
+                ConditionScope.BLOCK_AND_ENTITY, "Item has several enchantments"));
     }
 
     private ConditionScopeRegistry() {
