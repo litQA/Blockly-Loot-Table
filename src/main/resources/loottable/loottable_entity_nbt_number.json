@@ -1,0 +1,53 @@
+{
+  "args0": [
+    {
+      "type": "field_input",
+      "name": "tag",
+      "text": "CustomName"
+    },
+    {
+      "type": "input_value",
+      "name": "entity",
+      "check": "Entity"
+    },
+    {
+      "type": "field_dropdown",
+      "name": "operator",
+      "options": [
+        [
+          "=",
+          "="
+        ]
+      ]
+    },
+    {
+      "type": "field_input",
+      "name": "value",
+      "text": "0"
+    }
+  ],
+  "inputsInline": true,
+  "previousStatement": {
+    "check": "LootTableCondition"
+  },
+  "nextStatement": {
+    "check": "LootTableCondition"
+  },
+  "colour": "%{BKY_MATH_HUE}",
+  "mcreator": {
+    "toolbox_id": "loottable_entities",
+    "toolbox_init": [
+      "<field name=\"tag\">CustomName</field>",
+      "<field name=\"value\">0</field>",
+      "<value name=\"entity\"><block type=\"loottable_entity_dependency\"></block></value>"
+    ],
+    "fields": [
+      "tag",
+      "operator",
+      "value"
+    ],
+    "inputs": [
+      "entity"
+    ]
+  }
+}

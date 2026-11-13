@@ -1,0 +1,44 @@
+{
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "item",
+      "check": "MCItem"
+    },
+    {
+      "type": "field_data_list_selector",
+      "name": "enhancement",
+      "datalist": "enchantments",
+      "customEntryProviders": "enchantment"
+    },
+    {
+      "type": "field_number",
+      "name": "level",
+      "value": 1,
+      "min": 1,
+      "max": 255,
+      "precision": 1
+    }
+  ],
+  "inputsInline": true,
+  "previousStatement": {
+    "check": "LootTableCondition"
+  },
+  "nextStatement": {
+    "check": "LootTableCondition"
+  },
+  "colour": 350,
+  "mcreator": {
+    "toolbox_id": "loottable_items",
+    "toolbox_init": [
+      "<value name=\"item\"><block type=\"loottable_entity_mainhand_item\"><value name=\"entity\"><block type=\"loottable_source_entity_dependency\"></block></value></block></value>"
+    ],
+    "fields": [
+      "enhancement",
+      "level"
+    ],
+    "inputs": [
+      "item"
+    ]
+  }
+}

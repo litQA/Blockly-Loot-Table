@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.0.3.2-beta
+
+### New Content
+
+- Added block and entity NBT logic, number and text comparisons. Block NBT uses
+  `minecraft:location_check`; entity NBT uses `minecraft:entity_properties`.
+- Added immediate-source-entity and source-player dependency blocks. Source
+  entity now resolves to the indirect damage source (`attacker`), immediate
+  source entity to `direct_attacker`, and source player to `attacking_player`.
+- Added the entity main-hand item block and the item enchantment condition.
+  Enchantment checks on a main-hand item emit an entity equipment predicate;
+  checks without an item input fall back to `minecraft:match_tool`.
+- Added item count value input plus the independent `set_count uniform` and
+  `set_count add` loot-function blocks on the entry function chain.
+- Added a `minecraft components` toolbox category, an item condition category,
+  and a number category.
+- Entity blocks now use the native entity color, item blocks the native item
+  color, and NBT blocks the native logic, math and text hues.
+- Added strict Blockly connection checks for pools, entries, conditions and
+  functions. Incompatible statement blocks can no longer be stacked.
+
+### Internal
+
+- Replaced entry `min_count`/`max_count` fields with a typed number provider and
+  a loot-function list in the model, parser and JSON writer.
+- Extended the headless self-check to 151 checks covering the new conditions,
+  dependencies, count functions, colors, categories and connection checks.
+
 ## 1.0.2.1-beta
 
 ### New Content

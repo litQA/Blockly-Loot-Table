@@ -6,20 +6,9 @@
       "supported_mcitems": "all"
     },
     {
-      "type": "field_number",
-      "name": "min_count",
-      "value": 1,
-      "min": 1,
-      "max": 64000,
-      "precision": 1
-    },
-    {
-      "type": "field_number",
-      "name": "max_count",
-      "value": 1,
-      "min": 1,
-      "max": 64000,
-      "precision": 1
+      "type": "input_value",
+      "name": "count",
+      "check": "Number"
     },
     {
       "type": "field_number",
@@ -31,25 +20,41 @@
     },
     {
       "type": "input_statement",
-      "name": "conditions"
+      "name": "conditions",
+      "check": "LootTableCondition"
+    },
+    {
+      "type": "input_statement",
+      "name": "functions",
+      "check": "LootTableFunction"
     }
   ],
   "inputsInline": true,
-  "previousStatement": null,
-  "nextStatement": null,
-  "colour": 200,
+  "previousStatement": {
+    "check": "LootTableEntry"
+  },
+  "nextStatement": {
+    "check": "LootTableEntry"
+  },
+  "colour": 350,
   "mcreator": {
     "toolbox_id": "loottable",
-    "toolbox_init": [],
+    "toolbox_init": [
+      "<value name=\"count\"><block type=\"loottable_number\"><field name=\"value\">1</field></block></value>"
+    ],
     "fields": [
       "item",
-      "min_count",
-      "max_count",
       "weight"
+    ],
+    "inputs": [
+      "count"
     ],
     "statements": [
       {
         "name": "conditions"
+      },
+      {
+        "name": "functions"
       }
     ]
   }

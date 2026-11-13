@@ -25,8 +25,12 @@
     }
   ],
   "inputsInline": true,
-  "previousStatement": null,
-  "nextStatement": null,
+  "previousStatement": {
+    "check": "LootTableCondition"
+  },
+  "nextStatement": {
+    "check": "LootTableCondition"
+  },
   "colour": 60,
   "mcreator": {
     "toolbox_id": "loottable_blocks",

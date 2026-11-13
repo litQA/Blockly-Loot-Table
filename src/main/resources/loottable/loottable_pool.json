@@ -18,16 +18,22 @@
     },
     {
       "type": "input_statement",
-      "name": "conditions"
+      "name": "conditions",
+      "check": "LootTableCondition"
     },
     {
       "type": "input_statement",
-      "name": "entries"
+      "name": "entries",
+      "check": "LootTableEntry"
     }
   ],
   "inputsInline": false,
-  "previousStatement": null,
-  "nextStatement": null,
+  "previousStatement": {
+    "check": "LootTablePool"
+  },
+  "nextStatement": {
+    "check": "LootTablePool"
+  },
   "colour": 20,
   "mcreator": {
     "toolbox_id": "loottable",

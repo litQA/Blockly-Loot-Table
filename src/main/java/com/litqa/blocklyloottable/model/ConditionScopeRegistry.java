@@ -35,6 +35,20 @@ public final class ConditionScopeRegistry {
                 ConditionScope.BLOCK_ONLY, "Block state enum property"));
         register(new ConditionDefinition("loottable_entity_has_potion", "minecraft:entity_properties",
                 ConditionScope.ENTITY_ONLY, "Entity has potion effect"));
+        register(new ConditionDefinition("loottable_block_nbt_logic", "minecraft:location_check",
+                ConditionScope.BLOCK_ONLY, "Block logic NBT"));
+        register(new ConditionDefinition("loottable_block_nbt_number", "minecraft:location_check",
+                ConditionScope.BLOCK_ONLY, "Block number NBT"));
+        register(new ConditionDefinition("loottable_block_nbt_text", "minecraft:location_check",
+                ConditionScope.BLOCK_ONLY, "Block text NBT"));
+        register(new ConditionDefinition("loottable_entity_nbt_logic", "minecraft:entity_properties",
+                ConditionScope.ENTITY_ONLY, "Entity logic NBT"));
+        register(new ConditionDefinition("loottable_entity_nbt_number", "minecraft:entity_properties",
+                ConditionScope.ENTITY_ONLY, "Entity number NBT"));
+        register(new ConditionDefinition("loottable_entity_nbt_text", "minecraft:entity_properties",
+                ConditionScope.ENTITY_ONLY, "Entity text NBT"));
+        register(new ConditionDefinition("loottable_item_has_enchantment", "minecraft:match_tool",
+                ConditionScope.BLOCK_AND_ENTITY, "Item has enchantment"));
     }
 
     private ConditionScopeRegistry() {

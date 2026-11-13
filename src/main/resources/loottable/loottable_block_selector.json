@@ -10,7 +10,7 @@
   "output": "MCItemBlock",
   "colour": 60,
   "mcreator": {
-    "toolbox_id": "loottable_blocks",
+    "toolbox_id": "loottable_components",
     "fields": [
       "block"
     ],

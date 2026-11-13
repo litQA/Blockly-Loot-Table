@@ -11,6 +11,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.regex.Pattern;
 
 /**
  * Converts a Blockly XML document into a loot table model and validation report.
@@ -20,6 +22,10 @@ import java.util.List;
  * specification requires generation to stop for illegal condition scopes.</p>
  */
 public final class BlocklyXmlParser {
+
+    private static final Pattern NBT_NUMBER = Pattern.compile(
+            "[-+]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][-+]?\\d+)?[bBsSlLfFdD]?");
+    private static final Pattern NBT_TAG = Pattern.compile("[A-Za-z0-9_.+-]+");
 
     private BlocklyXmlParser() {
     }
@@ -203,20 +209,12 @@ public final class BlocklyXmlParser {
 
         LootTableModel.Entry entry = new LootTableModel.Entry();
         entry.setItem(item);
-
-        double minCount = readWholeNumber(block, "min_count", 1, 1, "Entry minimum count", report);
-        double maxCount = readWholeNumber(block, "max_count", minCount, 1, "Entry maximum count", report);
-        if (maxCount < minCount) {
-            report.addWarning("loottable_entry_item",
-                    "Entry maximum count was smaller than the minimum; the maximum was raised to the minimum.");
-            maxCount = minCount;
-        }
-        entry.setMinCount(minCount);
-        entry.setMaxCount(maxCount);
+        entry.setCount(parseCount(block, report));
         entry.setWeight(readWholeNumber(block, "weight", 1, 1, "Entry weight", report));
 
         parseConditionChain(statementFirstBlock(block, "conditions"), type, resolver, providedBlock,
                 entry.getConditions(), report);
+        parseFunctionChain(statementFirstBlock(block, "functions"), entry.getFunctions(), report);
         return entry;
     }
 
@@ -328,6 +326,21 @@ public final class BlocklyXmlParser {
                 condition.getProperties().put("entity", entity);
                 condition.getProperties().put("effect", effect);
             }
+            case "loottable_block_nbt_logic", "loottable_block_nbt_number", "loottable_block_nbt_text" -> {
+                if (!parseBlockNbtCondition(block, blockType, providedBlock, resolver, condition, report)) {
+                    return null;
+                }
+            }
+            case "loottable_entity_nbt_logic", "loottable_entity_nbt_number", "loottable_entity_nbt_text" -> {
+                if (!parseEntityNbtCondition(block, blockType, type, condition, report)) {
+                    return null;
+                }
+            }
+            case "loottable_item_has_enchantment" -> {
+                if (!parseItemEnchantmentCondition(block, blockType, type, condition, report)) {
+                    return null;
+                }
+            }
             case "loottable_inverted" -> {
                 Element termBlock = statementFirstBlock(block, "term");
                 if (termBlock == null) {
@@ -346,6 +359,231 @@ public final class BlocklyXmlParser {
             }
         }
         return condition;
+    }
+
+    private static boolean parseBlockNbtCondition(Element block, String blockType, String providedBlock,
+            ItemNameResolver resolver, LootTableModel.Condition condition, ValidationReport report) {
+        String resolvedBlock = parseBlockValue(block, "block", providedBlock, resolver, report);
+        if (resolvedBlock.isBlank()) {
+            return false;
+        }
+        String tag = fieldValue(block, "tag").trim();
+        if (tag.isBlank()) {
+            report.addWarning(blockType, "Block NBT condition has no NBT tag and was skipped.");
+            return false;
+        }
+        String value = nbtComparisonValue(block, blockType, report);
+        if (value == null) {
+            return false;
+        }
+        condition.getProperties().put("block", resolvedBlock);
+        condition.getProperties().put("nbt", "{" + quoteNbtKey(tag) + ":" + value + "}");
+        return true;
+    }
+
+    private static boolean parseEntityNbtCondition(Element block, String blockType, LootTableType type,
+            LootTableModel.Condition condition, ValidationReport report) {
+        String entity = parseEntityValue(block, "entity", type, report);
+        if (entity.isBlank()) {
+            return false;
+        }
+        String tag = fieldValue(block, "tag").trim();
+        if (tag.isBlank()) {
+            report.addWarning(blockType, "Entity NBT condition has no NBT tag and was skipped.");
+            return false;
+        }
+        String value = nbtComparisonValue(block, blockType, report);
+        if (value == null) {
+            return false;
+        }
+        condition.getProperties().put("entity", entity);
+        condition.getProperties().put("nbt", "{" + quoteNbtKey(tag) + ":" + value + "}");
+        return true;
+    }
+
+    private static boolean parseItemEnchantmentCondition(Element block, String blockType, LootTableType type,
+            LootTableModel.Condition condition, ValidationReport report) {
+        String enchantment = fieldValue(block, "enhancement").trim();
+        if (enchantment.isBlank()) {
+            report.addWarning(blockType, "Enchantment condition has no enchantment selected and was skipped.");
+            return false;
+        }
+        if (!enchantment.contains(":")) {
+            enchantment = "minecraft:" + enchantment;
+        }
+        double level = readWholeNumber(block, "level", 1, 1, "Enchantment level", report);
+        if (level > 255) {
+            report.addWarning(blockType, "Enchantment level cannot exceed 255; the value was clamped.");
+            level = 255;
+        }
+
+        Element itemBlock = valueBlock(block, "item");
+        if (itemBlock == null) {
+            condition.getProperties().put("mode", "tool");
+        } else if ("loottable_entity_mainhand_item".equals(itemBlock.getAttribute("type"))) {
+            String entity = parseEntityValue(itemBlock, "entity", type, report);
+            if (entity.isBlank()) {
+                return false;
+            }
+            condition.getProperties().put("mode", "entity");
+            condition.getProperties().put("entity", entity);
+        } else {
+            report.addWarning(itemBlock.getAttribute("type"),
+                    "Enchantment condition only supports a main-hand item source in this version; the condition was skipped.");
+            return false;
+        }
+
+        condition.getProperties().put("enchantment", enchantment);
+        condition.getProperties().put("level", level);
+        return true;
+    }
+
+    /**
+     * Converts the comparison field of an NBT condition to an SNBT value.
+     *
+     * @return SNBT value or {@code null} when the value is invalid
+     */
+    private static String nbtComparisonValue(Element block, String blockType, ValidationReport report) {
+        String raw = fieldValue(block, "value").trim();
+        if (raw.isBlank()) {
+            report.addWarning(blockType, "NBT condition has no comparison value and was skipped.");
+            return null;
+        }
+        if (blockType.endsWith("_logic")) {
+            String normalized = raw.toLowerCase(Locale.ROOT);
+            if ("true".equals(normalized) || "1".equals(normalized)) {
+                return "1b";
+            }
+            if ("false".equals(normalized) || "0".equals(normalized)) {
+                return "0b";
+            }
+            report.addWarning(blockType, "NBT logic value '" + raw + "' is not true or false and was skipped.");
+            return null;
+        }
+        if (blockType.endsWith("_number")) {
+            if (!NBT_NUMBER.matcher(raw).matches()) {
+                report.addWarning(blockType, "NBT number value '" + raw + "' is not valid and was skipped.");
+                return null;
+            }
+            return raw;
+        }
+        return quoteNbtText(raw);
+    }
+
+    private static String quoteNbtKey(String key) {
+        return NBT_TAG.matcher(key).matches() ? key : quoteNbtText(key);
+    }
+
+    private static String quoteNbtText(String value) {
+        StringBuilder escaped = new StringBuilder(value.length() + 2);
+        escaped.append('"');
+        for (int index = 0; index < value.length(); index++) {
+            char character = value.charAt(index);
+            switch (character) {
+                case '\\' -> escaped.append("\\\\");
+                case '"' -> escaped.append("\\\"");
+                case '\n' -> escaped.append("\\n");
+                case '\r' -> escaped.append("\\r");
+                case '\t' -> escaped.append("\\t");
+                default -> escaped.append(character);
+            }
+        }
+        return escaped.append('"').toString();
+    }
+
+    private static LootTableModel.NumberProvider parseCount(Element block, ValidationReport report) {
+        Element countBlock = valueBlock(block, "count");
+        if (countBlock == null) {
+            return LootTableModel.NumberProvider.constant(1);
+        }
+        return parseNumberValue(countBlock, 1, "Entry count", report);
+    }
+
+    private static void parseFunctionChain(Element first, List<LootTableModel.LootFunction> functions,
+            ValidationReport report) {
+        for (Element block = first; block != null; block = nextBlock(block)) {
+            LootTableModel.LootFunction function = parseFunction(block, report);
+            if (function != null) {
+                functions.add(function);
+            }
+        }
+    }
+
+    private static LootTableModel.LootFunction parseFunction(Element block, ValidationReport report) {
+        String blockType = block.getAttribute("type");
+        LootTableModel.LootFunction function = new LootTableModel.LootFunction(blockType);
+        switch (blockType) {
+            case "loottable_function_set_count_uniform" -> {
+                double min = parseNumberInput(block, "min", 1, "Uniform minimum", report);
+                double max = parseNumberInput(block, "max", 1, "Uniform maximum", report);
+                if (min < 0 || max < 0) {
+                    report.addWarning(blockType, "Uniform count cannot be negative; negative values were clamped to 0.");
+                    min = Math.max(0, min);
+                    max = Math.max(0, max);
+                }
+                if (max < min) {
+                    report.addWarning(blockType,
+                            "Uniform maximum was smaller than the minimum; the values were swapped.");
+                    double swap = min;
+                    min = max;
+                    max = swap;
+                }
+                function.getProperties().put("min", min);
+                function.getProperties().put("max", max);
+            }
+            case "loottable_function_set_count_add" -> {
+                double count = parseNumberInput(block, "count", 1, "Added count", report);
+                if (count < 0) {
+                    report.addWarning(blockType, "Added count cannot be negative; the value was clamped to 0.");
+                    count = 0;
+                }
+                function.getProperties().put("count", count);
+            }
+            default -> {
+                report.addWarning(blockType, "Unknown loot function " + blockType + " was skipped.");
+                return null;
+            }
+        }
+        return function;
+    }
+
+    private static double parseNumberInput(Element block, String inputName, double fallback, String label,
+            ValidationReport report) {
+        Element valueBlock = valueBlock(block, inputName);
+        if (valueBlock == null) {
+            return fallback;
+        }
+        LootTableModel.NumberProvider provider = parseNumberValue(valueBlock, fallback, label, report);
+        return provider.getValue();
+    }
+
+    private static LootTableModel.NumberProvider parseNumberValue(Element valueBlock, double fallback,
+            String label, ValidationReport report) {
+        String valueType = valueBlock.getAttribute("type");
+        String raw;
+        switch (valueType) {
+            case "loottable_number" -> raw = fieldValue(valueBlock, "value");
+            case "math_number" -> raw = fieldValue(valueBlock, "NUM");
+            default -> {
+                report.addWarning(valueType,
+                        label + " only supports a number block in this version; the default was used.");
+                return LootTableModel.NumberProvider.constant(fallback);
+            }
+        }
+        if (raw.isBlank()) {
+            return LootTableModel.NumberProvider.constant(fallback);
+        }
+        try {
+            double value = Double.parseDouble(raw);
+            if (!Double.isFinite(value)) {
+                throw new NumberFormatException("not finite");
+            }
+            return LootTableModel.NumberProvider.constant(value);
+        } catch (NumberFormatException exception) {
+            report.addWarning(valueType,
+                    label + " value '" + raw + "' is not a number; the default was used.");
+            return LootTableModel.NumberProvider.constant(fallback);
+        }
     }
 
     private static String fieldValue(Element block, String name) {
@@ -408,9 +646,10 @@ public final class BlocklyXmlParser {
         String valueType = valueBlock.getAttribute("type");
         return switch (valueType) {
             case "loottable_entity_dependency", "entity_from_deps" -> "this";
-            case "loottable_source_entity_dependency", "source_entity_from_deps" ->
-                    type == LootTableType.ENTITY ? "attacker" : "attacking_player";
-            case "immediate_source_entity_dependency" -> "direct_attacker";
+            case "loottable_source_entity_dependency", "source_entity_from_deps" -> "attacker";
+            case "loottable_immediate_source_entity_dependency", "immediate_source_entity_from_deps" ->
+                    "direct_attacker";
+            case "loottable_source_player_dependency", "source_player_from_deps" -> "attacking_player";
             default -> {
                 report.addWarning(valueType, "Entity value " + valueType + " is not supported and was skipped.");
                 yield "";
@@ -421,7 +660,8 @@ public final class BlocklyXmlParser {
     private static Element valueBlock(Element block, String name) {
         for (Element value : directChildren(block, "value")) {
             if (name.equals(value.getAttribute("name"))) {
-                return directChild(value, "block");
+                Element connected = directChild(value, "block");
+                return connected != null ? connected : directChild(value, "shadow");
             }
         }
         return null;

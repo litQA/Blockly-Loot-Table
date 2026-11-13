@@ -7,7 +7,7 @@ modify MCreator's native loot table element or generator templates.
 
 ## Scope
 
-The first implementation supports these condition blocks:
+Supported condition blocks:
 
 - `random_chance`
 - `killed_by_player` (Entity loot tables only)
@@ -16,21 +16,28 @@ The first implementation supports these condition blocks:
 - `inverted`
 - block-state boolean, integer and enum comparisons (Block loot tables only)
 - entity potion-effect predicate (Entity loot tables only)
+- block and entity NBT logic, number and text comparisons
+- item enchantment condition with an item input (Entity or tool context)
 - legacy `block_state_property` (parseable for existing workspaces; hidden from the toolbox)
 
-The Blockly toolbox also provides “Provided blockstate” and “Block to test”
-value blocks for block conditions, and “Event/target entity” and “Source entity”
-value blocks for entity conditions. The provided blockstate resolves to the
-block selected by the loot table element; source entities resolve to
-`attacking_player` for block tables and `attacker` for entity tables.
+The **minecraft components** category provides the provided-blockstate, block
+selector, event/target entity, source entity, immediate source entity, source
+player and entity main-hand item blocks. The provided blockstate resolves to the
+block selected by the loot table element. Source entity is the indirect damage
+source (`attacker`), immediate source entity is `direct_attacker`, and source
+player is `attacking_player`. The main-hand item block takes an entity input and
+can feed the enchantment condition.
 
 The `loottable_start` block is hidden from the toolbox and cannot be deleted.
 Each loot table has exactly one start block; extra start blocks are ignored with
 a warning.
 
 Pools support `rolls`, `bonus_rolls`, conditions and weighted item entries.
-Entries support an item selector, a count range, a weight and an optional
-condition chain.
+Entries support an item selector, a number count input, a weight, a condition
+chain and a function chain. The function chain accepts `set_count uniform`
+(minimum and maximum) and `set_count add` (added count). Incompatible block
+types cannot be connected because pool, entry, condition and function
+connections use distinct Blockly types.
 
 ## Supported generators
 
@@ -100,8 +107,8 @@ gradlew.bat selfCheck
 
 The context dependencies shown in the editor are:
 
-- Block: `provided blockstate, block selector, source entity, world`
-- Entity: `event/target entity, source entity, world`
+- Block: `provided blockstate, block selector, source entity, immediate source entity, source player, world`
+- Entity: `event/target entity, source entity, immediate source entity, source player, main-hand item, world`
 
 ## Examples
 
@@ -111,7 +118,7 @@ The context dependencies shown in the editor are:
 Loot table start
 └── Pool (rolls 1, bonus rolls 0)
     ├── conditions: Random chance 0.5
-    └── entries: Item diamond ore, count 1 to 1, weight 1
+    └── entries: Item diamond ore, count 1, weight 1
 ```
 
 ### Entity rare drop with a player kill
@@ -119,7 +126,7 @@ Loot table start
 ```text
 Loot table start
 └── Pool (rolls 1, bonus rolls 0)
-    └── entries: Item rotten flesh, count 1 to 2, weight 1
+    └── entries: Item rotten flesh, count 2, weight 1
         └── conditions: Killed by player
 ```
 
@@ -142,6 +149,16 @@ The template selector creates both documents automatically.
 - An Entity table with the potion condition and **Source entity** emits
   `minecraft:entity_properties`, `entity: "attacker"` and a non-empty
   `predicate.effects` map.
+- Block and entity NBT logic/number/text conditions emit `location_check` and
+  `entity_properties` with the expected SNBT value.
+- An entity main-hand item enchantment condition emits the
+  `equipment.mainhand` predicate with the selected enchantment and level.
+- `set_count uniform` and `set_count add` on the entry function chain emit the
+  expected count provider and `add` flag.
+- Pool, entry, condition and function blocks only connect to their own chain;
+  pulling a condition onto an entry chain is rejected by Blockly.
+- Entity and item blocks use the native entity and item colors, and NBT blocks
+  use the native logic, math and text hues.
 - An Entity table containing `block_state_property` (or a block-state
   comparison) shows a Blockly warning, shows an error in the compile notes
   panel, and saving is blocked.

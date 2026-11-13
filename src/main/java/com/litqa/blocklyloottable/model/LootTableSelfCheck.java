@@ -27,6 +27,10 @@ public final class LootTableSelfCheck {
         validEntityTable();
         validBlockStateConditions();
         validEntityPotionCondition();
+        validNbtConditions();
+        validItemEnchantmentCondition();
+        validCountFunctions();
+        strictConnectionChecks();
         invalidEntityBlockState();
         invalidBlockKilledByPlayer();
         invalidEntityPotionOnBlock();
@@ -67,10 +71,26 @@ public final class LootTableSelfCheck {
                 "blockly.block.loottable_block_selector",
                 "blockly.block.loottable_entity_dependency",
                 "blockly.block.loottable_source_entity_dependency",
+                "blockly.category.loottable_components",
+                "blockly.category.loottable_items",
+                "blockly.category.loottable_numbers",
                 "blockly.block.loottable_block_state_boolean",
                 "blockly.block.loottable_block_state_integer",
                 "blockly.block.loottable_block_state_enum",
-                "blockly.block.loottable_entity_has_potion")) {
+                "blockly.block.loottable_entity_has_potion",
+                "blockly.block.loottable_immediate_source_entity_dependency",
+                "blockly.block.loottable_source_player_dependency",
+                "blockly.block.loottable_entity_mainhand_item",
+                "blockly.block.loottable_item_has_enchantment",
+                "blockly.block.loottable_block_nbt_logic",
+                "blockly.block.loottable_block_nbt_number",
+                "blockly.block.loottable_block_nbt_text",
+                "blockly.block.loottable_entity_nbt_logic",
+                "blockly.block.loottable_entity_nbt_number",
+                "blockly.block.loottable_entity_nbt_text",
+                "blockly.block.loottable_number",
+                "blockly.block.loottable_function_set_count_uniform",
+                "blockly.block.loottable_function_set_count_add")) {
             check(properties.containsKey(key), fileName + " contains " + key);
         }
     }
@@ -84,8 +104,8 @@ public final class LootTableSelfCheck {
         BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(blockTableXml(
                 "<block type=\"loottable_entry_item\">"
                         + "<field name=\"item\">Blocks.DIAMOND_ORE</field>"
-                        + "<field name=\"min_count\">1</field>"
-                        + "<field name=\"max_count\">1</field>"
+                        + "<value name=\"count\"><block type=\"loottable_number\">"
+                        + "<field name=\"value\">1</field></block></value>"
                         + "<field name=\"weight\">1</field>"
                         + "</block>", ""), LootTableType.BLOCK, mapping::get);
         check(!result.report().hasErrors(), "valid block table has no errors");
@@ -102,7 +122,7 @@ public final class LootTableSelfCheck {
 
     private static void validBlockTable() {
         BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(blockTableXml(
-                entry("Blocks.DIAMOND_ORE", 1, 1, 1),
+                entry("Blocks.DIAMOND_ORE", 1, 1),
                 chain(condition("loottable_random_chance", "<field name=\"chance\">0.5</field>"),
                         condition("loottable_survives_explosion", ""),
                         condition("loottable_weather_check",
@@ -119,13 +139,14 @@ public final class LootTableSelfCheck {
 
     private static void validEntityTable() {
         BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(entityTableXml(
-                entry("Items.ROTTEN_FLESH", 1, 2, 10),
+                entry("Items.ROTTEN_FLESH", 2, 10),
                 condition("loottable_killed_by_player", "")), LootTableType.ENTITY, value -> value);
         check(!result.report().hasErrors(), "valid entity conditions have no errors");
         String json = LootTableJsonWriter.write(result.model(), "test", "entities/zombie", true);
         check(json.contains("\"type\": \"minecraft:entity\""), "JSON root type is entity");
         check(json.contains("\"condition\": \"minecraft:killed_by_player\""), "killed by player exists");
-        check(json.contains("\"max\": 2"), "count range exists");
+        check(json.contains("\"function\": \"minecraft:set_count\""), "count function exists");
+        check(json.contains("\"value\": 2"), "count value is written");
     }
 
     private static void validBlockStateConditions() {
@@ -136,7 +157,7 @@ public final class LootTableSelfCheck {
         };
 
         BlocklyXmlParser.ParseResult booleanResult = BlocklyXmlParser.parse(blockTableXml(
-                entry("Blocks.DIAMOND_ORE", 1, 1, 1),
+                entry("Blocks.DIAMOND_ORE", 1, 1),
                 condition("loottable_block_state_boolean",
                         "<field name=\"property\">waterlogged</field>"
                                 + "<value name=\"block\"><block type=\"loottable_block_selector\">"
@@ -153,7 +174,7 @@ public final class LootTableSelfCheck {
                 "boolean block state property value exists");
 
         BlocklyXmlParser.ParseResult integerResult = BlocklyXmlParser.parse(blockTableXml(
-                entry("Blocks.DIAMOND_ORE", 1, 1, 1),
+                entry("Blocks.DIAMOND_ORE", 1, 1),
                 condition("loottable_block_state_integer",
                         "<field name=\"property\">age</field>"
                                 + "<value name=\"block\"><block type=\"loottable_provided_blockstate\"></block></value>"
@@ -167,7 +188,7 @@ public final class LootTableSelfCheck {
         check(integerJson.contains("\"age\": \"3\""), "integer block state property value exists");
 
         BlocklyXmlParser.ParseResult enumResult = BlocklyXmlParser.parse(blockTableXml(
-                entry("Blocks.DIAMOND_ORE", 1, 1, 1),
+                entry("Blocks.DIAMOND_ORE", 1, 1),
                 condition("loottable_block_state_enum",
                         "<field name=\"property\">half</field>"
                                 + "<value name=\"block\"><block type=\"loottable_block_selector\">"
@@ -181,7 +202,7 @@ public final class LootTableSelfCheck {
 
     private static void validEntityPotionCondition() {
         BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(entityTableXml(
-                entry("Items.ROTTEN_FLESH", 1, 1, 1),
+                entry("Items.ROTTEN_FLESH", 1, 1),
                 condition("loottable_entity_has_potion",
                         "<value name=\"entity\"><block type=\"loottable_source_entity_dependency\"></block></value>"
                                 + "<field name=\"potion\">minecraft:fire_resistance</field>")),
@@ -194,9 +215,133 @@ public final class LootTableSelfCheck {
         check(json.contains("\"minecraft:fire_resistance\": {}"), "entity potion effect map exists");
     }
 
+    private static void validNbtConditions() {
+        BlocklyXmlParser.ParseResult blockResult = BlocklyXmlParser.parse(blockTableXml(
+                entry("Blocks.STONE", 1, 1),
+                condition("loottable_block_nbt_logic",
+                        "<field name=\"tag\">CustomName</field>"
+                                + "<value name=\"block\"><block type=\"loottable_provided_blockstate\"></block></value>"
+                                + "<field name=\"operator\">=</field>"
+                                + "<field name=\"value\">true</field>")),
+                LootTableType.BLOCK, value -> value, "minecraft:oak_log");
+        check(!blockResult.report().hasErrors(), "block NBT condition has no errors");
+        String blockJson = LootTableJsonWriter.write(blockResult.model(), "test", "blocks/log", false);
+        check(blockJson.contains("\"condition\": \"minecraft:location_check\""),
+                "block NBT condition uses location_check");
+        check(blockJson.contains("\"blocks\": [") && blockJson.contains("\"minecraft:oak_log\""),
+                "block NBT condition uses the provided target block");
+        check(blockJson.contains("\"nbt\": \"{CustomName:1b}\""), "block logic NBT value is SNBT");
+
+        BlocklyXmlParser.ParseResult entityResult = BlocklyXmlParser.parse(entityTableXml(
+                entry("Items.ROTTEN_FLESH", 1, 1),
+                condition("loottable_entity_nbt_number",
+                        "<field name=\"tag\">Level</field>"
+                                + "<value name=\"entity\"><block type=\"loottable_source_entity_dependency\"></block></value>"
+                                + "<field name=\"operator\">=</field><field name=\"value\">3</field>")),
+                LootTableType.ENTITY, value -> value);
+        check(!entityResult.report().hasErrors(), "entity NBT condition has no errors");
+        String entityJson = LootTableJsonWriter.write(entityResult.model(), "test", "entities/zombie", false);
+        check(entityJson.contains("\"condition\": \"minecraft:entity_properties\""),
+                "entity NBT condition uses entity_properties");
+        check(entityJson.contains("\"entity\": \"attacker\""), "entity NBT uses the source entity");
+        check(entityJson.contains("\"nbt\": \"{Level:3}\""), "entity number NBT value is SNBT");
+
+        BlocklyXmlParser.ParseResult textResult = BlocklyXmlParser.parse(entityTableXml(
+                entry("Items.ROTTEN_FLESH", 1, 1),
+                condition("loottable_entity_nbt_text",
+                        "<field name=\"tag\">Owner</field>"
+                                + "<field name=\"value\">Steve</field>")),
+                LootTableType.ENTITY, value -> value);
+        check(!textResult.report().hasErrors(), "entity text NBT condition has no errors");
+        String textJson = LootTableJsonWriter.write(textResult.model(), "test", "entities/zombie", false);
+        check(textJson.contains("\"nbt\": \"{Owner:\\\"Steve\\\"}\""), "entity text NBT value is quoted");
+    }
+
+    private static void validItemEnchantmentCondition() {
+        BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(entityTableXml(
+                entry("Items.ROTTEN_FLESH", 1, 1),
+                condition("loottable_item_has_enchantment",
+                        "<value name=\"item\"><block type=\"loottable_entity_mainhand_item\">"
+                                + "<value name=\"entity\"><block type=\"loottable_source_entity_dependency\"></block></value>"
+                                + "</block></value>"
+                                + "<field name=\"enhancement\">minecraft:sharpness</field>"
+                                + "<field name=\"level\">3</field>")),
+                LootTableType.ENTITY, value -> value);
+        check(!result.report().hasErrors(), "item enchantment condition has no errors");
+        String json = LootTableJsonWriter.write(result.model(), "test", "entities/zombie", false);
+        check(json.contains("\"condition\": \"minecraft:entity_properties\""),
+                "main-hand enchantment uses entity_properties");
+        check(json.contains("\"entity\": \"attacker\""), "main-hand enchantment uses the source entity");
+        check(json.contains("\"equipment\""), "main-hand enchantment uses equipment");
+        check(json.contains("\"mainhand\""), "main-hand enchantment uses the mainhand slot");
+        check(json.contains("\"minecraft:enchantments\": [\n"), "enchantment predicate list exists");
+        check(json.contains("\"levels\": 3"), "enchantment level is written as an integer");
+
+        BlocklyXmlParser.ParseResult toolResult = BlocklyXmlParser.parse(blockTableXml(
+                entry("Blocks.STONE", 1, 1),
+                condition("loottable_item_has_enchantment",
+                        "<field name=\"enhancement\">minecraft:fortune</field>"
+                                + "<field name=\"level\">2</field>")),
+                LootTableType.BLOCK, value -> value);
+        check(!toolResult.report().hasErrors(), "tool enchantment condition has no errors");
+        String toolJson = LootTableJsonWriter.write(toolResult.model(), "test", "blocks/stone", false);
+        check(toolJson.contains("\"condition\": \"minecraft:match_tool\""),
+                "tool enchantment uses match_tool");
+    }
+
+    private static void validCountFunctions() {
+        String entryXml = entryWithFunctions(entry("Items.ROTTEN_FLESH", 2, 1), chain(
+                "<block type=\"loottable_function_set_count_uniform\">"
+                        + "<value name=\"min\"><block type=\"loottable_number\">"
+                        + "<field name=\"value\">1</field></block></value>"
+                        + "<value name=\"max\"><block type=\"loottable_number\">"
+                        + "<field name=\"value\">3</field></block></value>"
+                        + "</block>",
+                "<block type=\"loottable_function_set_count_add\">"
+                        + "<value name=\"count\"><block type=\"loottable_number\">"
+                        + "<field name=\"value\">2</field></block></value>"
+                        + "</block>"));
+        BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(entityTableXml(entryXml, ""),
+                LootTableType.ENTITY, value -> value);
+        check(!result.report().hasErrors(), "count functions have no errors");
+        check(result.model().getPools().get(0).getEntries().get(0).getFunctions().size() == 2,
+                "both count functions were parsed");
+        String json = LootTableJsonWriter.write(result.model(), "test", "entities/zombie", false);
+        check(json.contains("\"type\": \"minecraft:uniform\""), "uniform count provider is written");
+        check(json.contains("\"min\": 1"), "uniform minimum is written");
+        check(json.contains("\"max\": 3"), "uniform maximum is written");
+        check(json.contains("\"add\": true"), "add count function is written");
+    }
+
+    private static void strictConnectionChecks() {
+        String start = resourceText("/loottable/loottable_start.json");
+        String pool = resourceText("/loottable/loottable_pool.json");
+        String entryBlock = resourceText("/loottable/loottable_entry_item.json");
+        check(start.contains("\"check\": \"LootTablePool\""), "start only accepts pools");
+        check(pool.contains("\"check\": \"LootTablePool\""), "pools only chain to pools");
+        check(pool.contains("\"check\": \"LootTableEntry\""), "pool entries only accept entries");
+        check(pool.contains("\"check\": \"LootTableCondition\""), "pool conditions only accept conditions");
+        check(entryBlock.contains("\"check\": \"LootTableEntry\""), "entries only chain to entries");
+        check(entryBlock.contains("\"check\": \"LootTableCondition\""),
+                "entry conditions only accept conditions");
+        check(entryBlock.contains("\"check\": \"LootTableFunction\""),
+                "entry functions only accept functions");
+        check(resourceText("/loottable/loottable_inverted.json").contains("\"check\": \"LootTableCondition\""),
+                "inverted terms only accept conditions");
+        check(resourceText("/loottable/$loottable_components.json").contains("\"color\": 120"),
+                "minecraft components category exists");
+        check(resourceText("/loottable/$loottable_items.json").contains("\"color\": 350"),
+                "item category exists");
+        check(resourceText("/loottable/$loottable_numbers.json").contains("\"color\": 230"),
+                "number category exists");
+        check(resourceText("/loottable/loottable_entity_has_potion.json").contains("\"colour\": 195"),
+                "entity condition uses the native entity color");
+        check(entryBlock.contains("\"colour\": 350"), "item entry uses the native item color");
+    }
+
     private static void invalidEntityPotionOnBlock() {
         BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(blockTableXml(
-                entry("Blocks.STONE", 1, 1, 1),
+                entry("Blocks.STONE", 1, 1),
                 condition("loottable_entity_has_potion",
                         "<field name=\"potion\">minecraft:fire_resistance</field>")),
                 LootTableType.BLOCK, value -> value);
@@ -237,7 +382,7 @@ public final class LootTableSelfCheck {
 
     private static void invalidEntityBlockState() {
         BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(entityTableXml(
-                entry("Items.ROTTEN_FLESH", 1, 1, 1),
+                entry("Items.ROTTEN_FLESH", 1, 1),
                 condition("loottable_block_state_property",
                         "<field name=\"block\">Blocks.OAK_LOG</field>" +
                                 "<field name=\"property\">axis</field>" +
@@ -249,7 +394,7 @@ public final class LootTableSelfCheck {
 
     private static void invalidBlockKilledByPlayer() {
         BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(blockTableXml(
-                entry("Blocks.STONE", 1, 1, 1),
+                entry("Blocks.STONE", 1, 1),
                 condition("loottable_killed_by_player", "")), LootTableType.BLOCK, value -> value);
         check(result.report().hasErrors(), "block table with killed by player is an error");
         check(result.report().summary().contains("killed_by_player"), "error names the block");
@@ -258,7 +403,7 @@ public final class LootTableSelfCheck {
 
     private static void unknownConditionIsSkipped() {
         BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(blockTableXml(
-                entry("Blocks.STONE", 1, 1, 1),
+                entry("Blocks.STONE", 1, 1),
                 condition("loottable_future_condition", "")), LootTableType.BLOCK, value -> value);
         check(!result.report().hasErrors(), "unknown condition is a warning, not an error");
         check(!result.report().getWarningMessages().isEmpty(), "unknown condition produces a warning");
@@ -318,6 +463,17 @@ public final class LootTableSelfCheck {
         return entryXml.substring(0, closing) + statement("conditions", conditionsXml) + entryXml.substring(closing);
     }
 
+    private static String entryWithFunctions(String entryXml, String functionsXml) {
+        if (functionsXml == null || functionsXml.isBlank()) {
+            return entryXml;
+        }
+        int closing = entryXml.lastIndexOf("</block>");
+        if (closing < 0) {
+            return entryXml;
+        }
+        return entryXml.substring(0, closing) + statement("functions", functionsXml) + entryXml.substring(closing);
+    }
+
     private static String statement(String name, String blocks) {
         if (blocks == null || blocks.isBlank()) {
             return "";
@@ -325,11 +481,11 @@ public final class LootTableSelfCheck {
         return "<statement name=\"" + name + "\">" + blocks + "</statement>";
     }
 
-    private static String entry(String item, int minCount, int maxCount, int weight) {
+    private static String entry(String item, int count, int weight) {
         return "<block type=\"loottable_entry_item\">"
                 + "<field name=\"item\">" + item + "</field>"
-                + "<field name=\"min_count\">" + minCount + "</field>"
-                + "<field name=\"max_count\">" + maxCount + "</field>"
+                + "<value name=\"count\"><block type=\"loottable_number\">"
+                + "<field name=\"value\">" + count + "</field></block></value>"
                 + "<field name=\"weight\">" + weight + "</field>"
                 + "</block>";
     }

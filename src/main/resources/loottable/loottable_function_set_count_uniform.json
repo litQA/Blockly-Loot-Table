@@ -1,0 +1,33 @@
+{
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "min",
+      "check": "Number"
+    },
+    {
+      "type": "input_value",
+      "name": "max",
+      "check": "Number"
+    }
+  ],
+  "inputsInline": true,
+  "previousStatement": {
+    "check": "LootTableFunction"
+  },
+  "nextStatement": {
+    "check": "LootTableFunction"
+  },
+  "colour": "%{BKY_MATH_HUE}",
+  "mcreator": {
+    "toolbox_id": "loottable_numbers",
+    "inputs": [
+      "min",
+      "max"
+    ],
+    "toolbox_init": [
+      "<value name=\"min\"><block type=\"loottable_number\"><field name=\"value\">1</field></block></value>",
+      "<value name=\"max\"><block type=\"loottable_number\"><field name=\"value\">1</field></block></value>"
+    ]
+  }
+}

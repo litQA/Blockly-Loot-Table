@@ -1,0 +1,26 @@
+{
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "count",
+      "check": "Number"
+    }
+  ],
+  "inputsInline": true,
+  "previousStatement": {
+    "check": "LootTableFunction"
+  },
+  "nextStatement": {
+    "check": "LootTableFunction"
+  },
+  "colour": "%{BKY_MATH_HUE}",
+  "mcreator": {
+    "toolbox_id": "loottable_numbers",
+    "inputs": [
+      "count"
+    ],
+    "toolbox_init": [
+      "<value name=\"count\"><block type=\"loottable_number\"><field name=\"value\">1</field></block></value>"
+    ]
+  }
+}

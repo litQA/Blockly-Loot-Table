@@ -1,0 +1,53 @@
+{
+  "args0": [
+    {
+      "type": "field_input",
+      "name": "tag",
+      "text": "CustomName"
+    },
+    {
+      "type": "input_value",
+      "name": "block",
+      "check": "MCItemBlock"
+    },
+    {
+      "type": "field_dropdown",
+      "name": "operator",
+      "options": [
+        [
+          "=",
+          "="
+        ]
+      ]
+    },
+    {
+      "type": "field_input",
+      "name": "value",
+      "text": "hello"
+    }
+  ],
+  "inputsInline": true,
+  "previousStatement": {
+    "check": "LootTableCondition"
+  },
+  "nextStatement": {
+    "check": "LootTableCondition"
+  },
+  "colour": "%{BKY_TEXTS_HUE}",
+  "mcreator": {
+    "toolbox_id": "loottable_blocks",
+    "toolbox_init": [
+      "<field name=\"tag\">CustomName</field>",
+      "<field name=\"value\">\"hello\"</field>",
+      "<value name=\"block\"><block type=\"loottable_provided_blockstate\"></block></value>"
+    ],
+    "fields": [
+      "tag",
+      "operator",
+      "value"
+    ],
+    "inputs": [
+      "block"
+    ]
+  }
+}

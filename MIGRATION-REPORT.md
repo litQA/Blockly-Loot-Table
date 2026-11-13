@@ -12,6 +12,24 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.0.3.2-beta
+
+- Added block and entity NBT logic/number/text conditions. Block NBT is emitted
+  as `minecraft:location_check` with a block predicate; entity NBT is emitted as
+  `minecraft:entity_properties`.
+- Added immediate-source-entity and source-player dependencies, the entity
+  main-hand item block, and the item enchantment condition.
+- Replaced the entry `min_count`/`max_count` fields with a typed count input and
+  a function chain. Independent `set_count uniform` and `set_count add` function
+  blocks are supported.
+- Added strict Blockly connection checks so pools, entries, conditions and
+  functions cannot be stacked across incompatible chains.
+- Split component, item and number blocks into dedicated toolbox categories and
+  matched the native entity, item, logic, math and text colors.
+- Existing workspaces that used `min_count`/`max_count` load with the new count
+  input absent, so their generated count defaults to 1. The old fields are
+  ignored. Reopen and save those elements to add an explicit count.
+
 ### 1.0.2.1-beta
 
 - The `loottable_start` block is hidden from the toolbox and forced to be
@@ -46,15 +64,17 @@ workspace metadata is modified.
    blocks that add conditions must register their scope in this Java registry or
    they are treated as unknown and skipped with a warning.
 
-2. **Condition subset.**
+2. **Condition and function subset.**
    The available conditions are `random_chance`, `killed_by_player`,
    `survives_explosion`, `weather_check`, `inverted`, the legacy
-   `block_state_property` form, block-state boolean/integer/enum comparisons and
-   the entity potion-effect predicate. `table_bonus`, `location_check`,
-   `random_chance_with_looting`, `killed_by_player_or_pets`, `alternative`, `and`,
-   `match_tool`, full `entity_properties` and `damage_source_properties` remain
-   future work. The entity condition currently exposes the `effects` predicate
-   only.
+   `block_state_property` form, block-state boolean/integer/enum comparisons,
+   the entity potion-effect predicate, block/entity NBT comparisons, and the item
+   enchantment condition. `table_bonus`, `random_chance_with_looting`,
+   `killed_by_player_or_pets`, `alternative`, `and`, full `entity_properties` and
+   `damage_source_properties` remain future work. The potion condition exposes
+   the `effects` predicate only, and NBT conditions compare one tag at a time.
+   The function chain supports `set_count` uniform and add; other loot functions
+   remain future work.
 
 3. **Concrete item entries only.**
    The item selector uses MCreator's block/item list. Item tags are recognized
@@ -106,3 +126,10 @@ workspace metadata is modified.
     The plugin emits JSON through the element template and does not inject a
     Gradle task. There is therefore no configuration-cache hook or postprocessor
     revision to maintain in this phase.
+
+12. **Blockly connection types are plugin-defined.**
+    Pools, entries, conditions and functions use the plugin connection types
+    `LootTablePool`, `LootTableEntry`, `LootTableCondition` and
+    `LootTableFunction`. Third-party blocks must opt into the matching type to
+    connect to these chains. NBT conditions compare one scalar tag at a time and
+    do not provide a compound or list editor.

@@ -66,10 +66,10 @@ public final class LootTableModel {
     public static final class Entry {
 
         private String item = "";
-        private double minCount = 1;
-        private double maxCount = 1;
+        private NumberProvider count = NumberProvider.constant(1);
         private double weight = 1;
         private final List<Condition> conditions = new ArrayList<>();
+        private final List<LootFunction> functions = new ArrayList<>();
 
         public String getItem() {
             return item;
@@ -79,20 +79,12 @@ public final class LootTableModel {
             this.item = item == null ? "" : item;
         }
 
-        public double getMinCount() {
-            return minCount;
+        public NumberProvider getCount() {
+            return count;
         }
 
-        public void setMinCount(double minCount) {
-            this.minCount = minCount;
-        }
-
-        public double getMaxCount() {
-            return maxCount;
-        }
-
-        public void setMaxCount(double maxCount) {
-            this.maxCount = maxCount;
+        public void setCount(NumberProvider count) {
+            this.count = count == null ? NumberProvider.constant(1) : count;
         }
 
         public double getWeight() {
@@ -105,6 +97,73 @@ public final class LootTableModel {
 
         public List<Condition> getConditions() {
             return conditions;
+        }
+
+        public List<LootFunction> getFunctions() {
+            return functions;
+        }
+    }
+
+    /**
+     * A number provider used by the item count and the set_count functions.
+     */
+    public static final class NumberProvider {
+
+        private final String type;
+        private final double value;
+        private final double min;
+        private final double max;
+
+        private NumberProvider(String type, double value, double min, double max) {
+            this.type = type;
+            this.value = value;
+            this.min = min;
+            this.max = max;
+        }
+
+        public static NumberProvider constant(double value) {
+            return new NumberProvider("constant", value, 0, 0);
+        }
+
+        public static NumberProvider uniform(double min, double max) {
+            return new NumberProvider("uniform", 0, min, max);
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public double getValue() {
+            return value;
+        }
+
+        public double getMin() {
+            return min;
+        }
+
+        public double getMax() {
+            return max;
+        }
+    }
+
+    /**
+     * One loot function attached to an item entry.
+     */
+    public static final class LootFunction {
+
+        private final String blockType;
+        private final Map<String, Object> properties = new LinkedHashMap<>();
+
+        public LootFunction(String blockType) {
+            this.blockType = blockType == null ? "" : blockType;
+        }
+
+        public String getBlockType() {
+            return blockType;
+        }
+
+        public Map<String, Object> getProperties() {
+            return properties;
         }
     }
 
