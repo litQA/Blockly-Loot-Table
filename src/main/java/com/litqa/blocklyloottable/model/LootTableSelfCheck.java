@@ -1,6 +1,7 @@
 package com.litqa.blocklyloottable.model;
 
 import com.litqa.blocklyloottable.util.RegistryNames;
+import com.litqa.blocklyloottable.util.VersionCompat;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,6 +40,7 @@ public final class LootTableSelfCheck {
         validEnchantItemFunctions();
         validFunctionBlocks();
         validWorldConditions();
+        validLegacyVersionFormats();
         validItemConditionsAndDamage();
         validNestedPoolsAndEntries();
         entityAutoPath();
@@ -536,9 +538,12 @@ public final class LootTableSelfCheck {
         check(countOccurrences(poolJson, "\"condition\": \"minecraft:random_chance\"") >= 2,
                 "nested loot table entry writes its conditions");
 
-        String legacyJson = LootTableJsonWriter.write(poolResult.model(), "test", "blocks/choice", false, false);
-        check(legacyJson.contains("\"name\": \"minecraft:entities/zombie\""),
-                "nested loot table uses name before item components");
+        VersionCompat.Features v1205 = new VersionCompat.Features(
+                true, true, true, true, true, true, true, true, false);
+        String legacyJson = LootTableJsonWriter.write(poolResult.model(), "test", "blocks/choice", false, v1205);
+        check(legacyJson.contains("\"name\": \"minecraft:entities/zombie\"")
+                        && !legacyJson.contains("\"value\": \"minecraft:entities/zombie\""),
+                "nested loot table uses name before 1.21");
 
         String contentsEntry = entryWithItem(
                 "<block type=\"loottable_item_contents_loot\">"
@@ -1309,6 +1314,21 @@ public final class LootTableSelfCheck {
                         && levelsJson.contains("\"type\": \"minecraft:constant\"")
                         && levelsJson.contains("\"value\": 30"),
                 "enchant_with_levels writes its provider level");
+
+        VersionCompat.Features v1205 = new VersionCompat.Features(
+                true, true, true, true, true, true, true, true, false);
+        String legacyRandom = writeItemEntry(random, v1205);
+        check(legacyRandom.contains("\"enchantments\": [")
+                        && !legacyRandom.contains("\"options\": ["),
+                "pre-1.21 enchant_randomly uses the enchantments field");
+        String legacyRandomAny = writeItemEntry(randomAny, v1205);
+        check(legacyRandomAny.contains("\"treasure\": false")
+                        && !legacyRandomAny.contains("\"options\""),
+                "pre-1.21 any-enchant uses the treasure flag");
+        String legacyLevels = writeItemEntry(levels, v1205);
+        check(legacyLevels.contains("\"treasure\": true")
+                        && !legacyLevels.contains("\"options\""),
+                "pre-1.21 enchant_with_levels uses the treasure flag");
     }
 
     private static void validFunctionBlocks() {
@@ -1377,6 +1397,13 @@ public final class LootTableSelfCheck {
         check(json.contains("\"function\": \"minecraft:limit_count\"")
                         && json.contains("\"limit\": 5"),
                 "limit count function writes its limit");
+        VersionCompat.Features v1205 = new VersionCompat.Features(
+                true, true, true, true, true, true, true, true, false);
+        String legacyJson = LootTableJsonWriter.write(result.model(), "test",
+                "blocks/diamond_ore", false, v1205);
+        check(legacyJson.contains("\"function\": \"minecraft:looting_enchant\"")
+                        && !legacyJson.contains("\"function\": \"minecraft:enchanted_count_increase\""),
+                "pre-1.21 enchanted count increase uses looting_enchant");
 
         String badBonus = "<block type=\"loottable_function_apply_bonus_uniform\">"
                 + "<field name=\"enchantment\">fortune</field>"
@@ -1438,6 +1465,106 @@ public final class LootTableSelfCheck {
                         && lightJson.contains("\"min\": -10")
                         && lightJson.contains("\"max\": 10"),
                 "coordinate range predicate exists");
+    }
+
+    private static void validLegacyVersionFormats() {
+        String count = "<value name=\"count\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">1</field></block></value>";
+        String base = "<block type=\"loottable_item_selector\">"
+                + "<field name=\"item\">minecraft:shulker_box</field></block>";
+
+        String enchanted = "<block type=\"loottable_item_with_enchantment\">"
+                + "<mutation inputs=\"1\"></mutation>"
+                + "<value name=\"item\"><block type=\"loottable_item_selector\">"
+                + "<field name=\"item\">minecraft:diamond_sword</field></block></value>"
+                + "<field name=\"enchantment0\">sharpness</field>"
+                + "<value name=\"level0\"><block type=\"loottable_integer_provider\">"
+                + "<field name=\"value\">2</field></block></value></block>";
+        BlocklyXmlParser.ParseResult enchantedResult = BlocklyXmlParser.parse(blockTableXml(
+                entryWithItem(enchanted, count, 1), ""), LootTableType.BLOCK, value -> value);
+        VersionCompat.Features v116 = new VersionCompat.Features(
+                false, false, false, false, false, false, false, false, false);
+        String v116Enchanted = LootTableJsonWriter.write(enchantedResult.model(),
+                "test", "blocks/sword", false, v116);
+        check(v116Enchanted.contains("\"function\": \"minecraft:set_nbt\"")
+                        && v116Enchanted.contains("Enchantments:[")
+                        && v116Enchanted.contains("lvl:2"),
+                "1.16 enchantments use the legacy Enchantments NBT tag");
+        VersionCompat.Features v117 = new VersionCompat.Features(
+                false, false, true, true, false, false, false, false, false);
+        check(LootTableJsonWriter.write(enchantedResult.model(), "test", "blocks/sword", false, v117)
+                        .contains("\"function\": \"minecraft:set_enchantments\""),
+                "1.17+ item enchantments use set_enchantments");
+
+        String score = "<block type=\"loottable_score_player\">"
+                + "<value name=\"player\"><block type=\"loottable_empty_text\">"
+                + "<field name=\"TEXT\">Steve</field></block></value>"
+                + "<value name=\"score\"><block type=\"loottable_empty_text\">"
+                + "<field name=\"TEXT\">points</field></block></value>"
+                + "<value name=\"scale\"><block type=\"loottable_float\">"
+                + "<field name=\"value\">1.0</field></block></value></block>";
+        BlocklyXmlParser.ParseResult scoreResult = BlocklyXmlParser.parse(blockTableXml(
+                entryWithItem(base, "<value name=\"count\">" + score + "</value>", 1), ""),
+                LootTableType.BLOCK, value -> value);
+        String v116Score = LootTableJsonWriter.write(scoreResult.model(),
+                "test", "blocks/shulker", false, v116);
+        check(v116Score.contains("\"count\": 0")
+                        && !v116Score.contains("\"type\": \"minecraft:score\""),
+                "1.16 score providers fall back to zero");
+
+        String container = "<block type=\"loottable_item_container\">"
+                + "<mutation inputs=\"1\"></mutation>"
+                + "<field name=\"component\">minecraft:container</field>"
+                + "<value name=\"item\">" + base + "</value>"
+                + "<value name=\"item0\"><block type=\"loottable_item_selector\">"
+                + "<field name=\"item\">minecraft:apple</field></block></value>"
+                + "<value name=\"count0\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">2</field></block></value></block>";
+        BlocklyXmlParser.ParseResult containerResult = BlocklyXmlParser.parse(blockTableXml(
+                entryWithItem(container, count, 1), ""), LootTableType.BLOCK, value -> value);
+        String v116Container = LootTableJsonWriter.write(containerResult.model(),
+                "test", "blocks/shulker", false, v116);
+        check(!v116Container.contains("\"function\": \"minecraft:set_contents\""),
+                "1.16-1.17 skip set_contents because the function did not exist");
+        VersionCompat.Features v118 = new VersionCompat.Features(
+                false, false, true, true, true, false, false, false, false);
+        String v118Container = LootTableJsonWriter.write(containerResult.model(),
+                "test", "blocks/shulker", false, v118);
+        check(v118Container.contains("\"type\": \"minecraft:container\""),
+                "1.18-1.19 set_contents uses the type field");
+
+        String damage = condition("loottable_damage_tag",
+                "<value name=\"tag\"><block type=\"loottable_empty_text\">"
+                        + "<field name=\"TEXT\">minecraft:is_projectile</field></block></value>");
+        BlocklyXmlParser.ParseResult damageResult = BlocklyXmlParser.parse(blockTableXml(
+                entry("Blocks.STONE", 1, 1), damage), LootTableType.BLOCK, value -> value);
+        String v1192Damage = LootTableJsonWriter.write(damageResult.model(),
+                "test", "blocks/stone", false, v118);
+        check(v1192Damage.contains("\"is_projectile\": true")
+                        && !v1192Damage.contains("\"tags\""),
+                "pre-1.19.4 damage predicates use the old boolean fields");
+
+        String structure = condition("loottable_world_structure",
+                "<field name=\"structure\">village</field>");
+        BlocklyXmlParser.ParseResult structureResult = BlocklyXmlParser.parse(blockTableXml(
+                entry("Blocks.STONE", 1, 1), structure), LootTableType.BLOCK, value -> value);
+        check(LootTableJsonWriter.write(structureResult.model(),
+                        "test", "blocks/stone", false, v118).contains("\"feature\": \"minecraft:village\""),
+                "pre-1.19 location predicates use feature");
+        VersionCompat.Features v1192 = new VersionCompat.Features(
+                false, false, true, true, true, false, true, false, false);
+        check(LootTableJsonWriter.write(structureResult.model(),
+                        "test", "blocks/stone", false, v1192).contains("\"structure\": \"minecraft:village\""),
+                "1.19-1.20.4 location predicates use singular structure");
+        VersionCompat.Features v1205 = new VersionCompat.Features(
+                false, false, true, true, true, false, true, false, false);
+        check(LootTableJsonWriter.write(structureResult.model(),
+                        "test", "blocks/stone", false, v1205).contains("\"structure\": \"minecraft:village\""),
+                "1.20-1.20.4 structure remains singular");
+        VersionCompat.Features modern = VersionCompat.Features.modern();
+        check(LootTableJsonWriter.write(structureResult.model(),
+                        "test", "blocks/stone", false, modern).contains("\"structures\": \"minecraft:village\""),
+                "1.20.5+ location predicates use plural structures");
     }
 
     private static int countOccurrences(String text, String needle) {
@@ -1585,6 +1712,15 @@ public final class LootTableSelfCheck {
             return entryXml;
         }
         return entryXml.substring(0, closing) + value("conditions", conditionsXml) + entryXml.substring(closing);
+    }
+
+    private static String writeItemEntry(String itemXml, VersionCompat.Features features) {
+        String count = "<value name=\"count\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">1</field></block></value>";
+        BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(blockTableXml(
+                entryWithItem(itemXml, count, 1), ""), LootTableType.BLOCK, value -> value);
+        check(!result.report().hasErrors(), "versioned item entry parses without errors");
+        return LootTableJsonWriter.write(result.model(), "test", "blocks/versioned", false, features);
     }
 
     private static String entryWithFunctions(String entryXml, String functionsXml) {

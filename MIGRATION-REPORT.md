@@ -12,6 +12,25 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.1.0.80-beta
+
+- Added the 1.16-1.19.4 compatibility document and used it to version-gate
+  generation for the old Forge generators.
+- 1.16-1.17 cannot emit `set_contents`; the container and loot-table-contents
+  producers are skipped there. 1.18+ uses the `type` field, while 1.20.5+ uses
+  `component`.
+- `set_enchantments` starts in 1.17. On 1.16.5 the enchanted-item producer falls
+  back to static `Enchantments` NBT and skips dynamic levels.
+- `score` starts in 1.17; 1.16.5 writes zero.
+- Nested loot-table entries use `name` before 1.21 and `value` from 1.21.
+- Location predicates use `feature` before 1.19, `structure` on 1.19-1.20.4,
+  and `structures` from 1.20.5.
+- Damage predicates use the old booleans before 1.19.4 and `tags` from 1.19.4.
+- Enchantment functions use `enchantments`/`treasure` and `looting_enchant`
+  before 1.21; the `options`/`enchanted_count_increase` forms are 1.21+.
+- The 1.20 compatibility table now records the pre-1.21 enchantment field
+  names correctly.
+
 ### 1.1.0.77-beta
 
 - Added the **Potion effect** item component. Potion serialization is

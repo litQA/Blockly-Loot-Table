@@ -47,7 +47,7 @@
       ]
     }
   ],
-  "inputsInline": false,
+  "inputsInline": true,
   "output": "MCItem",
   "colour": 350,
   "tooltip": "Creates a potion item with a custom effect.",

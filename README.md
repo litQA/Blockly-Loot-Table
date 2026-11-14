@@ -88,9 +88,12 @@ variants. **Item with
 enchantments** writes `minecraft:set_enchantments` with dynamic rows whose
 levels accept a bare number or a number provider. The four other variants write
 `minecraft:enchant_randomly` or `minecraft:enchant_with_levels`; their
-enchantment list rows use MCreator's `enchantments` datalist, and the treasure
-checkbox omits `options` when checked so treasure enchantments are eligible,
-while an unchecked box restricts to `#minecraft:on_random_loot`.
+enchantment list rows use MCreator's `enchantments` datalist. On 1.21+ the
+treasure checkbox omits `options` when checked so treasure enchantments are
+eligible, while an unchecked box restricts to `#minecraft:on_random_loot`.
+Before 1.21 the same choice uses the legacy `treasure` boolean and the
+`enchantments` list field. The list-restricted `enchant_with_levels` form cannot
+enforce its list before 1.21.
 
 The **Item components** category contains every A-1 item producer: the
 enchanted-item variants, custom NBT and container contents, together with the
@@ -102,15 +105,15 @@ logic, number or text block. Number NBT accepts only a constant value because
 the tag must be static. **Item with contents** is an expandable container block
 with one item socket and one Number/NumberProvider count socket per row. Rows
 default to an empty item selector and Integer 1, and both sockets are
-right-aligned. It emits `minecraft:set_contents` with `type` before 1.20.5 and
-with `component` from 1.20.5 onward. A floating-point literal count is rejected
-so the generated container remains valid. **Potion effect** creates a potion,
-splash potion, lingering potion or tipped arrow with a selected effect,
-amplifier and duration. Amplifier and duration accept numbers or number
-providers but must resolve to integer literals. Potion data is version-gated:
-numeric `CustomPotionEffects` NBT on 1.20-1.20.1, namespaced
-`custom_potion_effects` NBT on 1.20.2-1.20.4, and the
-`minecraft:potion_contents` component on 1.20.5+.
+right-aligned. It emits `minecraft:set_contents` with `type` on 1.18-1.20.4 and
+with `component` from 1.20.5 onward; the function is skipped on 1.16-1.17,
+where it did not yet exist. A floating-point literal count is rejected so the
+generated container remains valid. **Potion effect** creates a potion, splash
+potion, lingering potion or tipped arrow with a selected effect, amplifier and
+duration. Amplifier and duration accept numbers or number providers but must
+resolve to integer literals. Potion data is version-gated: numeric
+`CustomPotionEffects` NBT through 1.20.1, namespaced `custom_potion_effects`
+NBT on 1.20.2-1.20.4, and the `minecraft:potion_contents` component on 1.20.5+.
 
 The three block-state condition blocks use the same input style as NBT
 conditions. The property name is a text input block, the equality operator is
@@ -146,8 +149,9 @@ enchantment bonus`, `Apply ore bonus`, `Increase count by enchantment level`
 and `Limit final count`. These append `minecraft:apply_bonus`,
 `minecraft:enchanted_count_increase` and `minecraft:limit_count` functions to
 the entry function chain. The three `apply_bonus` numeric parameters are
-literal numbers in 1.21.1; their sockets reject number providers with a
-warning.
+literal numbers; their sockets reject number providers with a warning. On
+1.16-1.20.6 the count-increase block is emitted as the legacy
+`minecraft:looting_enchant` function, which always uses Looting.
 
 The compact item entry is a shorter B-shaped entry with item, count and weight
 sockets. It is useful when no conditions or functions are needed.
@@ -177,6 +181,14 @@ generators write to `data/<namespace>/loot_tables/`. Definitions for Fabric
 generator plugin when it is available. Minecraft 26.x uses a different loot
 table schema and must be handled by a separate `plugin-branch-26.x` source
 branch.
+
+The older generators use version-gated function and predicate fields. See
+[`loot_table-1.16-1.19.4.md`](../dsh_docs/loot_table_format/loot_table-1.16-1.19.4.md)
+for the complete 1.16-1.19.4 matrix. In brief: 1.16 has no
+`set_enchantments` or `score`, 1.18 adds `set_contents` with `type`, 1.19
+renames the location `feature` key to `structure`, and 1.19.4 replaces the old
+damage booleans with damage tags. Nested loot-table entries use `name` before
+1.21. The potion producer uses numeric `CustomPotionEffects` NBT before 1.20.2.
 
 ## Build
 

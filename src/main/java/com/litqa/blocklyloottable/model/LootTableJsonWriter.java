@@ -1,5 +1,6 @@
 package com.litqa.blocklyloottable.model;
 
+import com.litqa.blocklyloottable.util.VersionCompat;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -17,6 +18,8 @@ public final class LootTableJsonWriter {
      */
     private static final ThreadLocal<Boolean> NAMESPACED_POTION_NBT = ThreadLocal
             .withInitial(() -> Boolean.TRUE);
+    private static final ThreadLocal<VersionCompat.Features> FEATURES = ThreadLocal
+            .withInitial(VersionCompat.Features::modern);
 
     /**
      * Numeric potion effect ids used by the 1.20-1.20.1 item NBT format.
@@ -80,8 +83,22 @@ public final class LootTableJsonWriter {
      */
     public static String write(LootTableModel model, String namespace, String path, boolean includeRandomSequence,
             boolean itemComponents, boolean namespacedPotionNbt) {
+        return write(model, namespace, path, includeRandomSequence, new VersionCompat.Features(
+                itemComponents, namespacedPotionNbt, true, true, true, true, true, itemComponents, true));
+    }
+
+    /**
+     * Writes with explicit per-version feature switches.
+     *
+     * @param features version-dependent JSON switches
+     */
+    public static String write(LootTableModel model, String namespace, String path, boolean includeRandomSequence,
+            VersionCompat.Features features) {
         Boolean previous = NAMESPACED_POTION_NBT.get();
-        NAMESPACED_POTION_NBT.set(namespacedPotionNbt);
+        VersionCompat.Features previousFeatures = FEATURES.get();
+        NAMESPACED_POTION_NBT.set(features.namespacedPotionNbt());
+        FEATURES.set(features);
+        boolean itemComponents = features.itemComponents();
         try {
             Map<String, Object> root = new LinkedHashMap<>();
             root.put("type", model.getType().getJsonType());
@@ -99,6 +116,7 @@ public final class LootTableJsonWriter {
             return JsonText.write(root);
         } finally {
             NAMESPACED_POTION_NBT.set(previous);
+            FEATURES.set(previousFeatures);
         }
     }
 
@@ -172,7 +190,7 @@ public final class LootTableJsonWriter {
             }
             Map<String, Object> json = new LinkedHashMap<>();
             json.put("type", "minecraft:loot_table");
-            json.put(itemComponents ? "value" : "name", entry.getLootTable());
+            json.put(FEATURES.get().modern121Format() ? "value" : "name", entry.getLootTable());
             json.put("weight", entry.getWeight());
             List<Object> functions = new ArrayList<>();
             for (LootTableModel.LootFunction function : entry.getFunctions()) {
@@ -247,6 +265,9 @@ public final class LootTableJsonWriter {
                 yield json;
             }
             case "score" -> {
+                if (!FEATURES.get().scoreProvider()) {
+                    yield 0;
+                }
                 Map<String, Object> json = new LinkedHashMap<>();
                 Map<String, Object> target = new LinkedHashMap<>();
                 target.put("type", "minecraft:" + provider.getScoreTargetType());
@@ -294,6 +315,9 @@ public final class LootTableJsonWriter {
                 if (enchantments.isEmpty()) {
                     return null;
                 }
+                if (!FEATURES.get().setEnchantments()) {
+                    return legacyEnchantmentsNbt(entries);
+                }
                 Map<String, Object> json = new LinkedHashMap<>();
                 json.put("function", "minecraft:set_enchantments");
                 json.put("enchantments", enchantments);
@@ -307,7 +331,7 @@ public final class LootTableJsonWriter {
                 }
                 Map<String, Object> json = new LinkedHashMap<>();
                 json.put("function", "minecraft:enchant_randomly");
-                json.put("options", options);
+                json.put(FEATURES.get().modern121Format() ? "options" : "enchantments", options);
                 return json;
             }
             case "loottable_item_enchant_random_any" -> {
@@ -316,8 +340,12 @@ public final class LootTableJsonWriter {
                 json.put("levels", numberProviderToJson(LootTableModel.NumberProvider.uniform(
                         provider(function.getProperties().get("min"), 1),
                         provider(function.getProperties().get("max"), 3))));
-                if (!bool(function.getProperties().get("treasure"), true)) {
-                    json.put("options", "#minecraft:on_random_loot");
+                if (FEATURES.get().modern121Format()) {
+                    if (!bool(function.getProperties().get("treasure"), true)) {
+                        json.put("options", "#minecraft:on_random_loot");
+                    }
+                } else {
+                    json.put("treasure", bool(function.getProperties().get("treasure"), true));
                 }
                 return json;
             }
@@ -330,7 +358,12 @@ public final class LootTableJsonWriter {
                 json.put("function", "minecraft:enchant_with_levels");
                 json.put("levels", numberProviderToJson(
                         provider(function.getProperties().get("levels"), 1)));
-                json.put("options", options);
+                if (FEATURES.get().modern121Format()) {
+                    json.put("options", options);
+                } else {
+                    // Pre-1.21 has no enchantment-list field for this function.
+                    json.put("treasure", true);
+                }
                 return json;
             }
             case "loottable_item_enchant_levels_any" -> {
@@ -338,8 +371,12 @@ public final class LootTableJsonWriter {
                 json.put("function", "minecraft:enchant_with_levels");
                 json.put("levels", numberProviderToJson(
                         provider(function.getProperties().get("levels"), 1)));
-                if (!bool(function.getProperties().get("treasure"), true)) {
-                    json.put("options", "#minecraft:on_random_loot");
+                if (FEATURES.get().modern121Format()) {
+                    if (!bool(function.getProperties().get("treasure"), true)) {
+                        json.put("options", "#minecraft:on_random_loot");
+                    }
+                } else {
+                    json.put("treasure", bool(function.getProperties().get("treasure"), true));
                 }
                 return json;
             }
@@ -368,8 +405,12 @@ public final class LootTableJsonWriter {
             }
             case "loottable_function_enchanted_count_increase" -> {
                 Map<String, Object> json = new LinkedHashMap<>();
-                json.put("function", "minecraft:enchanted_count_increase");
-                json.put("enchantment", string(function.getProperties().get("enchantment")));
+                json.put("function", FEATURES.get().modern121Format()
+                        ? "minecraft:enchanted_count_increase"
+                        : "minecraft:looting_enchant");
+                if (FEATURES.get().modern121Format()) {
+                    json.put("enchantment", string(function.getProperties().get("enchantment")));
+                }
                 json.put("count", numberProviderToJson(provider(function.getProperties().get("count"), 0)));
                 return json;
             }
@@ -431,6 +472,9 @@ public final class LootTableJsonWriter {
                 return json;
             }
             case "loottable_item_container" -> {
+                if (!FEATURES.get().containerType()) {
+                    return null;
+                }
                 Object value = function.getProperties().get("items");
                 if (!(value instanceof List<?> rawItems) || rawItems.isEmpty()) {
                     return null;
@@ -463,27 +507,38 @@ public final class LootTableJsonWriter {
                 }
                 Map<String, Object> json = new LinkedHashMap<>();
                 json.put("function", "minecraft:set_contents");
-                json.put(itemComponents ? "component" : "type",
-                        string(function.getProperties().get("component")).isBlank()
-                                ? "minecraft:container"
-                                : string(function.getProperties().get("component")));
+                String component = string(function.getProperties().get("component")).isBlank()
+                        ? "minecraft:container"
+                        : string(function.getProperties().get("component"));
+                if (itemComponents) {
+                    json.put("component", component);
+                } else if (FEATURES.get().containerType()) {
+                    json.put("type", component);
+                }
                 json.put("entries", entries);
                 return json;
             }
             case "loottable_item_contents_loot" -> {
+                if (!FEATURES.get().containerType()) {
+                    return null;
+                }
                 String lootTable = string(function.getProperties().get("lootTable"));
                 if (lootTable.isBlank()) {
                     return null;
                 }
                 Map<String, Object> lootEntry = new LinkedHashMap<>();
                 lootEntry.put("type", "minecraft:loot_table");
-                lootEntry.put(itemComponents ? "value" : "name", lootTable);
+                lootEntry.put(FEATURES.get().modern121Format() ? "value" : "name", lootTable);
                 Map<String, Object> json = new LinkedHashMap<>();
                 json.put("function", "minecraft:set_contents");
-                json.put(itemComponents ? "component" : "type",
-                        string(function.getProperties().get("component")).isBlank()
-                                ? "minecraft:container"
-                                : string(function.getProperties().get("component")));
+                String component = string(function.getProperties().get("component")).isBlank()
+                        ? "minecraft:container"
+                        : string(function.getProperties().get("component"));
+                if (itemComponents) {
+                    json.put("component", component);
+                } else if (FEATURES.get().containerType()) {
+                    json.put("type", component);
+                }
                 json.put("entries", List.of(lootEntry));
                 return json;
             }
@@ -491,6 +546,39 @@ public final class LootTableJsonWriter {
                 return null;
             }
         }
+    }
+
+    /**
+     * Minecraft 1.16 has no {@code set_enchantments} function. Exact levels
+     * can still be written as the legacy {@code Enchantments} item tag when
+     * every level is a constant.
+     */
+    private static Map<String, Object> legacyEnchantmentsNbt(List<?> entries) {
+        StringBuilder tag = new StringBuilder("{Enchantments:[");
+        boolean first = true;
+        for (Object entry : entries) {
+            if (!(entry instanceof LootTableModel.EnchantmentLevel enchantment)) {
+                continue;
+            }
+            LootTableModel.NumberProvider level = enchantment.getLevel();
+            if (level == null || !("number".equals(level.getType()) || "constant".equals(level.getType()))) {
+                return null;
+            }
+            if (!first) {
+                tag.append(',');
+            }
+            long value = (long) level.getValue();
+            tag.append("{id:\"").append(enchantment.getEnchantment()).append("\",lvl:").append(value).append('}');
+            first = false;
+        }
+        if (first) {
+            return null;
+        }
+        tag.append("]}");
+        Map<String, Object> json = new LinkedHashMap<>();
+        json.put("function", "minecraft:set_nbt");
+        json.put("tag", tag.toString());
+        return json;
     }
 
     private static Map<String, Object> conditionToJson(LootTableModel.Condition condition, boolean itemComponents) {
@@ -641,7 +729,8 @@ public final class LootTableJsonWriter {
                     return null;
                 }
                 json.put("condition", "minecraft:location_check");
-                json.put("predicate", locationPredicate("biomes", biome));
+                json.put("predicate", locationPredicate(
+                        FEATURES.get().pluralLocationFields() ? "biomes" : "biome", biome));
             }
             case "loottable_world_biome_tag" -> {
                 String tag = string(condition.getProperties().get("tag"));
@@ -649,7 +738,8 @@ public final class LootTableJsonWriter {
                     return null;
                 }
                 json.put("condition", "minecraft:location_check");
-                json.put("predicate", locationPredicate("biomes", tagged(tag)));
+                json.put("predicate", locationPredicate(
+                        FEATURES.get().pluralLocationFields() ? "biomes" : "biome", tagged(tag)));
             }
             case "loottable_world_structure" -> {
                 String structure = string(condition.getProperties().get("structure"));
@@ -657,7 +747,7 @@ public final class LootTableJsonWriter {
                     return null;
                 }
                 json.put("condition", "minecraft:location_check");
-                json.put("predicate", locationPredicate("structures", structure));
+                json.put("predicate", locationPredicate(structureKey(), structure));
             }
             case "loottable_world_structure_tag" -> {
                 String tag = string(condition.getProperties().get("tag"));
@@ -665,7 +755,7 @@ public final class LootTableJsonWriter {
                     return null;
                 }
                 json.put("condition", "minecraft:location_check");
-                json.put("predicate", locationPredicate("structures", tagged(tag)));
+                json.put("predicate", locationPredicate(structureKey(), tagged(tag)));
             }
             case "loottable_world_smokey" -> {
                 json.put("condition", "minecraft:location_check");
@@ -728,11 +818,33 @@ public final class LootTableJsonWriter {
                 if (tag.isBlank()) {
                     return null;
                 }
-                Map<String, Object> tagPredicate = new LinkedHashMap<>();
-                tagPredicate.put("id", tagged(tag));
-                tagPredicate.put("expected", true);
                 Map<String, Object> predicate = new LinkedHashMap<>();
-                predicate.put("tags", List.of(tagPredicate));
+                if (FEATURES.get().damageTags()) {
+                    Map<String, Object> tagPredicate = new LinkedHashMap<>();
+                    tagPredicate.put("id", tagged(tag));
+                    tagPredicate.put("expected", true);
+                    predicate.put("tags", List.of(tagPredicate));
+                } else {
+                    String name = tagged(tag);
+                    if (name.startsWith("#")) {
+                        name = name.substring(1);
+                    }
+                    String oldField = switch (name) {
+                        case "minecraft:is_projectile" -> "is_projectile";
+                        case "minecraft:is_explosion" -> "is_explosion";
+                        case "minecraft:bypasses_armor" -> "bypasses_armor";
+                        case "minecraft:bypasses_invulnerability" -> "bypasses_invulnerability";
+                        case "minecraft:bypasses_magic" -> "bypasses_magic";
+                        case "minecraft:is_fire" -> "is_fire";
+                        case "minecraft:is_magic" -> "is_magic";
+                        case "minecraft:is_lightning" -> "is_lightning";
+                        default -> "";
+                    };
+                    if (oldField.isBlank()) {
+                        return null;
+                    }
+                    predicate.put(oldField, true);
+                }
                 json.put("condition", "minecraft:damage_source_properties");
                 json.put("predicate", predicate);
             }
@@ -878,6 +990,14 @@ public final class LootTableJsonWriter {
         Map<String, Object> predicate = new LinkedHashMap<>();
         predicate.put(key, value);
         return predicate;
+    }
+
+    private static String structureKey() {
+        VersionCompat.Features features = FEATURES.get();
+        if (!features.structureField()) {
+            return "feature";
+        }
+        return features.pluralLocationFields() ? "structures" : "structure";
     }
 
     private static String tagged(String tag) {

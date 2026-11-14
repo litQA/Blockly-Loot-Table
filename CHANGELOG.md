@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.1.0.80-beta
+
+### Added
+
+- Added the full 1.16-1.19.4 compatibility matrix in
+  `dsh_docs/loot_table_format/loot_table-1.16-1.19.4.md`.
+- Added version-aware generation for the older Forge generators:
+  - 1.16 falls back to static `set_nbt` enchantments and zero for score providers.
+  - `set_contents` is skipped on 1.16-1.17 and uses `type` on 1.18-1.20.4.
+  - 1.18+ nested loot tables use the `name` field; 1.21+ uses `value`.
+  - 1.19-1.20.4 location predicates use `structure`; earlier versions use
+    `feature`; 1.20.5+ uses `biomes`/`structures`.
+  - 1.19.4+ damage predicates use `tags`; earlier versions use the old
+    boolean fields.
+  - Pre-1.21 enchant functions use `enchantments`/`treasure`; 1.21+ uses
+    `options`.
+  - Pre-1.21 count increase uses `looting_enchant`; 1.21+ uses
+    `enchanted_count_increase`.
+- Potion item inputs are inline by default.
+
+### Verified
+
+- Self-check 554 checks; all 112 loottable JSON resources and the mutator
+  script validate.
+
 ## 1.1.0.77-beta
 
 ### Added

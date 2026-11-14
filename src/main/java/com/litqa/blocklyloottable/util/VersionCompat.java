@@ -7,7 +7,35 @@ import net.mcreator.workspace.Workspace;
  */
 public final class VersionCompat {
 
+    /**
+     * Feature switches for a concrete Minecraft version. Keeping these in one
+     * record avoids sprinkling version comparisons through the JSON writer.
+     */
+    public record Features(boolean itemComponents, boolean namespacedPotionNbt,
+            boolean setEnchantments, boolean scoreProvider, boolean containerType,
+            boolean damageTags, boolean structureField, boolean pluralLocationFields,
+            boolean modern121Format) {
+
+        public static Features modern() {
+            return new Features(true, true, true, true, true, true, true, true, true);
+        }
+    }
+
     private VersionCompat() {
+    }
+
+    public static Features features(Workspace workspace) {
+        String version = minecraftVersion(workspace);
+        return new Features(
+                compareVersion(version, 1, 20, 5) >= 0,
+                compareVersion(version, 1, 20, 2) >= 0,
+                compareVersion(version, 1, 17, 0) >= 0,
+                compareVersion(version, 1, 17, 0) >= 0,
+                compareVersion(version, 1, 18, 0) >= 0,
+                compareVersion(version, 1, 19, 4) >= 0,
+                compareVersion(version, 1, 19, 0) >= 0,
+                compareVersion(version, 1, 20, 5) >= 0,
+                compareVersion(version, 1, 21, 0) >= 0);
     }
 
     /**
