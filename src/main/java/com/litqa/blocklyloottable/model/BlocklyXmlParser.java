@@ -384,6 +384,7 @@ public final class BlocklyXmlParser {
             };
             LootTableModel.LootFunction function = new LootTableModel.LootFunction(itemType);
             function.getProperties().put("effect", effect);
+            function.getProperties().put("item_type", item);
             function.getProperties().put("amplifier",
                     readPlainIntegerInput(itemBlock, "amplifier", 0, "Potion amplifier", report));
             function.getProperties().put("duration",
@@ -898,12 +899,14 @@ public final class BlocklyXmlParser {
                     return null;
                 }
             }
-            case "loottable_item_has_enchantment_min", "loottable_item_has_enchantment_range" -> {
+            case "loottable_item_has_enchantment_min", "loottable_item_has_enchantment_range",
+                    "loottable_item_has_enchantment_exact" -> {
                 if (!parseItemEnchantmentCondition(block, blockType, type, condition, report)) {
                     return null;
                 }
             }
             case "loottable_item_same", "loottable_item_durability_range",
+                    "loottable_item_durability_exact",
                     "loottable_item_durability_at_least", "loottable_item_durability_at_most",
                     "loottable_item_count", "loottable_item_count_at_least",
                     "loottable_item_count_at_most", "loottable_item_count_range" -> {
@@ -1158,6 +1161,11 @@ public final class BlocklyXmlParser {
         applyItemSource(condition, source);
 
         switch (blockType) {
+            case "loottable_item_durability_exact" -> {
+                int durability = readPlainIntegerInput(block, "value", 1, "Exact durability", report);
+                condition.getProperties().put("minDurability", durability);
+                condition.getProperties().put("maxDurability", durability);
+            }
             case "loottable_item_durability_at_least" -> condition.getProperties().put("minDurability",
                     readPlainIntegerInput(block, "min", 1, "Minimum durability", report));
             case "loottable_item_durability_at_most" -> condition.getProperties().put("maxDurability",
@@ -1327,23 +1335,32 @@ public final class BlocklyXmlParser {
         }
 
         boolean range = "loottable_item_has_enchantment_range".equals(blockType);
-        Integer minimum = readRangeBound(block, "min", range ? 0 : 1, false,
-                "Minimum enchantment level", report);
-        Integer maximum = range
-                ? readRangeBound(block, "max", null, true, "Maximum enchantment level", report)
-                : null;
-        if (minimum != null) {
-            minimum = Math.min(255, Math.max(1, minimum));
-        }
-        if (maximum != null) {
-            maximum = Math.min(255, Math.max(1, maximum));
-        }
-        if (minimum != null && maximum != null && maximum < minimum) {
-            report.addWarning(blockType,
-                    "Maximum enchantment level is lower than the minimum; the bounds were swapped.");
-            Integer swap = minimum;
-            minimum = maximum;
-            maximum = swap;
+        boolean exact = "loottable_item_has_enchantment_exact".equals(blockType);
+        Integer minimum;
+        Integer maximum;
+        if (exact) {
+            minimum = Math.min(255, Math.max(1,
+                    readPlainIntegerInput(block, "level", 1, "Exact enchantment level", report)));
+            maximum = minimum;
+        } else {
+            minimum = readRangeBound(block, "min", range ? 0 : 1, false,
+                    "Minimum enchantment level", report);
+            maximum = range
+                    ? readRangeBound(block, "max", null, true, "Maximum enchantment level", report)
+                    : null;
+            if (minimum != null) {
+                minimum = Math.min(255, Math.max(1, minimum));
+            }
+            if (maximum != null) {
+                maximum = Math.min(255, Math.max(1, maximum));
+            }
+            if (minimum != null && maximum != null && maximum < minimum) {
+                report.addWarning(blockType,
+                        "Maximum enchantment level is lower than the minimum; the bounds were swapped.");
+                Integer swap = minimum;
+                minimum = maximum;
+                maximum = swap;
+            }
         }
 
         Element itemBlock = valueBlock(block, "item");

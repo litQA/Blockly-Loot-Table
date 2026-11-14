@@ -1,0 +1,43 @@
+{
+  "type": "loottable_item_has_enchantment_exact",
+  "message0": "%1 has enchantment %2 at exactly level %3",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "item",
+      "check": "MCItem"
+    },
+    {
+      "type": "field_data_list_selector",
+      "name": "enhancement",
+      "datalist": "enchantments",
+      "customEntryProviders": "enchantment"
+    },
+    {
+      "type": "input_value",
+      "name": "level",
+      "check": [
+        "Number",
+        "NumberProvider"
+      ]
+    }
+  ],
+  "inputsInline": true,
+  "colour": 120,
+  "tooltip": "Checks that the selected item has the enchantment at exactly the selected level.",
+  "mcreator": {
+    "toolbox_id": "loottable_items",
+    "toolbox_init": [
+      "<value name=\"item\"><block type=\"loottable_entity_mainhand_item\"><value name=\"entity\"><block type=\"loottable_source_entity_dependency\"></block></value></block></value>",
+      "<value name=\"level\"><block type=\"loottable_integer\"><field name=\"value\">1</field></block></value>"
+    ],
+    "fields": [
+      "enhancement"
+    ],
+    "inputs": [
+      "item",
+      "level"
+    ]
+  },
+  "output": "LootTableCondition"
+}

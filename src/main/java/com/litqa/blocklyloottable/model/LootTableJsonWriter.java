@@ -59,33 +59,6 @@ public final class LootTableJsonWriter {
             Map.entry("minecraft:hero_of_the_village", 32),
             Map.entry("minecraft:darkness", 33));
 
-    /**
-     * Vanilla potion ids used to give custom-effect items a valid base name.
-     * Unknown or unsupported effects fall back to awkward so the item is not
-     * named "Uncraftable".
-     */
-    private static final Map<String, String> POTION_BASE_IDS = Map.ofEntries(
-            Map.entry("minecraft:speed", "minecraft:swiftness"),
-            Map.entry("minecraft:slowness", "minecraft:slowness"),
-            Map.entry("minecraft:strength", "minecraft:strength"),
-            Map.entry("minecraft:instant_health", "minecraft:healing"),
-            Map.entry("minecraft:instant_damage", "minecraft:harming"),
-            Map.entry("minecraft:jump_boost", "minecraft:leaping"),
-            Map.entry("minecraft:regeneration", "minecraft:regeneration"),
-            Map.entry("minecraft:fire_resistance", "minecraft:fire_resistance"),
-            Map.entry("minecraft:water_breathing", "minecraft:water_breathing"),
-            Map.entry("minecraft:invisibility", "minecraft:invisibility"),
-            Map.entry("minecraft:night_vision", "minecraft:night_vision"),
-            Map.entry("minecraft:weakness", "minecraft:weakness"),
-            Map.entry("minecraft:poison", "minecraft:poison"),
-            Map.entry("minecraft:slow_falling", "minecraft:slow_falling"),
-            Map.entry("minecraft:luck", "minecraft:luck"),
-            Map.entry("minecraft:unluck", "minecraft:unluck"),
-            Map.entry("minecraft:wind_charged", "minecraft:wind_charged"),
-            Map.entry("minecraft:weaving", "minecraft:weaving"),
-            Map.entry("minecraft:oozing", "minecraft:oozing"),
-            Map.entry("minecraft:infested", "minecraft:infested"));
-
     private LootTableJsonWriter() {
     }
 
@@ -490,6 +463,11 @@ public final class LootTableJsonWriter {
                 }
                 int amplifier = intProperty(function.getProperties().get("amplifier"), 0);
                 int duration = intProperty(function.getProperties().get("duration"), 600);
+                String itemType = string(function.getProperties().get("item_type"));
+                if (itemType.isBlank()) {
+                    itemType = "minecraft:potion";
+                }
+                String nameKey = potionNameKey(effect, itemType);
                 Map<String, Object> json = new LinkedHashMap<>();
                 if (itemComponents) {
                     Map<String, Object> customEffect = new LinkedHashMap<>();
@@ -498,22 +476,27 @@ public final class LootTableJsonWriter {
                     customEffect.put("duration", duration);
 
                     Map<String, Object> potionContents = new LinkedHashMap<>();
-                    potionContents.put("potion", potionBase(effect));
                     potionContents.put("custom_effects", List.of(customEffect));
+
+                    Map<String, Object> itemName = new LinkedHashMap<>();
+                    itemName.put("translate", nameKey);
+                    itemName.put("italic", false);
 
                     Map<String, Object> components = new LinkedHashMap<>();
                     components.put("minecraft:potion_contents", potionContents);
+                    components.put("minecraft:item_name", itemName);
 
                     json.put("function", "minecraft:set_components");
                     json.put("components", components);
                     return json;
                 }
 
+                String displayName = "{\"translate\":\"" + nameKey + "\",\"italic\":false}";
                 if (Boolean.TRUE.equals(NAMESPACED_POTION_NBT.get())) {
                     json.put("function", "minecraft:set_nbt");
-                    json.put("tag", "{Potion:\"" + potionBase(effect)
-                            + "\",custom_potion_effects:[{id:\"" + effect + "\",amplifier:"
-                            + amplifier + ",duration:" + duration + "}]}");
+                    json.put("tag", "{custom_potion_effects:[{id:\"" + effect + "\",amplifier:"
+                            + amplifier + ",duration:" + duration + "}],display:{Name:'"
+                            + displayName + "'}}");
                     return json;
                 }
 
@@ -522,9 +505,9 @@ public final class LootTableJsonWriter {
                     return null;
                 }
                 json.put("function", "minecraft:set_nbt");
-                json.put("tag", "{Potion:\"" + potionBase(effect)
-                        + "\",CustomPotionEffects:[{Id:" + legacyId + ",Amplifier:"
-                        + amplifier + ",Duration:" + duration + "}]}");
+                json.put("tag", "{CustomPotionEffects:[{Id:" + legacyId + ",Amplifier:"
+                        + amplifier + ",Duration:" + duration + "}],display:{Name:'"
+                        + displayName + "'}}");
                 return json;
             }
             case "loottable_item_container" -> {
@@ -748,7 +731,8 @@ public final class LootTableJsonWriter {
                 predicate.put("nbt", nbt);
                 json.put("predicate", predicate);
             }
-            case "loottable_item_has_enchantment_min", "loottable_item_has_enchantment_range" -> {
+            case "loottable_item_has_enchantment_min", "loottable_item_has_enchantment_range",
+                    "loottable_item_has_enchantment_exact" -> {
                 String enchantment = string(condition.getProperties().get("enchantment"));
                 if (enchantment.isBlank()) {
                     return null;
@@ -900,6 +884,7 @@ public final class LootTableJsonWriter {
                 json.put("predicate", locationPredicate("block", blocks));
             }
             case "loottable_item_same", "loottable_item_durability_range",
+                    "loottable_item_durability_exact",
                     "loottable_item_durability_at_least", "loottable_item_durability_at_most",
                     "loottable_item_count", "loottable_item_count_at_least",
                     "loottable_item_count_at_most", "loottable_item_count_range",
@@ -990,8 +975,10 @@ public final class LootTableJsonWriter {
         return json;
     }
 
-    private static String potionBase(String effect) {
-        return POTION_BASE_IDS.getOrDefault(effect, "minecraft:awkward");
+    private static String potionNameKey(String effect, String itemType) {
+        String itemPath = itemType.substring(itemType.indexOf(':') + 1);
+        String effectPath = effect.substring(effect.indexOf(':') + 1);
+        return "item.minecraft." + itemPath + ".effect." + effectPath;
     }
 
     private static Map<String, Object> blockStateCondition(String block) {

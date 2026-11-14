@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.1.1.92-beta
+
+### Fixed
+
+- Potion and tipped-arrow items no longer duplicate their selected effect. The
+  producer writes `custom_potion_effects`/`custom_effects` only and no longer
+  adds a base potion template alongside it.
+- Potion and tipped-arrow items now write a translated item name instead of
+  falling back to "Uncraftable Potion": `minecraft:item_name` on 1.20.5+, and a
+  `display.Name` text component in the older NBT formats.
+
+### Added
+
+- Exact item-enchantment-level condition.
+- Exact item-durability condition; both exact blocks remain alongside the
+  0/Infinity range variants.
+
+### Verified
+
+- Self-check 575 checks; the potion formats and exact item predicates compile
+  and generate the expected JSON.
+
 ## 1.1.1.88-beta
 
 ### Added

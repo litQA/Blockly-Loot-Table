@@ -1099,15 +1099,20 @@ public final class LootTableSelfCheck {
                         && modernPotion.contains("\"minecraft:potion_contents\"")
                         && modernPotion.contains("\"id\": \"minecraft:speed\"")
                         && modernPotion.contains("\"amplifier\": 1")
-                        && modernPotion.contains("\"duration\": 300"),
-                "potion item uses potion_contents on 1.20.5+");
+                        && modernPotion.contains("\"duration\": 300")
+                        && modernPotion.contains("\"minecraft:item_name\"")
+                        && modernPotion.contains("item.minecraft.potion.effect.speed")
+                        && !modernPotion.contains("\"potion\": "),
+                "potion item uses custom effects and an item name on 1.20.5+");
         String namespacedPotion = LootTableJsonWriter.write(
                 potionResult.model(), "test", "blocks/potion", false, false, true);
         check(namespacedPotion.contains("\"function\": \"minecraft:set_nbt\"")
                         && namespacedPotion.contains("custom_potion_effects")
                         && namespacedPotion.contains("id:\\\"minecraft:speed\\\"")
                         && namespacedPotion.contains("amplifier:1")
-                        && namespacedPotion.contains("duration:300"),
+                        && namespacedPotion.contains("duration:300")
+                        && namespacedPotion.contains("item.minecraft.potion.effect.speed")
+                        && !namespacedPotion.contains("Potion:\\\""),
                 "potion item uses namespaced NBT on 1.20.2-1.20.4");
         String legacyPotion = LootTableJsonWriter.write(
                 potionResult.model(), "test", "blocks/potion", false, false, false);
@@ -1115,7 +1120,9 @@ public final class LootTableSelfCheck {
                         && legacyPotion.contains("CustomPotionEffects")
                         && legacyPotion.contains("Id:1")
                         && legacyPotion.contains("Amplifier:1")
-                        && legacyPotion.contains("Duration:300"),
+                        && legacyPotion.contains("Duration:300")
+                        && legacyPotion.contains("item.minecraft.potion.effect.speed")
+                        && !legacyPotion.contains("Potion:\\\""),
                 "potion item uses numeric NBT on 1.20-1.20.1");
         check(resourceText("/loottable/loottable_item_potion.json")
                         .contains("\"toolbox_id\": \"loottable_item_components\""),
@@ -1231,6 +1238,33 @@ public final class LootTableSelfCheck {
                 "killed by player or pets expands to any_of");
         check(petJson.contains("\"nbt\": \"{Tame:1b}\""),
                 "killed by player or pets uses the tamed NBT predicate");
+
+        String exactEnchant = condition("loottable_item_has_enchantment_exact",
+                "<field name=\"enhancement\">sharpness</field>"
+                        + "<value name=\"level\"><block type=\"loottable_integer\">"
+                        + "<field name=\"value\">4</field></block></value>");
+        BlocklyXmlParser.ParseResult exactEnchantResult = BlocklyXmlParser.parse(blockTableXml(
+                entry("Blocks.STONE", 1, 1), exactEnchant), LootTableType.BLOCK, value -> value);
+        check(!exactEnchantResult.report().hasErrors(), "exact enchantment condition has no errors");
+        String exactEnchantJson = LootTableJsonWriter.write(exactEnchantResult.model(),
+                "test", "blocks/stone", false);
+        check(exactEnchantJson.contains("\"levels\": {")
+                        && exactEnchantJson.contains("\"min\": 4")
+                        && exactEnchantJson.contains("\"max\": 4"),
+                "exact enchantment condition writes one exact level");
+
+        String exactDurability = condition("loottable_item_durability_exact",
+                "<value name=\"value\"><block type=\"loottable_integer\">"
+                        + "<field name=\"value\">12</field></block></value>");
+        BlocklyXmlParser.ParseResult exactDurabilityResult = BlocklyXmlParser.parse(blockTableXml(
+                entry("Blocks.STONE", 1, 1), exactDurability), LootTableType.BLOCK, value -> value);
+        check(!exactDurabilityResult.report().hasErrors(), "exact durability condition has no errors");
+        String exactDurabilityJson = LootTableJsonWriter.write(exactDurabilityResult.model(),
+                "test", "blocks/stone", false);
+        check(exactDurabilityJson.contains("\"durability\": {")
+                        && exactDurabilityJson.contains("\"min\": 12")
+                        && exactDurabilityJson.contains("\"max\": 12"),
+                "exact durability condition writes matching bounds");
 
         String components = resourceText("/loottable/$loottable_item_components.json");
         String damageCategory = resourceText("/loottable/$loottable_damage_conditions.json");
@@ -1495,8 +1529,12 @@ public final class LootTableSelfCheck {
                 + "<value name=\"duration\"><block type=\"loottable_integer\">"
                 + "<field name=\"value\">600</field></block></value></block>";
         String potionJson = writeItemEntry(potion, VersionCompat.Features.modern());
-        check(potionJson.contains("\"potion\": \"minecraft:swiftness\""), "potion base template");
         check(potionJson.contains("\"custom_effects\": ["), "potion custom effects");
+        check(potionJson.contains("\"minecraft:item_name\": {"), "potion item name");
+        check(potionJson.contains("\"translate\": \"item.minecraft.potion.effect.speed\""),
+                "potion translated item name");
+        check(!potionJson.contains("\"potion\": \""), "potion has no base template");
+        check(!potionJson.contains("\"Potion:\""), "potion has no legacy base template");
     }
 
     private static void validPotionRangeCondition() {

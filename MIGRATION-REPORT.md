@@ -12,6 +12,20 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.1.1.92-beta
+
+- Removed the base potion template from the potion item producer. Vanilla
+  concatenates base-potion effects with `custom_effects`, which duplicated the
+  selected effect on potions and tipped arrows.
+- Added a translated item name so potion items no longer display as
+  "Uncraftable Potion": `minecraft:item_name` on 1.20.5+, and `display.Name` in
+  the 1.20-1.20.4 NBT formats.
+- Added an exact enchantment-level condition and an exact durability condition.
+  The range variants remain available with 0/Infinity omission semantics.
+- Known limitation: the translated potion name relies on a vanilla effect
+  translation key; unknown/custom effect ids may display the raw translation key
+  until a resource pack supplies it.
+
 ### 1.1.1.88-beta
 
 - Added base potion templates to the potion item producer. 1.20.5+ writes

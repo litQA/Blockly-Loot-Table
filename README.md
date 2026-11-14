@@ -114,15 +114,18 @@ duration. Amplifier and duration accept numbers or number providers but must
 resolve to integer literals. Potion data is version-gated: numeric
 `CustomPotionEffects` NBT through 1.20.1, namespaced `custom_potion_effects`
 NBT on 1.20.2-1.20.4, and the `minecraft:potion_contents` component on 1.20.5+.
-Every format also writes a base potion template derived from the selected effect
-(for example speed -> `minecraft:swiftness`) so the client does not show
-"Uncraftable Potion". Unknown or custom effects fall back to `minecraft:awkward`.
+No base potion template is written, because vanilla concatenates the base
+potion's effects with `custom_effects` and duplicates the effect. To keep a
+readable item name, the producer writes a translated `item_name` component on
+1.20.5+ (`item.minecraft.<item>.effect.<effect>`), or the equivalent
+`display.Name` text component in the older NBT formats.
 
 **Entity has potion (complex range)** adds duration and amplifier ranges on top
 of the entity potion predicate. Bounds accept any Number/NumberProvider; a lower
 bound of 0 omits `min`, and an upper bound of the Infinity block omits `max`.
 The durability, enchantment-level and item-count range blocks use the same
-0/Infinity omission rules. The exact count block remains available. The
+0/Infinity omission rules. Exact durability and exact enchantment-level blocks
+remain available alongside the ranges; the exact count block also remains. The
 **Infinity** number block is rejected with a warning outside the range sockets
 where it is meaningful.
 
@@ -314,6 +317,11 @@ longer ships a preset-template selector.
 - An Entity table with the potion condition and **Source entity** emits
   `minecraft:entity_properties`, `entity: "attacker"` and a non-empty
   `predicate.effects` map.
+- A potion or tipped-arrow item with fire resistance at amplifier 10 shows one
+  fire-resistance effect, not a base effect plus a custom effect, and its hover
+  name is translated instead of "Uncraftable Potion".
+- The exact enchantment-level and exact durability conditions emit matching
+  `levels.min`/`levels.max` and durability bounds.
 - A Block table with **Source entity**, **Immediate source entity** or **Source
   player** accepts the block and emits `entity: "this"` without an
   unavailable-parameter warning.

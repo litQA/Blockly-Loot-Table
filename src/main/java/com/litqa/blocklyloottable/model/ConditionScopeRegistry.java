@@ -57,10 +57,14 @@ public final class ConditionScopeRegistry {
                 ConditionScope.BLOCK_AND_ENTITY, "Item has enchantment at least"));
         register(new ConditionDefinition("loottable_item_has_enchantment_range", "minecraft:match_tool",
                 ConditionScope.BLOCK_AND_ENTITY, "Item has enchantment in range"));
+        register(new ConditionDefinition("loottable_item_has_enchantment_exact", "minecraft:match_tool",
+                ConditionScope.BLOCK_AND_ENTITY, "Item has exact enchantment level"));
         register(new ConditionDefinition("loottable_item_same", "minecraft:match_tool",
                 ConditionScope.BLOCK_AND_ENTITY, "Items are the same"));
         register(new ConditionDefinition("loottable_item_durability_range", "minecraft:match_tool",
                 ConditionScope.BLOCK_AND_ENTITY, "Item durability in range"));
+        register(new ConditionDefinition("loottable_item_durability_exact", "minecraft:match_tool",
+                ConditionScope.BLOCK_AND_ENTITY, "Item exact durability"));
         register(new ConditionDefinition("loottable_item_durability_at_least", "minecraft:match_tool",
                 ConditionScope.BLOCK_AND_ENTITY, "Item durability at least"));
         register(new ConditionDefinition("loottable_item_durability_at_most", "minecraft:match_tool",

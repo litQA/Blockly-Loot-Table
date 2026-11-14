@@ -1,0 +1,34 @@
+{
+  "type": "loottable_item_durability_exact",
+  "message0": "%1 durability is exactly %2",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "item",
+      "check": "MCItem"
+    },
+    {
+      "type": "input_value",
+      "name": "value",
+      "check": [
+        "Number",
+        "NumberProvider"
+      ]
+    }
+  ],
+  "inputsInline": true,
+  "colour": 120,
+  "tooltip": "Checks that the item has exactly the selected durability.",
+  "mcreator": {
+    "toolbox_id": "loottable_items",
+    "toolbox_init": [
+      "<value name=\"item\"><block type=\"loottable_entity_mainhand_item\"><value name=\"entity\"><block type=\"loottable_source_entity_dependency\"></block></value></block></value>",
+      "<value name=\"value\"><block type=\"loottable_integer\"><field name=\"value\">1</field></block></value>"
+    ],
+    "inputs": [
+      "item",
+      "value"
+    ]
+  },
+  "output": "LootTableCondition"
+}
