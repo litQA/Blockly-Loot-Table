@@ -12,6 +12,23 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.0.3.52-beta
+
+- Added item predicate conditions for item type, durability, count and custom
+  NBT values. Same-level predicates are merged into one `match_tool` or one
+  main-hand `entity_properties` predicate when the fields do not conflict.
+- Added **Damage conditions** and the **Source damage** value block. Minecraft
+  1.21.1 has no exact damage-type predicate, so damage types are mapped to the
+  closest vanilla damage tag. Types without a mapping are skipped with a
+  warning.
+- Added `Killed by player or pets`. Vanilla 1.21.1 has no single condition for
+  this test, so the plugin emits an `any_of` of player-kill and common pet
+  entity types.
+- Added the **Item components** category and moved all A-type item producers
+  there. NBT tags are now text inputs; NBT values use typed value inputs.
+- Container rows now default to an empty item selector and Integer 1, use an
+  expanded layout and align both row sockets to the right.
+
 ### 1.0.3.45-beta
 
 - Added custom-NBT item producers for boolean, number and text values.
@@ -303,3 +320,5 @@ workspace metadata is modified.
     `LootTableFunction`. Third-party blocks must opt into the matching type to
     connect to these chains. NBT conditions compare one scalar tag at a time and
     do not provide a compound or list editor.
+
+

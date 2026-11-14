@@ -13,7 +13,7 @@
   "inputsInline": false,
   "colour": 350,
   "mcreator": {
-    "toolbox_id": "loottable",
+    "toolbox_id": "loottable_item_components",
     "toolbox_init": [
       "<value name=\"item\"><block type=\"loottable_item_selector\"></block></value>",
       "<mutation inputs=\"1\"></mutation>",

@@ -1,0 +1,39 @@
+{
+  "type": "loottable_item_has_nbt_logic",
+  "message0": "%1 custom logic NBT tag %2 is %3",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "item",
+      "check": "MCItem"
+    },
+    {
+      "type": "input_value",
+      "name": "tag",
+      "check": "String"
+    },
+    {
+      "type": "input_value",
+      "name": "value",
+      "check": "Boolean"
+    }
+  ],
+  "inputsInline": true,
+  "previousStatement": "LootTableCondition",
+  "nextStatement": "LootTableCondition",
+  "colour": 350,
+  "tooltip": "Checks a custom logic NBT tag on an item.",
+  "mcreator": {
+    "toolbox_id": "loottable_items",
+    "toolbox_init": [
+      "<value name=\"item\"><block type=\"loottable_entity_mainhand_item\"><value name=\"entity\"><block type=\"loottable_source_entity_dependency\"></block></value></block></value>",
+      "<value name=\"tag\"><block type=\"loottable_empty_text\"><field name=\"TEXT\">tagName</field></block></value>",
+      "<value name=\"value\"><block type=\"loottable_boolean\"></block></value>"
+    ],
+    "inputs": [
+      "item",
+      "tag",
+      "value"
+    ]
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "type": "loottable_damage_tag",
+  "message0": "%1 is damaged by %2 tag",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "damage",
+      "check": "DamageSource"
+    },
+    {
+      "type": "input_value",
+      "name": "tag",
+      "check": "String"
+    }
+  ],
+  "inputsInline": true,
+  "previousStatement": "LootTableCondition",
+  "nextStatement": "LootTableCondition",
+  "colour": 320,
+  "tooltip": "Minecraft loot table condition.",
+  "mcreator": {
+    "toolbox_id": "loottable_damage_conditions",
+    "toolbox_init": [
+      "<value name=\"damage\"><block type=\"loottable_source_damage\"></block></value>",
+      "<value name=\"tag\"><block type=\"loottable_empty_text\"><field name=\"TEXT\">minecraft:is_projectile</field></block></value>"
+    ],
+    "inputs": [
+      "damage",
+      "tag"
+    ]
+  }
+}

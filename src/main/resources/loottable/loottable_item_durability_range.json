@@ -1,0 +1,45 @@
+{
+  "type": "loottable_item_durability_range",
+  "message0": "%1 durability is between %2 and %3",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "item",
+      "check": "MCItem"
+    },
+    {
+      "type": "input_value",
+      "name": "min",
+      "check": [
+        "Number",
+        "NumberProvider"
+      ]
+    },
+    {
+      "type": "input_value",
+      "name": "max",
+      "check": [
+        "Number",
+        "NumberProvider"
+      ]
+    }
+  ],
+  "inputsInline": true,
+  "previousStatement": "LootTableCondition",
+  "nextStatement": "LootTableCondition",
+  "colour": 350,
+  "tooltip": "Minecraft loot table condition.",
+  "mcreator": {
+    "toolbox_id": "loottable_items",
+    "toolbox_init": [
+      "<value name=\"item\"><block type=\"loottable_entity_mainhand_item\"><value name=\"entity\"><block type=\"loottable_source_entity_dependency\"></block></value></block></value>",
+      "<value name=\"min\"><block type=\"loottable_integer\"><field name=\"value\">0</field></block></value>",
+      "<value name=\"max\"><block type=\"loottable_integer\"><field name=\"value\">100</field></block></value>"
+    ],
+    "inputs": [
+      "item",
+      "min",
+      "max"
+    ]
+  }
+}

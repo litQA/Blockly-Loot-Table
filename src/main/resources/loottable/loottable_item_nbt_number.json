@@ -1,16 +1,19 @@
 {
   "type": "loottable_item_nbt_number",
-  "message0": "number NBT %1 = %2 on item %3",
+  "message0": "Item %3 with custom number NBT tag %1 = %2",
   "args0": [
     {
-      "type": "field_input",
+      "type": "input_value",
       "name": "tag",
-      "text": "tag"
+      "check": "String"
     },
     {
       "type": "input_value",
       "name": "value",
-      "check": "Number"
+      "check": [
+        "Number",
+        "NumberProvider"
+      ]
     },
     {
       "type": "input_value",
@@ -19,16 +22,20 @@
     }
   ],
   "inputsInline": true,
-  "output": "MCItem",
   "colour": 350,
-  "tooltip": "Adds a numeric custom NBT tag to an item. Only constant numeric values are supported.",
+  "tooltip": "Adds a custom number NBT tag to an item.",
   "mcreator": {
-    "toolbox_id": "loottable",
-    "fields": ["tag"],
-    "inputs": ["value", "item"],
+    "toolbox_id": "loottable_item_components",
     "toolbox_init": [
+      "<value name=\"tag\"><block type=\"loottable_empty_text\"><field name=\"TEXT\">tagName</field></block></value>",
       "<value name=\"value\"><block type=\"loottable_float\"><field name=\"value\">0.0</field></block></value>",
       "<value name=\"item\"><block type=\"loottable_item_selector\"></block></value>"
+    ],
+    "inputs": [
+      "tag",
+      "value",
+      "item"
     ]
-  }
+  },
+  "output": "MCItem"
 }

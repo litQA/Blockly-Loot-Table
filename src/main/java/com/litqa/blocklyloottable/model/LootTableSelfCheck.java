@@ -37,6 +37,7 @@ public final class LootTableSelfCheck {
         validEnchantItemFunctions();
         validFunctionBlocks();
         validWorldConditions();
+        validItemConditionsAndDamage();
         entityAutoPath();
         manualPathProvidedBlock();
         validBlockSourceAliases();
@@ -281,10 +282,12 @@ public final class LootTableSelfCheck {
         BlocklyXmlParser.ParseResult blockResult = BlocklyXmlParser.parse(blockTableXml(
                 entry("Blocks.STONE", 1, 1),
                 condition("loottable_block_nbt_logic",
-                        "<field name=\"tag\">CustomName</field>"
+                        "<value name=\"tag\"><block type=\"loottable_empty_text\">"
+                                + "<field name=\"TEXT\">CustomName</field></block></value>"
                                 + "<value name=\"block\"><block type=\"loottable_provided_blockstate\"></block></value>"
                                 + "<field name=\"operator\">=</field>"
-                                + "<field name=\"value\">true</field>")),
+                                + "<value name=\"value\"><block type=\"loottable_boolean\">"
+                                + "<field name=\"BOOL\">TRUE</field></block></value>")),
                 LootTableType.BLOCK, value -> value, "minecraft:oak_log");
         check(!blockResult.report().hasErrors(), "block NBT condition has no errors");
         String blockJson = LootTableJsonWriter.write(blockResult.model(), "test", "blocks/log", false);
@@ -297,22 +300,27 @@ public final class LootTableSelfCheck {
         BlocklyXmlParser.ParseResult entityResult = BlocklyXmlParser.parse(entityTableXml(
                 entry("Items.ROTTEN_FLESH", 1, 1),
                 condition("loottable_entity_nbt_number",
-                        "<field name=\"tag\">Level</field>"
+                        "<value name=\"tag\"><block type=\"loottable_empty_text\">"
+                                + "<field name=\"TEXT\">Level</field></block></value>"
                                 + "<value name=\"entity\"><block type=\"loottable_source_entity_dependency\"></block></value>"
-                                + "<field name=\"operator\">=</field><field name=\"value\">3</field>")),
+                                + "<field name=\"operator\">=</field>"
+                                + "<value name=\"value\"><block type=\"loottable_float\">"
+                                + "<field name=\"value\">3.0</field></block></value>")),
                 LootTableType.ENTITY, value -> value);
         check(!entityResult.report().hasErrors(), "entity NBT condition has no errors");
         String entityJson = LootTableJsonWriter.write(entityResult.model(), "test", "entities/zombie", false);
         check(entityJson.contains("\"condition\": \"minecraft:entity_properties\""),
                 "entity NBT condition uses entity_properties");
         check(entityJson.contains("\"entity\": \"attacker\""), "entity NBT uses the source entity");
-        check(entityJson.contains("\"nbt\": \"{Level:3}\""), "entity number NBT value is SNBT");
+        check(entityJson.contains("\"nbt\": \"{Level:3.0}\""), "entity number NBT value is SNBT");
 
         BlocklyXmlParser.ParseResult textResult = BlocklyXmlParser.parse(entityTableXml(
                 entry("Items.ROTTEN_FLESH", 1, 1),
                 condition("loottable_entity_nbt_text",
-                        "<field name=\"tag\">Owner</field>"
-                                + "<field name=\"value\">Steve</field>")),
+                        "<value name=\"tag\"><block type=\"loottable_empty_text\">"
+                                + "<field name=\"TEXT\">Owner</field></block></value>"
+                                + "<value name=\"value\"><block type=\"loottable_empty_text\">"
+                                + "<field name=\"TEXT\">Steve</field></block></value>")),
                 LootTableType.ENTITY, value -> value);
         check(!textResult.report().hasErrors(), "entity text NBT condition has no errors");
         String textJson = LootTableJsonWriter.write(textResult.model(), "test", "entities/zombie", false);
@@ -711,7 +719,8 @@ public final class LootTableSelfCheck {
                 + "<field name=\"item\">minecraft:paper</field></block>";
 
         String nbtLogic = "<block type=\"loottable_item_nbt_logic\">"
-                + "<field name=\"tag\">CustomName</field>"
+                + "<value name=\"tag\"><block type=\"loottable_empty_text\">"
+                + "<field name=\"TEXT\">CustomName</field></block></value>"
                 + "<value name=\"value\"><block type=\"loottable_boolean\">"
                 + "<field name=\"BOOL\">TRUE</field></block></value>"
                 + "<value name=\"item\">" + base + "</value></block>";
@@ -727,7 +736,8 @@ public final class LootTableSelfCheck {
                 "boolean NBT uses set_nbt before 1.20.5");
 
         String nbtText = "<block type=\"loottable_item_nbt_text\">"
-                + "<field name=\"tag\">Note</field>"
+                + "<value name=\"tag\"><block type=\"loottable_empty_text\">"
+                + "<field name=\"TEXT\">Note</field></block></value>"
                 + "<value name=\"value\"><block type=\"loottable_empty_text\">"
                 + "<field name=\"TEXT\">hello</field></block></value>"
                 + "<value name=\"item\">" + base + "</value></block>";
@@ -778,7 +788,7 @@ public final class LootTableSelfCheck {
                 "empty text block is in the components category");
         String containerResource = resourceText("/loottable/loottable_item_container.json");
         check(containerResource.contains("loottable_item_container_mutator")
-                        && containerResource.contains("\"toolbox_id\": \"loottable\""),
+                        && containerResource.contains("\"toolbox_id\": \"loottable_item_components\""),
                 "container item resource exposes its mutator");
         String randomChance = resourceText("/loottable/loottable_random_chance.json");
         check(randomChance.contains("%{BKY_LOGIC_HUE}")
@@ -787,6 +797,88 @@ public final class LootTableSelfCheck {
         String mainhand = resourceText("/loottable/loottable_entity_mainhand_item.json");
         check(mainhand.contains("\"toolbox_id\": \"loottable_entities\""),
                 "main-hand item is in the entity category");
+    }
+
+    private static void validItemConditionsAndDamage() {
+        String same = condition("loottable_item_same",
+                "<value name=\"other\"><block type=\"loottable_item_selector\">"
+                        + "<field name=\"item\">minecraft:paper</field></block></value>");
+        String durability = condition("loottable_item_durability_at_least",
+                "<value name=\"min\"><block type=\"loottable_integer\">"
+                        + "<field name=\"value\">40</field></block></value>");
+        String count = condition("loottable_item_count_at_most",
+                "<value name=\"max\"><block type=\"loottable_integer\">"
+                        + "<field name=\"value\">3</field></block></value>");
+        BlocklyXmlParser.ParseResult itemResult = BlocklyXmlParser.parse(blockTableXml(
+                entry("Blocks.STONE", 1, 1), chain(same, durability, count)),
+                LootTableType.BLOCK, value -> value);
+        check(!itemResult.report().hasErrors(), "item predicate conditions have no errors");
+        String itemJson = LootTableJsonWriter.write(itemResult.model(), "test", "blocks/stone", false);
+        check(countOccurrences(itemJson, "\"condition\": \"minecraft:match_tool\"") == 1,
+                "same-level item conditions merge into one match_tool");
+        check(itemJson.contains("\"minecraft:paper\""), "same-item condition keeps its item");
+        check(itemJson.contains("\"minecraft:damage\"")
+                        && itemJson.contains("\"durability\"")
+                        && itemJson.contains("\"min\": 40"),
+                "durability condition writes the damage sub-predicate");
+        check(itemJson.contains("\"count\"") && itemJson.contains("\"max\": 3"),
+                "item count condition writes the count predicate");
+        String legacyItemJson = LootTableJsonWriter.write(itemResult.model(), "test", "blocks/stone", false, false);
+        check(legacyItemJson.contains("\"durability\"")
+                        && !legacyItemJson.contains("\"minecraft:damage\""),
+                "pre-1.20.5 item durability uses the top-level predicate");
+
+        String damage = condition("loottable_damage_type",
+                "<field name=\"damagetype\">arrow</field>");
+        BlocklyXmlParser.ParseResult damageResult = BlocklyXmlParser.parse(blockTableXml(
+                entry("Blocks.STONE", 1, 1), damage), LootTableType.BLOCK, value -> value);
+        check(!damageResult.report().hasErrors(), "damage type condition has no errors");
+        String damageJson = LootTableJsonWriter.write(damageResult.model(), "test", "blocks/stone", false);
+        check(damageJson.contains("\"condition\": \"minecraft:damage_source_properties\""),
+                "damage type condition writes damage_source_properties");
+        check(damageJson.contains("\"id\": \"#minecraft:is_projectile\""),
+                "arrow maps to the projectile damage tag");
+
+        String nbt = condition("loottable_item_has_nbt_text",
+                "<value name=\"tag\"><block type=\"loottable_empty_text\">"
+                        + "<field name=\"TEXT\">tagName</field></block></value>"
+                        + "<value name=\"value\"><block type=\"loottable_empty_text\">"
+                        + "<field name=\"TEXT\">x</field></block></value>");
+        BlocklyXmlParser.ParseResult nbtResult = BlocklyXmlParser.parse(blockTableXml(
+                entry("Blocks.STONE", 1, 1), nbt), LootTableType.BLOCK, value -> value);
+        check(!nbtResult.report().hasErrors(), "item NBT condition has no errors");
+        String nbtJson = LootTableJsonWriter.write(nbtResult.model(), "test", "blocks/stone", false);
+        check(nbtJson.contains("\"minecraft:custom_data\"")
+                        && nbtJson.contains("{tagName:\\\"x\\\"}"),
+                "item NBT condition writes custom_data");
+        String legacyNbtJson = LootTableJsonWriter.write(nbtResult.model(), "test", "blocks/stone", false, false);
+        check(legacyNbtJson.contains("\"nbt\"")
+                        && !legacyNbtJson.contains("\"minecraft:custom_data\""),
+                "pre-1.20.5 item NBT uses the top-level nbt predicate");
+
+        String pets = condition("loottable_killed_by_player_or_pets", "");
+        BlocklyXmlParser.ParseResult petResult = BlocklyXmlParser.parse(entityTableXml(
+                entry("Items.ROTTEN_FLESH", 1, 1), pets), LootTableType.ENTITY, value -> value);
+        check(!petResult.report().hasErrors(), "killed by player or pets has no errors");
+        String petJson = LootTableJsonWriter.write(petResult.model(), "test", "entities/zombie", false);
+        check(petJson.contains("\"condition\": \"minecraft:any_of\"")
+                        && petJson.contains("\"condition\": \"minecraft:killed_by_player\""),
+                "killed by player or pets expands to any_of");
+        check(petJson.contains("\"minecraft:wolf\"") && petJson.contains("\"minecraft:cat\""),
+                "killed by player or pets includes pet types");
+
+        String components = resourceText("/loottable/$loottable_item_components.json");
+        String damageCategory = resourceText("/loottable/$loottable_damage_conditions.json");
+        check(components.contains("\"color\": 350"), "item components category is item-colored");
+        check(damageCategory.contains("\"color\": 320"), "damage conditions category is pink");
+        String sourceDamage = resourceText("/loottable/loottable_source_damage.json");
+        check(sourceDamage.contains("\"output\": \"DamageSource\"")
+                        && sourceDamage.contains("\"toolbox_id\": \"loottable_components\""),
+                "source damage block is available in components");
+        String nbtProducer = resourceText("/loottable/loottable_item_nbt_text.json");
+        check(nbtProducer.contains("\"name\": \"tag\"")
+                        && nbtProducer.contains("\"type\": \"input_value\""),
+                "item NBT producer uses a tag text input");
     }
 
     private static void validEnchantItemFunctions() {

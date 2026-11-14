@@ -46,7 +46,7 @@ public final class LootTableJsonWriter {
         json.put("bonus_rolls", pool.getBonusRolls());
 
         if (!pool.getConditions().isEmpty()) {
-            List<Object> conditions = conditionsToJson(pool.getConditions());
+            List<Object> conditions = conditionsToJson(pool.getConditions(), itemComponents);
             if (!conditions.isEmpty()) {
                 json.put("conditions", conditions);
             }
@@ -89,7 +89,7 @@ public final class LootTableJsonWriter {
         json.put("functions", functions);
 
         if (!entry.getConditions().isEmpty()) {
-            List<Object> conditions = conditionsToJson(entry.getConditions());
+            List<Object> conditions = conditionsToJson(entry.getConditions(), itemComponents);
             if (!conditions.isEmpty()) {
                 json.put("conditions", conditions);
             }
@@ -291,7 +291,7 @@ public final class LootTableJsonWriter {
         }
     }
 
-    private static Map<String, Object> conditionToJson(LootTableModel.Condition condition) {
+    private static Map<String, Object> conditionToJson(LootTableModel.Condition condition, boolean itemComponents) {
         if (condition == null) {
             return null;
         }
@@ -499,23 +499,146 @@ public final class LootTableJsonWriter {
                 json.put("condition", "minecraft:location_check");
                 json.put("predicate", locationPredicate("block", blocks));
             }
+            case "loottable_item_same", "loottable_item_durability_range",
+                    "loottable_item_durability_at_least", "loottable_item_durability_at_most",
+                    "loottable_item_count", "loottable_item_count_at_least",
+                    "loottable_item_count_at_most", "loottable_item_count_range",
+                    "loottable_item_has_nbt_logic", "loottable_item_has_nbt_number",
+                    "loottable_item_has_nbt_text" -> {
+                return itemConditionToJson(condition, itemComponents);
+            }
+            case "loottable_damage_type", "loottable_damage_tag" -> {
+                String tag = string(condition.getProperties().get("tag"));
+                if (tag.isBlank()) {
+                    return null;
+                }
+                Map<String, Object> tagPredicate = new LinkedHashMap<>();
+                tagPredicate.put("id", tagged(tag));
+                tagPredicate.put("expected", true);
+                Map<String, Object> predicate = new LinkedHashMap<>();
+                predicate.put("tags", List.of(tagPredicate));
+                json.put("condition", "minecraft:damage_source_properties");
+                json.put("predicate", predicate);
+            }
+            case "loottable_killed_by_player_or_pets" -> {
+                List<Object> terms = conditionTermsToJson(condition.getTerms(), itemComponents);
+                if (terms.isEmpty()) {
+                    return null;
+                }
+                json.put("condition", "minecraft:any_of");
+                json.put("terms", terms);
+            }
             case "loottable_logic_and", "loottable_logic_or" -> {
-                List<Object> terms = conditionTermsToJson(condition.getTerms());
+                List<Object> terms = conditionTermsToJson(condition.getTerms(), itemComponents);
                 if (terms.isEmpty()) {
                     return null;
                 }
                 json.put("terms", terms);
             }
             case "loottable_logic_not" -> {
-                Map<String, Object> term = conditionToJson(condition.getTerm());
+                Map<String, Object> term = conditionToJson(condition.getTerm(), itemComponents);
                 if (term == null) {
                     return null;
                 }
                 json.put("term", term);
             }
+            case "loottable_entity_pet" -> {
+                String entity = string(condition.getProperties().get("entity"));
+                String type = string(condition.getProperties().get("type"));
+                if (entity.isBlank() || type.isBlank()) {
+                    return null;
+                }
+                Map<String, Object> predicate = new LinkedHashMap<>();
+                predicate.put("type", type);
+                json.put("condition", "minecraft:entity_properties");
+                json.put("entity", entity);
+                json.put("predicate", predicate);
+            }
             default -> {
                 // Conditions without parameters need only their type.
             }
+        }
+        return json;
+    }
+
+    private static Map<String, Object> itemConditionToJson(LootTableModel.Condition condition, boolean itemComponents) {
+        Map<String, Object> itemPredicate = new LinkedHashMap<>();
+        String item = string(condition.getProperties().get("item"));
+        if (!item.isBlank()) {
+            itemPredicate.put("items", List.of(item));
+        }
+
+        String blockType = condition.getBlockType();
+        if (blockType.startsWith("loottable_item_count")) {
+            Map<String, Object> count = new LinkedHashMap<>();
+            if (condition.getProperties().containsKey("minCount")) {
+                count.put("min", number(condition.getProperties().get("minCount"), 0));
+            }
+            if (condition.getProperties().containsKey("maxCount")) {
+                count.put("max", number(condition.getProperties().get("maxCount"), 0));
+            }
+            if (!count.isEmpty()) {
+                itemPredicate.put("count", count);
+            }
+        }
+        if (blockType.startsWith("loottable_item_durability")) {
+            Map<String, Object> durability = new LinkedHashMap<>();
+            if (condition.getProperties().containsKey("minDurability")) {
+                durability.put("min", number(condition.getProperties().get("minDurability"), 0));
+            }
+            if (condition.getProperties().containsKey("maxDurability")) {
+                durability.put("max", number(condition.getProperties().get("maxDurability"), 0));
+            }
+            if (!durability.isEmpty()) {
+                if (itemComponents) {
+                    Map<String, Object> damage = new LinkedHashMap<>();
+                    damage.put("durability", durability);
+                    Map<String, Object> predicates = new LinkedHashMap<>();
+                    predicates.put("minecraft:damage", damage);
+                    itemPredicate.put("predicates", predicates);
+                } else {
+                    itemPredicate.put("durability", durability);
+                }
+            }
+        }
+        if (blockType.startsWith("loottable_item_has_nbt")) {
+            String nbt = string(condition.getProperties().get("nbt"));
+            if (nbt.isBlank()) {
+                return null;
+            }
+            if (itemComponents) {
+                Map<String, Object> predicates = new LinkedHashMap<>();
+                predicates.put("minecraft:custom_data", nbt);
+                itemPredicate.put("predicates", predicates);
+            } else {
+                itemPredicate.put("nbt", nbt);
+            }
+        }
+
+        Map<String, Object> json = new LinkedHashMap<>();
+        if ("entity".equals(string(condition.getProperties().get("mode")))) {
+            String entity = string(condition.getProperties().get("entity"));
+            if (entity.isBlank()) {
+                return null;
+            }
+            Map<String, Object> mainhand = new LinkedHashMap<>();
+            mainhand.put("predicates", itemPredicate.getOrDefault("predicates", new LinkedHashMap<>()));
+            if (itemPredicate.containsKey("items")) {
+                mainhand.put("items", itemPredicate.get("items"));
+            }
+            if (itemPredicate.containsKey("count")) {
+                mainhand.put("count", itemPredicate.get("count"));
+            }
+            Map<String, Object> equipment = new LinkedHashMap<>();
+            equipment.put("mainhand", mainhand);
+            Map<String, Object> predicate = new LinkedHashMap<>();
+            predicate.put("equipment", equipment);
+            json.put("condition", "minecraft:entity_properties");
+            json.put("entity", entity);
+            json.put("predicate", predicate);
+        } else {
+            json.put("condition", "minecraft:match_tool");
+            json.put("predicate", itemPredicate);
         }
         return json;
     }
@@ -531,10 +654,10 @@ public final class LootTableJsonWriter {
         return value.startsWith("#") ? value : "#" + value;
     }
 
-    private static List<Object> conditionsToJson(List<LootTableModel.Condition> input) {
+    private static List<Object> conditionsToJson(List<LootTableModel.Condition> input, boolean itemComponents) {
         List<Object> conditions = new ArrayList<>();
         for (LootTableModel.Condition condition : input) {
-            Map<String, Object> conditionJson = conditionToJson(condition);
+            Map<String, Object> conditionJson = conditionToJson(condition, itemComponents);
             if (conditionJson == null) {
                 continue;
             }
@@ -545,9 +668,60 @@ public final class LootTableJsonWriter {
                     continue;
                 }
             }
+            if (isMergeableItemCondition(conditionJson)) {
+                Map<String, Object> combined = findItemPredicate(conditions, conditionJson);
+                Map<String, Object> incoming = itemPredicate(conditionJson);
+                if (combined != null && incoming != null && deepMerge(combined, incoming)) {
+                    continue;
+                }
+            }
             conditions.add(conditionJson);
         }
         return conditions;
+    }
+
+    private static boolean isMergeableItemCondition(Map<String, Object> json) {
+        return "minecraft:match_tool".equals(json.get("condition"))
+                || ("minecraft:entity_properties".equals(json.get("condition"))
+                && itemPredicate(json) != null);
+    }
+
+    private static Map<String, Object> findItemPredicate(List<Object> conditions, Map<String, Object> incoming) {
+        boolean entityMode = "minecraft:entity_properties".equals(incoming.get("condition"));
+        String entity = string(incoming.get("entity"));
+        for (Object condition : conditions) {
+            if (!(condition instanceof Map<?, ?> map)) {
+                continue;
+            }
+            if (entityMode) {
+                if ("minecraft:entity_properties".equals(map.get("condition"))
+                        && entity.equals(string(map.get("entity")))) {
+                    return itemPredicate(castMap(map));
+                }
+            } else if ("minecraft:match_tool".equals(map.get("condition"))) {
+                return itemPredicate(castMap(map));
+            }
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> castMap(Map<?, ?> map) {
+        return (Map<String, Object>) map;
+    }
+
+    private static Map<String, Object> itemPredicate(Map<String, Object> json) {
+        if ("minecraft:match_tool".equals(json.get("condition"))
+                && json.get("predicate") instanceof Map<?, ?> predicate) {
+            return castMap(predicate);
+        }
+        if ("minecraft:entity_properties".equals(json.get("condition"))
+                && json.get("predicate") instanceof Map<?, ?> predicate
+                && predicate.get("equipment") instanceof Map<?, ?> equipment
+                && equipment.get("mainhand") instanceof Map<?, ?> mainhand) {
+            return castMap(mainhand);
+        }
+        return null;
     }
 
     @SuppressWarnings("unchecked")
@@ -583,11 +757,11 @@ public final class LootTableJsonWriter {
         return true;
     }
 
-    private static List<Object> conditionTermsToJson(List<LootTableModel.Condition> conditions) {
+    private static List<Object> conditionTermsToJson(List<LootTableModel.Condition> conditions, boolean itemComponents) {
         List<Object> terms = new ArrayList<>();
         if (conditions != null) {
             for (LootTableModel.Condition condition : conditions) {
-                Map<String, Object> json = conditionToJson(condition);
+                Map<String, Object> json = conditionToJson(condition, itemComponents);
                 if (json != null) {
                     terms.add(json);
                 }

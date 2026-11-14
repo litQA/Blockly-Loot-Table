@@ -1,0 +1,32 @@
+{
+  "type": "loottable_item_same",
+  "message0": "%1 and %2 are the same item",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "item",
+      "check": "MCItem"
+    },
+    {
+      "type": "input_value",
+      "name": "other",
+      "check": "MCItem"
+    }
+  ],
+  "inputsInline": true,
+  "previousStatement": "LootTableCondition",
+  "nextStatement": "LootTableCondition",
+  "colour": 350,
+  "tooltip": "Minecraft loot table condition.",
+  "mcreator": {
+    "toolbox_id": "loottable_items",
+    "toolbox_init": [
+      "<value name=\"item\"><block type=\"loottable_entity_mainhand_item\"><value name=\"entity\"><block type=\"loottable_source_entity_dependency\"></block></value></block></value>",
+      "<value name=\"other\"><block type=\"loottable_item_selector\"></block></value>"
+    ],
+    "inputs": [
+      "item",
+      "other"
+    ]
+  }
+}

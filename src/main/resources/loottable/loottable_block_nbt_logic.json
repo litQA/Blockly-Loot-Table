@@ -1,9 +1,9 @@
 {
   "args0": [
     {
-      "type": "field_input",
+      "type": "input_value",
       "name": "tag",
-      "text": "CustomName"
+      "check": "String"
     },
     {
       "type": "input_value",
@@ -21,18 +21,9 @@
       ]
     },
     {
-      "type": "field_dropdown",
+      "type": "input_value",
       "name": "value",
-      "options": [
-        [
-          "true",
-          "true"
-        ],
-        [
-          "false",
-          "false"
-        ]
-      ]
+      "check": "Boolean"
     }
   ],
   "inputsInline": true,
@@ -42,18 +33,18 @@
   "mcreator": {
     "toolbox_id": "loottable_blocks",
     "toolbox_init": [
-      "<field name=\"tag\">CustomName</field>",
-      "<field name=\"value\">true</field>",
-      "<value name=\"block\"><block type=\"loottable_provided_blockstate\"></block></value>"
+      "<value name=\"tag\"><block type=\"loottable_empty_text\"><field name=\"TEXT\">tagName</field></block></value>",
+      "<value name=\"block\"><block type=\"loottable_provided_blockstate\"></block></value>",
+      "<field name=\"operator\">=</field>",
+      "<value name=\"value\"><block type=\"loottable_boolean\"></block></value>"
     ],
     "fields": [
-      "tag",
-      "operator",
-      "value"
+      "operator"
     ],
     "inputs": [
-      "block"
+      "tag",
+      "block",
+      "value"
     ]
   }
 }
-

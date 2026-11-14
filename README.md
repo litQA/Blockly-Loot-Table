@@ -17,6 +17,9 @@ Supported condition blocks:
 - entity potion-effect predicate (Block tables test the player who breaks the
   block; Entity tables test the selected entity)
 - block and entity NBT logic, number and text comparisons
+- item identity, durability and count conditions, plus item NBT comparisons
+- damage-type and damage-tag conditions
+- `killed_by_player_or_pets` (an `any_of` approximation)
 - item enchantment conditions with an item input, minimum level and optional
   maximum level
 - enchanted-item value blocks with dynamic enchantment rows and NumberProvider
@@ -27,7 +30,16 @@ Supported condition blocks:
 
 Same-level location checks are merged into one `minecraft:location_check`
 predicate when their keys do not conflict, so dimension, biome, position and
-block-tag tests become a single AND predicate.
+block-tag tests become a single AND predicate. Item predicates are merged the
+same way: same-level identity, durability, count and NBT tests become one
+`minecraft:match_tool` or one `entity_properties.equipment.mainhand` predicate.
+
+**Damage conditions** test the source damage with a vanilla damage tag.
+Minecraft 1.21.1 has no exact damage-type predicate, so `is <type> type damage`
+maps common types to the closest vanilla tag; unmapped types are skipped with a
+warning. **Killed by player or pets** expands to an `any_of` of the player-kill
+condition and common pet entity types because vanilla has no aggregate
+condition.
 
 The **Minecraft components** category provides the empty item selector,
 provided-blockstate, block selector, event/target entity, source entity,
@@ -57,19 +69,22 @@ other variants write `minecraft:enchant_randomly` or
 so treasure enchantments are eligible, while an unchecked box restricts to
 `#minecraft:on_random_loot`.
 
-The **Loot tables** category also contains A-1 item producers for custom NBT and
-container contents. The three NBT blocks add boolean, number or text SNBT to the
-item's `tag`. On 1.20.5+ they emit `minecraft:set_custom_data`; older generators
-receive `minecraft:set_nbt`. Number NBT accepts only a constant value, because
+The **Item components** category contains every A-1 item producer: the empty
+item selector, enchanted-item variants, custom NBT and container contents. The
+three NBT blocks add boolean, number or text SNBT to the item's `tag`. On 1.20.5+
+they emit `minecraft:set_custom_data`; older generators receive
+`minecraft:set_nbt`. NBT tag names are text inputs; the value socket accepts a
+logic, number or text block. Number NBT accepts only a constant value because
 the tag must be static. **Item with contents** is an expandable container block
-with one item socket and one Number/NumberProvider count socket per row. It
-emits `minecraft:set_contents` with `type` before 1.20.5 and with `component`
-from 1.20.5 onward. A floating-point literal count is rejected so the generated
-container remains valid.
+with one item socket and one Number/NumberProvider count socket per row. Rows
+default to an empty item selector and Integer 1, and both sockets are
+right-aligned. It emits `minecraft:set_contents` with `type` before 1.20.5 and
+with `component` from 1.20.5 onward. A floating-point literal count is rejected
+so the generated container remains valid.
 
 `Random chance` now lives in the **Logic** category and uses the native logic
-colour. The main-hand item block is in **Entity conditions**. The item producer
-blocks were moved out of the item-condition list into **Loot tables**.
+colour. The main-hand item block is in **Entity conditions**. Item producers
+live in **Item components**; item-comparison blocks stay in **Item conditions**.
 
 The count input accepts a bare number or a number provider. The **Numbers**
 category contains the terminal `Integer` and `Float` blocks, the constant

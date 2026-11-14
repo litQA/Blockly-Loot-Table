@@ -1,0 +1,10 @@
+{
+  "type": "loottable_source_damage",
+  "message0": "source damage",
+  "output": "DamageSource",
+  "colour": 320,
+  "tooltip": "The damage source of the current loot context.",
+  "mcreator": {
+    "toolbox_id": "loottable_components"
+  }
+}

@@ -53,6 +53,34 @@ public final class ConditionScopeRegistry {
                 ConditionScope.BLOCK_AND_ENTITY, "Item has enchantment at least"));
         register(new ConditionDefinition("loottable_item_has_enchantment_range", "minecraft:match_tool",
                 ConditionScope.BLOCK_AND_ENTITY, "Item has enchantment in range"));
+        register(new ConditionDefinition("loottable_item_same", "minecraft:match_tool",
+                ConditionScope.BLOCK_AND_ENTITY, "Items are the same"));
+        register(new ConditionDefinition("loottable_item_durability_range", "minecraft:match_tool",
+                ConditionScope.BLOCK_AND_ENTITY, "Item durability in range"));
+        register(new ConditionDefinition("loottable_item_durability_at_least", "minecraft:match_tool",
+                ConditionScope.BLOCK_AND_ENTITY, "Item durability at least"));
+        register(new ConditionDefinition("loottable_item_durability_at_most", "minecraft:match_tool",
+                ConditionScope.BLOCK_AND_ENTITY, "Item durability at most"));
+        register(new ConditionDefinition("loottable_item_count", "minecraft:match_tool",
+                ConditionScope.BLOCK_AND_ENTITY, "Item count is"));
+        register(new ConditionDefinition("loottable_item_count_at_least", "minecraft:match_tool",
+                ConditionScope.BLOCK_AND_ENTITY, "Item count at least"));
+        register(new ConditionDefinition("loottable_item_count_at_most", "minecraft:match_tool",
+                ConditionScope.BLOCK_AND_ENTITY, "Item count at most"));
+        register(new ConditionDefinition("loottable_item_count_range", "minecraft:match_tool",
+                ConditionScope.BLOCK_AND_ENTITY, "Item count in range"));
+        register(new ConditionDefinition("loottable_item_has_nbt_logic", "minecraft:match_tool",
+                ConditionScope.BLOCK_AND_ENTITY, "Item logic NBT"));
+        register(new ConditionDefinition("loottable_item_has_nbt_number", "minecraft:match_tool",
+                ConditionScope.BLOCK_AND_ENTITY, "Item number NBT"));
+        register(new ConditionDefinition("loottable_item_has_nbt_text", "minecraft:match_tool",
+                ConditionScope.BLOCK_AND_ENTITY, "Item text NBT"));
+        register(new ConditionDefinition("loottable_damage_type", "minecraft:damage_source_properties",
+                ConditionScope.BLOCK_AND_ENTITY, "Damage type"));
+        register(new ConditionDefinition("loottable_damage_tag", "minecraft:damage_source_properties",
+                ConditionScope.BLOCK_AND_ENTITY, "Damage type tag"));
+        register(new ConditionDefinition("loottable_killed_by_player_or_pets", "minecraft:any_of",
+                ConditionScope.ENTITY_ONLY, "Killed by player or pets"));
         register(new ConditionDefinition("loottable_time_check", "minecraft:time_check",
                 ConditionScope.BLOCK_AND_ENTITY, "World time"));
         register(new ConditionDefinition("loottable_time_day", "minecraft:time_check",

@@ -1,11 +1,11 @@
 {
   "type": "loottable_item_nbt_text",
-  "message0": "text NBT %1 = %2 on item %3",
+  "message0": "Item %3 with custom text NBT tag %1 = %2",
   "args0": [
     {
-      "type": "field_input",
+      "type": "input_value",
       "name": "tag",
-      "text": "tag"
+      "check": "String"
     },
     {
       "type": "input_value",
@@ -19,16 +19,20 @@
     }
   ],
   "inputsInline": true,
-  "output": "MCItem",
   "colour": 350,
-  "tooltip": "Adds a text custom NBT tag to an item.",
+  "tooltip": "Adds a custom text NBT tag to an item.",
   "mcreator": {
-    "toolbox_id": "loottable",
-    "fields": ["tag"],
-    "inputs": ["value", "item"],
+    "toolbox_id": "loottable_item_components",
     "toolbox_init": [
-      "<value name=\"value\"><block type=\"loottable_empty_text\"></block></value>",
+      "<value name=\"tag\"><block type=\"loottable_empty_text\"><field name=\"TEXT\">tagName</field></block></value>",
+      "<value name=\"value\"><block type=\"loottable_empty_text\"><field name=\"TEXT\"></field></block></value>",
       "<value name=\"item\"><block type=\"loottable_item_selector\"></block></value>"
+    ],
+    "inputs": [
+      "tag",
+      "value",
+      "item"
     ]
-  }
+  },
+  "output": "MCItem"
 }

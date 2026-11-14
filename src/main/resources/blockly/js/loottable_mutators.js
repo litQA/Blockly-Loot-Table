@@ -90,6 +90,7 @@
         }
         for (var row = 0; row < count; row++) {
             block.appendValueInput('item' + row).setCheck('MCItem')
+                .setAlign(Blockly.Input.Align.RIGHT)
                 .appendField(label('blockly.block.loottable_item_container.mutator.item', 'Item'));
             block.appendValueInput('count' + row).setCheck(['Number', 'NumberProvider'])
                 .setAlign(Blockly.Input.Align.RIGHT)

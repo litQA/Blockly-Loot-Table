@@ -9,7 +9,7 @@
   "output": "MCItem",
   "colour": 350,
   "mcreator": {
-    "toolbox_id": "loottable_components",
+    "toolbox_id": "loottable_item_components",
     "fields": [
       "item"
     ]

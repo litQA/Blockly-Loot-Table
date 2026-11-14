@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.0.3.52-beta
+
+### New Content
+
+- Added item predicate conditions for item identity, durability bounds, item
+  count bounds and custom logic/number/text NBT values.
+- Added **Damage conditions** with damage-type and damage-tag blocks, plus a
+  reusable **Source damage** value block.
+- Added `Killed by player or pets` as an `any_of` approximation of the missing
+  vanilla aggregate condition.
+- Added an **Item components** category for all A-type item producers.
+- NBT tag names are now text value inputs, and block/entity NBT values use
+  proper logic, number and text value inputs.
+
+### Changed
+
+- Container rows now default to an empty item selector and Integer 1, use
+  expanded layout and right-align both inputs.
+- Removed the leading `Item` from the empty item selector and `Empty text` from
+  the empty text block.
+- Same-level item predicates merge into one `match_tool` or
+  `entity_properties.equipment.mainhand` when their keys do not conflict.
+
+### Internal
+
+- Extended the self-check to 420 checks for item predicates, damage conditions,
+  merged predicates, NBT value inputs and category placement.
+
 ## 1.0.3.45-beta
 
 ### New Content
@@ -368,3 +396,6 @@
 - The condition set is the first-phase subset documented in
   `MIGRATION-REPORT.md`.
 - Item tags and nested predicate editors are not implemented yet.
+
+
+
