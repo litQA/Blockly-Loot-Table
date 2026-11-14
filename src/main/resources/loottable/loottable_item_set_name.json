@@ -1,0 +1,31 @@
+{
+  "type": "loottable_item_set_name",
+  "message0": "Item %1 with name %2",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "item",
+      "check": "MCItem"
+    },
+    {
+      "type": "input_value",
+      "name": "name",
+      "check": "String"
+    }
+  ],
+  "inputsInline": false,
+  "colour": 350,
+  "tooltip": "Give an item a plain custom name.",
+  "output": "MCItem",
+  "mcreator": {
+    "toolbox_id": "loottable_item_components",
+    "toolbox_init": [
+      "<value name=\"item\"><block type=\"loottable_item_selector\"></block></value>",
+      "<value name=\"name\"><block type=\"loottable_empty_text\"><field name=\"TEXT\">Custom Name</field></block></value>"
+    ],
+    "inputs": [
+      "item",
+      "name"
+    ]
+  }
+}

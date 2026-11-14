@@ -1,0 +1,32 @@
+{
+  "type": "loottable_item_set_name_full",
+  "message0": "Item %1 with custom name data %2",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "item",
+      "check": "MCItem"
+    },
+    {
+      "type": "field_input",
+      "name": "name",
+      "text": "{\"text\":\"Custom Name\",\"translate\":\"item.translation.key\",\"score\":{\"name\":\"*\",\"objective\":\"example_objective\"},\"selector\":\"@p\",\"keybind\":\"key.attack\",\"nbt\":\"display.Name\",\"color\":\"gold\",\"bold\":true,\"italic\":false,\"underlined\":true,\"strikethrough\":false,\"obfuscated\":false,\"insertion\":\"click to insert\",\"clickEvent\":{\"action\":\"run_command\",\"value\":\"/say hello\"},\"hoverEvent\":{\"action\":\"show_text\",\"contents\":{\"text\":\"This is a tooltip\"}},\"extra\":[{\"text\":\" extra text\",\"color\":\"gray\"},{\"translate\":\"item.translation.key\"}]}"
+    }
+  ],
+  "inputsInline": false,
+  "colour": 350,
+  "tooltip": "Give an item a fully custom text component.",
+  "output": "MCItem",
+  "mcreator": {
+    "toolbox_id": "loottable_item_components",
+    "toolbox_init": [
+      "<value name=\"item\"><block type=\"loottable_item_selector\"></block></value>"
+    ],
+    "inputs": [
+      "item"
+    ],
+    "fields": [
+      "name"
+    ]
+  }
+}

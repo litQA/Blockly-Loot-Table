@@ -1,5 +1,8 @@
 package com.litqa.blocklyloottable.model;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -318,6 +321,11 @@ public final class BlocklyXmlParser {
         entry.setWeight(readWholeNumber(block, "weight", 1, 1, "Nested loot table weight", report));
         parseConditions(block, "conditions", type, resolver, providedBlock,
                 entry.getConditions(), report);
+        if (type == LootTableType.BLOCK && !entry.getConditions().isEmpty()) {
+            report.addWarning(block.getAttribute("type"),
+                    "A conditional nested loot table in a Block table is evaluated against the "
+                            + "breaking player ('this'); entity-specific conditions may skip the entry.");
+        }
         parseFunctionChain(statementFirstBlock(block, "functions"), entry.getFunctions(), report);
         return entry;
     }
@@ -476,6 +484,28 @@ public final class BlocklyXmlParser {
                 value.getProperties().put("nbt", "{" + quoteNbtKey(tag) + ":" + nbtValue + "}");
                 yield value;
             }
+            case "loottable_item_set_name" -> {
+                String name = parseTextInput(itemBlock, "name", "Custom Name", itemType, report).trim();
+                if (name.isBlank()) {
+                    report.addWarning(itemType, "A custom item name is empty; the item was skipped.");
+                    yield null;
+                }
+                LootTableModel.LootFunction value = new LootTableModel.LootFunction(itemType);
+                value.getProperties().put("name", name);
+                yield value;
+            }
+            case "loottable_item_set_name_full" -> {
+                String raw = fieldValue(itemBlock, "name").trim();
+                String nameJson = normalizedTextComponent(raw);
+                if (nameJson == null) {
+                    report.addError(itemType,
+                            "The advanced item name is not a valid JSON text component object.");
+                    yield null;
+                }
+                LootTableModel.LootFunction value = new LootTableModel.LootFunction(itemType);
+                value.getProperties().put("nameJson", nameJson);
+                yield value;
+            }
             case "loottable_item_container" -> {
                 String component = fieldValue(itemBlock, "component").trim();
                 if (component.isBlank()) {
@@ -593,6 +623,18 @@ public final class BlocklyXmlParser {
         }
         enchantment = enchantment.toLowerCase(Locale.ROOT);
         return enchantment.contains(":") ? enchantment : "minecraft:" + enchantment;
+    }
+
+    private static String normalizedTextComponent(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            JsonElement element = JsonParser.parseString(raw);
+            return element.isJsonObject() ? element.toString() : null;
+        } catch (JsonSyntaxException exception) {
+            return null;
+        }
     }
 
     private static boolean parseTimeCheckCondition(Element block, String blockType,
@@ -841,6 +883,11 @@ public final class BlocklyXmlParser {
                 condition.getProperties().put("entity", entity);
                 condition.getProperties().put("effect", effect);
             }
+            case "loottable_entity_has_potion_range" -> {
+                if (!parseEntityPotionRangeCondition(block, blockType, type, condition, report)) {
+                    return null;
+                }
+            }
             case "loottable_block_nbt_logic", "loottable_block_nbt_number", "loottable_block_nbt_text" -> {
                 if (!parseBlockNbtCondition(block, blockType, providedBlock, resolver, condition, report)) {
                     return null;
@@ -991,6 +1038,59 @@ public final class BlocklyXmlParser {
         return true;
     }
 
+    private static boolean parseEntityPotionRangeCondition(Element block, String blockType, LootTableType type,
+            LootTableModel.Condition condition, ValidationReport report) {
+        String entity = parseEntityValue(block, "entity", type, report);
+        if (entity.isBlank()) {
+            return false;
+        }
+        String effect = fieldValue(block, "potion").trim();
+        if (effect.isBlank()) {
+            report.addWarning(blockType, "Potion range condition has no effect selected and was skipped.");
+            return false;
+        }
+        if (!effect.contains(":")) {
+            effect = "minecraft:" + effect;
+        }
+        Integer durationMin = readRangeBound(block, "durationMin", 0, false,
+                "Minimum duration", report);
+        Integer durationMax = readRangeBound(block, "durationMax", null, true,
+                "Maximum duration", report);
+        Integer amplifierMin = readRangeBound(block, "amplifierMin", 0, false,
+                "Minimum amplifier", report);
+        Integer amplifierMax = readRangeBound(block, "amplifierMax", null, true,
+                "Maximum amplifier", report);
+        if (durationMin != null && durationMax != null && durationMax < durationMin) {
+            report.addWarning(blockType,
+                    "Maximum duration was smaller than the minimum; the bounds were swapped.");
+            Integer swap = durationMin;
+            durationMin = durationMax;
+            durationMax = swap;
+        }
+        if (amplifierMin != null && amplifierMax != null && amplifierMax < amplifierMin) {
+            report.addWarning(blockType,
+                    "Maximum amplifier was smaller than the minimum; the bounds were swapped.");
+            Integer swap = amplifierMin;
+            amplifierMin = amplifierMax;
+            amplifierMax = swap;
+        }
+        condition.getProperties().put("entity", entity);
+        condition.getProperties().put("effect", effect);
+        if (durationMin != null) {
+            condition.getProperties().put("durationMin", durationMin);
+        }
+        if (durationMax != null) {
+            condition.getProperties().put("durationMax", durationMax);
+        }
+        if (amplifierMin != null) {
+            condition.getProperties().put("amplifierMin", amplifierMin);
+        }
+        if (amplifierMax != null) {
+            condition.getProperties().put("amplifierMax", amplifierMax);
+        }
+        return true;
+    }
+
     private record ItemSource(String mode, String entity, String item) {
     }
 
@@ -1063,39 +1163,61 @@ public final class BlocklyXmlParser {
             case "loottable_item_durability_at_most" -> condition.getProperties().put("maxDurability",
                     readPlainIntegerInput(block, "max", 1, "Maximum durability", report));
             case "loottable_item_durability_range" -> {
-                int minimum = readPlainIntegerInput(block, "min", 0, "Minimum durability", report);
-                int maximum = readPlainIntegerInput(block, "max", 100, "Maximum durability", report);
-                if (maximum < minimum) {
+                Integer minimum = readRangeBound(block, "min", 0, false,
+                        "Minimum durability", report);
+                Integer maximum = readRangeBound(block, "max", null, true,
+                        "Maximum durability", report);
+                if (minimum != null && maximum != null && maximum < minimum) {
                     report.addWarning(blockType,
                             "Maximum durability was smaller than the minimum; the bounds were swapped.");
-                    int swap = minimum;
+                    Integer swap = minimum;
                     minimum = maximum;
                     maximum = swap;
                 }
-                condition.getProperties().put("minDurability", minimum);
-                condition.getProperties().put("maxDurability", maximum);
+                if (minimum != null) {
+                    condition.getProperties().put("minDurability", minimum);
+                }
+                if (maximum != null) {
+                    condition.getProperties().put("maxDurability", maximum);
+                }
             }
             case "loottable_item_count" -> {
                 int count = readPlainIntegerInput(block, "value", 1, "Item count", report);
                 condition.getProperties().put("minCount", count);
                 condition.getProperties().put("maxCount", count);
             }
-            case "loottable_item_count_at_least" -> condition.getProperties().put("minCount",
-                    readPlainIntegerInput(block, "min", 1, "Minimum item count", report));
-            case "loottable_item_count_at_most" -> condition.getProperties().put("maxCount",
-                    readPlainIntegerInput(block, "max", 1, "Maximum item count", report));
+            case "loottable_item_count_at_least" -> {
+                Integer minimum = readRangeBound(block, "min", 0, false,
+                        "Minimum item count", report);
+                if (minimum != null) {
+                    condition.getProperties().put("minCount", minimum);
+                }
+            }
+            case "loottable_item_count_at_most" -> {
+                Integer maximum = readRangeBound(block, "max", null, true,
+                        "Maximum item count", report);
+                if (maximum != null) {
+                    condition.getProperties().put("maxCount", maximum);
+                }
+            }
             case "loottable_item_count_range" -> {
-                int minimum = readPlainIntegerInput(block, "min", 1, "Minimum item count", report);
-                int maximum = readPlainIntegerInput(block, "max", 3, "Maximum item count", report);
-                if (maximum < minimum) {
+                Integer minimum = readRangeBound(block, "min", 0, false,
+                        "Minimum item count", report);
+                Integer maximum = readRangeBound(block, "max", null, true,
+                        "Maximum item count", report);
+                if (minimum != null && maximum != null && maximum < minimum) {
                     report.addWarning(blockType,
                             "Maximum item count was smaller than the minimum; the bounds were swapped.");
-                    int swap = minimum;
+                    Integer swap = minimum;
                     minimum = maximum;
                     maximum = swap;
                 }
-                condition.getProperties().put("minCount", minimum);
-                condition.getProperties().put("maxCount", maximum);
+                if (minimum != null) {
+                    condition.getProperties().put("minCount", minimum);
+                }
+                if (maximum != null) {
+                    condition.getProperties().put("maxCount", maximum);
+                }
             }
             default -> {
                 // Same-item only needs the item predicate.
@@ -1204,17 +1326,24 @@ public final class BlocklyXmlParser {
             enchantment = "minecraft:" + enchantment;
         }
 
-        int minimum = readEnchantmentLevelInput(block, "min", 1, "Minimum enchantment level", report);
-        Integer maximum = null;
-        if ("loottable_item_has_enchantment_range".equals(blockType)) {
-            maximum = readEnchantmentLevelInput(block, "max", 3, "Maximum enchantment level", report);
-            if (maximum < minimum) {
-                report.addWarning(blockType,
-                        "Maximum enchantment level is lower than the minimum; the bounds were swapped.");
-                int swap = minimum;
-                minimum = maximum;
-                maximum = swap;
-            }
+        boolean range = "loottable_item_has_enchantment_range".equals(blockType);
+        Integer minimum = readRangeBound(block, "min", range ? 0 : 1, false,
+                "Minimum enchantment level", report);
+        Integer maximum = range
+                ? readRangeBound(block, "max", null, true, "Maximum enchantment level", report)
+                : null;
+        if (minimum != null) {
+            minimum = Math.min(255, Math.max(1, minimum));
+        }
+        if (maximum != null) {
+            maximum = Math.min(255, Math.max(1, maximum));
+        }
+        if (minimum != null && maximum != null && maximum < minimum) {
+            report.addWarning(blockType,
+                    "Maximum enchantment level is lower than the minimum; the bounds were swapped.");
+            Integer swap = minimum;
+            minimum = maximum;
+            maximum = swap;
         }
 
         Element itemBlock = valueBlock(block, "item");
@@ -1234,7 +1363,9 @@ public final class BlocklyXmlParser {
         }
 
         condition.getProperties().put("enchantment", enchantment);
-        condition.getProperties().put("minLevel", minimum);
+        if (minimum != null) {
+            condition.getProperties().put("minLevel", minimum);
+        }
         if (maximum != null) {
             condition.getProperties().put("maxLevel", maximum);
         }
@@ -1629,6 +1760,44 @@ public final class BlocklyXmlParser {
         return value;
     }
 
+    private static Integer readRangeBound(Element block, String inputName, Integer fallback,
+            boolean allowInfinity, String label, ValidationReport report) {
+        Element value = valueBlock(block, inputName);
+        if (value == null) {
+            return fallback;
+        }
+        LootTableModel.NumberProvider provider = parseNumberValue(value, fallback == null ? 0 : fallback,
+                false, label, report);
+        if (provider.isInfinity()) {
+            if (allowInfinity) {
+                return null;
+            }
+            report.addWarning(block.getAttribute("type"),
+                    label + " does not accept Infinity; the default was used.");
+            return fallback;
+        }
+        if (!isSimpleNumber(provider)) {
+            report.addWarning(block.getAttribute("type"),
+                    label + " must be a plain number or Infinity; the default was used.");
+            return fallback;
+        }
+        double raw = provider.getValue();
+        int bound = (int) raw;
+        if (raw != bound) {
+            report.addWarning(block.getAttribute("type"),
+                    label + " must be an integer; the fractional part was removed.");
+        }
+        if (bound < 0) {
+            report.addWarning(block.getAttribute("type"),
+                    label + " cannot be negative; the value was clamped to 0.");
+            return 0;
+        }
+        if (bound == 0 && "min".equals(inputName)) {
+            return null;
+        }
+        return bound;
+    }
+
     private static double readPlainFloatInput(Element block, String inputName, double fallback, String label,
             ValidationReport report, double minimum, double maximum) {
         LootTableModel.NumberProvider provider = valueBlock(block, inputName) == null
@@ -1686,6 +1855,9 @@ public final class BlocklyXmlParser {
         String valueType = valueBlock.getAttribute("type");
         String raw;
         switch (valueType) {
+            case "loottable_infinity" -> {
+                return LootTableModel.NumberProvider.infinity();
+            }
             case "loottable_integer", "loottable_integer_provider" -> {
                 raw = fieldValue(valueBlock, "value");
                 return integerNumber(valueBlock, raw, fallback, fallbackFloating, label, report,
@@ -1864,6 +2036,10 @@ public final class BlocklyXmlParser {
 
     private static LootTableModel.NumberProvider nonNegative(LootTableModel.NumberProvider provider,
             String blockType, String label, ValidationReport report) {
+        if (provider != null && provider.isInfinity()) {
+            report.addWarning(blockType, label + " does not accept Infinity; the value 0 was used.");
+            return LootTableModel.NumberProvider.number(0, false);
+        }
         if (isSimpleNumber(provider) && provider.getValue() < 0) {
             report.addWarning(blockType, label + " cannot be negative; the value was clamped to 0.");
             return "constant".equals(provider.getType())

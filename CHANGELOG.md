@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.1.1.88-beta
+
+### Added
+
+- Potion items now write a base potion template alongside custom effects, so
+  vanilla clients show a usable potion name instead of "Uncraftable Potion".
+- Added the `Infinity` number provider and a complex entity potion-effect range
+  condition with duration and amplifier min/max sockets.
+- Merged durability, enchantment-level and item-count range conditions; lower
+  bound 0 and upper bound Infinity omit the corresponding JSON fields.
+- Added simple and advanced `minecraft:set_name` item producers; the advanced
+  form accepts and validates a complete JSON text component.
+- Added a warning when a conditional nested loot table is used from a Block
+  table, because its conditions see the breaking player as `this`.
+
+### Changed
+
+- Complex pools no longer insert a sample condition or item; the first branch is
+  labelled `if condition`. Simple pools start with one simple item entry.
+
+### Verified
+
+- Self-check 568 checks; version-aware generation, potion formats and new item
+  components compile without errors.
+
 ## 1.1.0.80-beta
 
 ### Added

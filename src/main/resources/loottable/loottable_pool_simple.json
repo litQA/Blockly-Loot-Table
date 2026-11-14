@@ -1,4 +1,5 @@
 {
+  "message0": "Pool with rolls %1 and bonus rolls %2",
   "args0": [
     {
       "type": "field_number",
@@ -28,7 +29,9 @@
   "colour": 120,
   "mcreator": {
     "toolbox_id": "loottable",
-    "toolbox_init": [],
+    "toolbox_init": [
+      "<statement name=\"entries\"><block type=\"loottable_entry_item_simple\"><value name=\"item\"><block type=\"loottable_item_selector\"></block></value><value name=\"count\"><block type=\"loottable_integer\"><field name=\"value\">1</field></block></value></block></statement>"
+    ],
     "fields": [
       "rolls",
       "bonus_rolls"

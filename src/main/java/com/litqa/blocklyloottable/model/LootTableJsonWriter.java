@@ -59,6 +59,33 @@ public final class LootTableJsonWriter {
             Map.entry("minecraft:hero_of_the_village", 32),
             Map.entry("minecraft:darkness", 33));
 
+    /**
+     * Vanilla potion ids used to give custom-effect items a valid base name.
+     * Unknown or unsupported effects fall back to awkward so the item is not
+     * named "Uncraftable".
+     */
+    private static final Map<String, String> POTION_BASE_IDS = Map.ofEntries(
+            Map.entry("minecraft:speed", "minecraft:swiftness"),
+            Map.entry("minecraft:slowness", "minecraft:slowness"),
+            Map.entry("minecraft:strength", "minecraft:strength"),
+            Map.entry("minecraft:instant_health", "minecraft:healing"),
+            Map.entry("minecraft:instant_damage", "minecraft:harming"),
+            Map.entry("minecraft:jump_boost", "minecraft:leaping"),
+            Map.entry("minecraft:regeneration", "minecraft:regeneration"),
+            Map.entry("minecraft:fire_resistance", "minecraft:fire_resistance"),
+            Map.entry("minecraft:water_breathing", "minecraft:water_breathing"),
+            Map.entry("minecraft:invisibility", "minecraft:invisibility"),
+            Map.entry("minecraft:night_vision", "minecraft:night_vision"),
+            Map.entry("minecraft:weakness", "minecraft:weakness"),
+            Map.entry("minecraft:poison", "minecraft:poison"),
+            Map.entry("minecraft:slow_falling", "minecraft:slow_falling"),
+            Map.entry("minecraft:luck", "minecraft:luck"),
+            Map.entry("minecraft:unluck", "minecraft:unluck"),
+            Map.entry("minecraft:wind_charged", "minecraft:wind_charged"),
+            Map.entry("minecraft:weaving", "minecraft:weaving"),
+            Map.entry("minecraft:oozing", "minecraft:oozing"),
+            Map.entry("minecraft:infested", "minecraft:infested"));
+
     private LootTableJsonWriter() {
     }
 
@@ -430,6 +457,32 @@ public final class LootTableJsonWriter {
                 json.put("tag", tag);
                 return json;
             }
+            case "loottable_item_set_name" -> {
+                String name = string(function.getProperties().get("name")).trim();
+                if (name.isBlank()) {
+                    return null;
+                }
+                Map<String, Object> component = new LinkedHashMap<>();
+                component.put("text", name);
+                Map<String, Object> json = new LinkedHashMap<>();
+                json.put("function", "minecraft:set_name");
+                json.put("name", component);
+                json.put("entity", "this");
+                json.put("target", "custom_name");
+                return json;
+            }
+            case "loottable_item_set_name_full" -> {
+                String nameJson = string(function.getProperties().get("nameJson")).trim();
+                if (nameJson.isBlank()) {
+                    return null;
+                }
+                Map<String, Object> json = new LinkedHashMap<>();
+                json.put("function", "minecraft:set_name");
+                json.put("name", new JsonText.RawJson(nameJson));
+                json.put("entity", "this");
+                json.put("target", "custom_name");
+                return json;
+            }
             case "loottable_item_potion" -> {
                 String effect = string(function.getProperties().get("effect"));
                 if (effect.isBlank()) {
@@ -445,6 +498,7 @@ public final class LootTableJsonWriter {
                     customEffect.put("duration", duration);
 
                     Map<String, Object> potionContents = new LinkedHashMap<>();
+                    potionContents.put("potion", potionBase(effect));
                     potionContents.put("custom_effects", List.of(customEffect));
 
                     Map<String, Object> components = new LinkedHashMap<>();
@@ -457,7 +511,8 @@ public final class LootTableJsonWriter {
 
                 if (Boolean.TRUE.equals(NAMESPACED_POTION_NBT.get())) {
                     json.put("function", "minecraft:set_nbt");
-                    json.put("tag", "{custom_potion_effects:[{id:\"" + effect + "\",amplifier:"
+                    json.put("tag", "{Potion:\"" + potionBase(effect)
+                            + "\",custom_potion_effects:[{id:\"" + effect + "\",amplifier:"
                             + amplifier + ",duration:" + duration + "}]}");
                     return json;
                 }
@@ -467,7 +522,8 @@ public final class LootTableJsonWriter {
                     return null;
                 }
                 json.put("function", "minecraft:set_nbt");
-                json.put("tag", "{CustomPotionEffects:[{Id:" + legacyId + ",Amplifier:"
+                json.put("tag", "{Potion:\"" + potionBase(effect)
+                        + "\",CustomPotionEffects:[{Id:" + legacyId + ",Amplifier:"
                         + amplifier + ",Duration:" + duration + "}]}");
                 return json;
             }
@@ -633,6 +689,40 @@ public final class LootTableJsonWriter {
                 predicate.put("effects", effects);
                 json.put("predicate", predicate);
             }
+            case "loottable_entity_has_potion_range" -> {
+                String entity = string(condition.getProperties().get("entity"));
+                String effect = string(condition.getProperties().get("effect"));
+                if (entity.isBlank() || effect.isBlank()) {
+                    return null;
+                }
+                json.put("entity", entity);
+                Map<String, Object> effectPredicate = new LinkedHashMap<>();
+                Map<String, Object> duration = new LinkedHashMap<>();
+                if (condition.getProperties().containsKey("durationMin")) {
+                    duration.put("min", number(condition.getProperties().get("durationMin"), 0));
+                }
+                if (condition.getProperties().containsKey("durationMax")) {
+                    duration.put("max", number(condition.getProperties().get("durationMax"), 0));
+                }
+                if (!duration.isEmpty()) {
+                    effectPredicate.put("duration", duration);
+                }
+                Map<String, Object> amplifier = new LinkedHashMap<>();
+                if (condition.getProperties().containsKey("amplifierMin")) {
+                    amplifier.put("min", number(condition.getProperties().get("amplifierMin"), 0));
+                }
+                if (condition.getProperties().containsKey("amplifierMax")) {
+                    amplifier.put("max", number(condition.getProperties().get("amplifierMax"), 0));
+                }
+                if (!amplifier.isEmpty()) {
+                    effectPredicate.put("amplifier", amplifier);
+                }
+                Map<String, Object> effects = new LinkedHashMap<>();
+                effects.put(effect, effectPredicate);
+                Map<String, Object> predicate = new LinkedHashMap<>();
+                predicate.put("effects", effects);
+                json.put("predicate", predicate);
+            }
             case "loottable_block_nbt_logic", "loottable_block_nbt_number", "loottable_block_nbt_text" -> {
                 String block = string(condition.getProperties().get("block"));
                 String nbt = string(condition.getProperties().get("nbt"));
@@ -663,19 +753,23 @@ public final class LootTableJsonWriter {
                 if (enchantment.isBlank()) {
                     return null;
                 }
-                int minimum = (int) Math.max(1, Math.min(255,
-                        number(condition.getProperties().get("minLevel"),
-                                number(condition.getProperties().get("level"), 1))));
                 Map<String, Object> levels = new LinkedHashMap<>();
-                levels.put("min", minimum);
+                if (condition.getProperties().containsKey("minLevel")) {
+                    levels.put("min", (int) Math.max(1, Math.min(255,
+                            number(condition.getProperties().get("minLevel"), 1))));
+                } else if (condition.getProperties().containsKey("level")) {
+                    levels.put("min", (int) Math.max(1, Math.min(255,
+                            number(condition.getProperties().get("level"), 1))));
+                }
                 if (condition.getProperties().containsKey("maxLevel")) {
-                    int maximum = (int) Math.max(minimum, Math.min(255,
-                            number(condition.getProperties().get("maxLevel"), minimum)));
-                    levels.put("max", maximum);
+                    levels.put("max", (int) Math.max(1, Math.min(255,
+                            number(condition.getProperties().get("maxLevel"), 255))));
                 }
                 Map<String, Object> enchantmentPredicate = new LinkedHashMap<>();
                 enchantmentPredicate.put("enchantments", List.of(enchantment));
-                enchantmentPredicate.put("levels", levels);
+                if (!levels.isEmpty()) {
+                    enchantmentPredicate.put("levels", levels);
+                }
                 List<Object> enchantmentPredicates = new ArrayList<>();
                 enchantmentPredicates.add(enchantmentPredicate);
 
@@ -894,6 +988,10 @@ public final class LootTableJsonWriter {
             }
         }
         return json;
+    }
+
+    private static String potionBase(String effect) {
+        return POTION_BASE_IDS.getOrDefault(effect, "minecraft:awkward");
     }
 
     private static Map<String, Object> blockStateCondition(String block) {

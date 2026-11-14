@@ -114,6 +114,23 @@ duration. Amplifier and duration accept numbers or number providers but must
 resolve to integer literals. Potion data is version-gated: numeric
 `CustomPotionEffects` NBT through 1.20.1, namespaced `custom_potion_effects`
 NBT on 1.20.2-1.20.4, and the `minecraft:potion_contents` component on 1.20.5+.
+Every format also writes a base potion template derived from the selected effect
+(for example speed -> `minecraft:swiftness`) so the client does not show
+"Uncraftable Potion". Unknown or custom effects fall back to `minecraft:awkward`.
+
+**Entity has potion (complex range)** adds duration and amplifier ranges on top
+of the entity potion predicate. Bounds accept any Number/NumberProvider; a lower
+bound of 0 omits `min`, and an upper bound of the Infinity block omits `max`.
+The durability, enchantment-level and item-count range blocks use the same
+0/Infinity omission rules. The exact count block remains available. The
+**Infinity** number block is rejected with a warning outside the range sockets
+where it is meaningful.
+
+**Item with custom name** has a simple text form and an advanced single-line JSON
+text-component form. Both emit `minecraft:set_name`; the advanced field is
+validated as JSON before generation. Item entries keep their normal colour, while
+complex pools start without a sample condition or item; simple pools include one
+simple item entry by default.
 
 The three block-state condition blocks use the same input style as NBT
 conditions. The property name is a text input block, the equality operator is
@@ -397,4 +414,8 @@ See `MIGRATION-REPORT.md` for the full limitation list and
 `../dsh_docs/blockly_type.md` for the block type/usage reference. The main
 restrictions are the condition subset, concrete item entries only (item tags are
 skipped with a warning), and enchantment options that use the 1.21 enchantment
-registry lists rather than per-item compatibility filtering.
+registry lists rather than per-item compatibility filtering. Nested loot-table
+entries with conditions in a Block table are evaluated against the breaking
+player (`this`); entity-specific nested tables can therefore be skipped when the
+player entity is absent or does not satisfy the condition. The generated 1.21
+entry uses the version-correct `value` field.

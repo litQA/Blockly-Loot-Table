@@ -1,0 +1,11 @@
+{
+  "type": "loottable_infinity",
+  "message0": "Infinity",
+  "args0": [],
+  "output": "NumberProvider",
+  "colour": "%{BKY_MATH_HUE}",
+  "mcreator": {
+    "toolbox_id": "loottable_numbers",
+    "toolbox_init": []
+  }
+}

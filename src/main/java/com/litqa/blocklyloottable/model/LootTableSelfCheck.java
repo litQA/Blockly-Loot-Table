@@ -41,6 +41,8 @@ public final class LootTableSelfCheck {
         validFunctionBlocks();
         validWorldConditions();
         validLegacyVersionFormats();
+        validSetNameAndPotionBase();
+        validPotionRangeCondition();
         validItemConditionsAndDamage();
         validNestedPoolsAndEntries();
         entityAutoPath();
@@ -1465,6 +1467,59 @@ public final class LootTableSelfCheck {
                         && lightJson.contains("\"min\": -10")
                         && lightJson.contains("\"max\": 10"),
                 "coordinate range predicate exists");
+    }
+
+    private static void validSetNameAndPotionBase() {
+        String simpleName = "<block type=\"loottable_item_set_name\">"
+                + "<value name=\"item\"><block type=\"loottable_item_selector\">"
+                + "<field name=\"item\">minecraft:stone</field></block></value>"
+                + "<value name=\"name\"><block type=\"loottable_empty_text\">"
+                + "<field name=\"TEXT\">Named Item</field></block></value></block>";
+        String simpleJson = writeItemEntry(simpleName, VersionCompat.Features.modern());
+        check(simpleJson.contains("\"function\": \"minecraft:set_name\""), "simple set_name function");
+        check(simpleJson.contains("\"text\": \"Named Item\""), "simple set_name text");
+
+        String fullName = "<block type=\"loottable_item_set_name_full\">"
+                + "<value name=\"item\"><block type=\"loottable_item_selector\">"
+                + "<field name=\"item\">minecraft:stone</field></block></value>"
+                + "<field name=\"name\">{\"text\":\"Full Name\",\"color\":\"gold\"}</field></block>";
+        String fullJson = writeItemEntry(fullName, VersionCompat.Features.modern());
+        check(fullJson.contains("\"function\": \"minecraft:set_name\""), "full set_name function");
+        check(fullJson.contains("\"color\":\"gold\""), "full set_name raw component");
+
+        String potion = "<block type=\"loottable_item_potion\">"
+                + "<field name=\"potion\">minecraft:speed</field>"
+                + "<field name=\"item_type\">potion</field>"
+                + "<value name=\"amplifier\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">0</field></block></value>"
+                + "<value name=\"duration\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">600</field></block></value></block>";
+        String potionJson = writeItemEntry(potion, VersionCompat.Features.modern());
+        check(potionJson.contains("\"potion\": \"minecraft:swiftness\""), "potion base template");
+        check(potionJson.contains("\"custom_effects\": ["), "potion custom effects");
+    }
+
+    private static void validPotionRangeCondition() {
+        String rangeCondition = condition("loottable_entity_has_potion_range",
+                value("entity", "<block type=\"loottable_entity_dependency\"></block>")
+                        + "<field name=\"potion\">minecraft:speed</field>"
+                        + value("durationMin", "<block type=\"loottable_integer\">"
+                                + "<field name=\"value\">10</field></block>")
+                        + value("durationMax", "<block type=\"loottable_integer\">"
+                                + "<field name=\"value\">20</field></block>")
+                        + value("amplifierMin", "<block type=\"loottable_integer\">"
+                                + "<field name=\"value\">1</field></block>")
+                        + value("amplifierMax", "<block type=\"loottable_integer\">"
+                                + "<field name=\"value\">2</field></block>"));
+        BlocklyXmlParser.ParseResult result = BlocklyXmlParser.parse(
+                entityTableXml(entry("minecraft:stone", 1, 1), rangeCondition),
+                LootTableType.ENTITY, ItemNameResolver.IDENTITY);
+        check(!result.report().hasErrors(), "potion range condition parses without errors");
+        String json = LootTableJsonWriter.write(result.model(), "test", "entities/test", false);
+        check(json.contains("\"duration\": {"), "potion range writes duration");
+        check(json.contains("\"min\": 10"), "potion range writes duration min");
+        check(json.contains("\"max\": 20"), "potion range writes duration max");
+        check(json.contains("\"amplifier\": {"), "potion range writes amplifier");
     }
 
     private static void validLegacyVersionFormats() {

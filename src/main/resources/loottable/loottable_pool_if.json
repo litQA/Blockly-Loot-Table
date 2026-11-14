@@ -18,7 +18,7 @@
       "precision": 1
     }
   ],
-  "message1": "if %1",
+  "message1": "if condition %1",
   "args1": [
     {
       "type": "input_value",
@@ -44,9 +44,7 @@
   "mcreator": {
     "toolbox_id": "loottable",
     "toolbox_init": [
-      "<mutation elseif=\"0\" else=\"0\"></mutation>",
-      "<value name=\"condition0\"><block type=\"loottable_random_chance\"><field name=\"chance\">0.5</field></block></value>",
-      "<statement name=\"entries0\"><block type=\"loottable_entry_item_simple\"><value name=\"item\"><block type=\"loottable_item_selector\"></block></value><value name=\"count\"><block type=\"loottable_integer\"><field name=\"value\">1</field></block></value></block></statement>"
+      "<mutation elseif=\"0\" else=\"0\"></mutation>"
     ],
     "inputs": [
       "condition0"

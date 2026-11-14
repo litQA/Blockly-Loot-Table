@@ -14,12 +14,18 @@
     {
       "type": "input_value",
       "name": "min",
-      "check": "Number"
+      "check": [
+        "Number",
+        "NumberProvider"
+      ]
     },
     {
       "type": "input_value",
       "name": "max",
-      "check": "Number"
+      "check": [
+        "Number",
+        "NumberProvider"
+      ]
     }
   ],
   "inputsInline": true,

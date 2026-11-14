@@ -12,6 +12,23 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.1.1.88-beta
+
+- Added base potion templates to the potion item producer. 1.20.5+ writes
+  `minecraft:potion_contents.potion`; 1.20-1.20.4 adds `Potion` to the NBT tag.
+  This fixes missing potion/tipped-arrow names while retaining custom effects.
+- Added the `Infinity` number provider and complex entity potion range
+  condition. Infinity is only accepted by the complex potion, durability,
+  enchantment-level and item-count range sockets; other sockets warn and use a
+  default or skip the entry.
+- Merged durability, enchantment-level and item-count range conditions with
+  0/Infinity omission semantics.
+- Added simple/advanced `minecraft:set_name` item producers. The advanced form
+  validates its text-component JSON before writing.
+- Complex pools no longer insert sample conditions/items. Simple pools insert
+  one simple item entry. Conditional nested loot-table entries used from Block
+  tables now produce an advisory warning about `this` being the breaker.
+
 ### 1.1.0.80-beta
 
 - Added the 1.16-1.19.4 compatibility document and used it to version-gate

@@ -9,6 +9,13 @@ import java.util.Map;
  */
 public final class JsonText {
 
+    /**
+     * A pre-validated JSON fragment. Only use this for values that have already
+     * been parsed successfully by the plugin.
+     */
+    public record RawJson(String json) {
+    }
+
     private JsonText() {
     }
 
@@ -26,6 +33,8 @@ public final class JsonText {
             writeObject(builder, map, depth);
         } else if (value instanceof List<?> list) {
             writeArray(builder, list, depth);
+        } else if (value instanceof RawJson raw) {
+            builder.append(raw.json());
         } else if (value instanceof String text) {
             writeString(builder, text);
         } else if (value instanceof Number number) {

@@ -20,7 +20,6 @@
   "inputsInline": true,
   "colour": 120,
   "mcreator": {
-    "toolbox_id": "loottable_items",
     "toolbox_init": [
       "<value name=\"item\"><block type=\"loottable_entity_mainhand_item\"><value name=\"entity\"><block type=\"loottable_source_entity_dependency\"></block></value></block></value>",
       "<value name=\"min\"><block type=\"loottable_integer\"><field name=\"value\">1</field></block></value>"

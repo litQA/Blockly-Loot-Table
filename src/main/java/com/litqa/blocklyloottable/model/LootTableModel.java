@@ -197,6 +197,14 @@ public final class LootTableModel {
                     p == null ? number(1, true) : p);
         }
 
+        /**
+         * Marker for an omitted bound. Infinity is only valid in range fields
+         * whose codec represents an absent bound as an omitted key.
+         */
+        public static NumberProvider infinity() {
+            return new NumberProvider("infinity", 0, false, null, null, null, null);
+        }
+
         public static NumberProvider scoreContext(String target, String score, double scale) {
             return new NumberProvider("score", 0, false, null, null, null, null,
                     "context", target, score, scale);
@@ -217,6 +225,10 @@ public final class LootTableModel {
 
         public boolean isFloating() {
             return floating;
+        }
+
+        public boolean isInfinity() {
+            return "infinity".equals(type);
         }
 
         public NumberProvider getMin() {

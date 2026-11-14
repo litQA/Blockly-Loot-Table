@@ -39,6 +39,8 @@ public final class ConditionScopeRegistry {
                 ConditionScope.BLOCK_ONLY, "Same block"));
         register(new ConditionDefinition("loottable_entity_has_potion", "minecraft:entity_properties",
                 ConditionScope.BLOCK_AND_ENTITY, "Entity has potion effect"));
+        register(new ConditionDefinition("loottable_entity_has_potion_range", "minecraft:entity_properties",
+                ConditionScope.BLOCK_AND_ENTITY, "Entity has potion effect range"));
         register(new ConditionDefinition("loottable_block_nbt_logic", "minecraft:location_check",
                 ConditionScope.BLOCK_ONLY, "Block logic NBT"));
         register(new ConditionDefinition("loottable_block_nbt_number", "minecraft:location_check",

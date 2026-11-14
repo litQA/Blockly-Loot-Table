@@ -21,6 +21,9 @@ repositories {
 
 dependencies {
     compileOnly files('libs/mcreator-api-2026.1.jar')
+    // MCreator ships Gson at runtime; this is only needed to validate the
+    // advanced set_name JSON field at compile time.
+    compileOnly files('libs/gson-2.13.2.jar')
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -73,6 +76,6 @@ tasks.named('jar') {
 // require MCreator to be running and is not part of the plugin archive.
 tasks.register('selfCheck', JavaExec) {
     dependsOn tasks.named('classes')
-    classpath = sourceSets.main.runtimeClasspath
+    classpath = sourceSets.main.runtimeClasspath + files('libs/gson-2.13.2.jar')
     mainClass = 'com.litqa.blocklyloottable.model.LootTableSelfCheck'
 }
