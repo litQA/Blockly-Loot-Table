@@ -12,6 +12,13 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.1.0.1-beta
+
+- Fixed condition-aware pool dragging. The pool mutator previously skipped
+  insertion markers, leaving the drag preview without the same condition and
+  entry inputs as the source block. It now initializes the mutator shape for
+  insertion markers too.
+
 ### 1.0.3.73-beta
 
 - `All conditions`, `Any condition` and `Not` no longer embed a default child

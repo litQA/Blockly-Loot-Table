@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.0.1-beta
+
+### Fixed
+
+- Condition-aware pool blocks can be dragged again. Their mutator now builds
+  the condition and entry inputs on Blockly insertion markers as well as on
+  normal blocks, so the drag preview no longer fails with
+  `The insertion marker manager tried to create a marker but the result is
+  missing an input`.
+
 ## 1.0.3.73-beta
 
 ### Changed

@@ -328,6 +328,8 @@ longer ships a preset-template selector.
 - Pool, entry and function blocks connect only when their statement types
   match. Conditions are A-type value blocks and connect to the single condition
   socket on a pool or entry.
+- Condition-aware pool variants can be dragged from the toolbox and around the
+  workspace; the drag preview keeps their condition and entry inputs.
 - The block selector displays only the selector field, without a
   `Block to test` prefix.
 - Entity and item blocks use the native entity and item colors; all A-type

@@ -941,9 +941,12 @@ public final class LootTableSelfCheck {
                         && resourceText("/loottable/loottable_score_player.json").contains("%{BKY_MATH_HUE}")
                         && resourceText("/loottable/loottable_score_uuid.json").contains("%{BKY_MATH_HUE}"),
                 "score providers use the number blue");
-        check(resourceText("/blockly/js/loottable_mutators.js").contains("loottable_condition_all_mutator")
-                        && resourceText("/blockly/js/loottable_mutators.js").contains("loottable_pool_if_mutator"),
+        String mutatorJs = resourceText("/blockly/js/loottable_mutators.js");
+        check(mutatorJs.contains("loottable_condition_all_mutator")
+                        && mutatorJs.contains("loottable_pool_if_mutator"),
                 "condition and pool mutators are registered");
+        check(!mutatorJs.contains("block.isInsertionMarker()"),
+                "pool mutator builds insertion-marker inputs");
     }
 
     private static void validEnchantedItem() {

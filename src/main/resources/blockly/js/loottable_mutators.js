@@ -213,7 +213,7 @@
     }
 
     function updatePoolShape(block) {
-        if (!block || block.isInsertionMarker()) {
+        if (!block) {
             return;
         }
         for (var index = 0; index < 64; index++) {
