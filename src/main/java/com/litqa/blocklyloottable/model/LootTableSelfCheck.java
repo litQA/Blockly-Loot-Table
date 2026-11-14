@@ -688,13 +688,14 @@ public final class LootTableSelfCheck {
                 "logic category exists");
         check(resourceText("/loottable/$loottable_conditions.json").contains("\"color\": 120"),
                 "conditions parent category exists");
-        check(resourceText("/loottable/$loottable_blocks.json")
-                        .contains("\"parent_category\": \"loottable_conditions\""),
-                "block conditions are nested under conditions");
+        check(!resourceExists("/loottable/$loottable_blocks.json"),
+                "block conditions category is hidden");
+        check(!resourceExists("/loottable/$loottable_entities.json"),
+                "entity conditions category is hidden");
         check(resourceText("/loottable/$loottable_world.json").contains("\"color\": 35"),
                 "world conditions use the earth-yellow colour");
-        check(resourceText("/loottable/loottable_world_light.json").contains("\"colour\": 35"),
-                "world condition blocks use the earth-yellow colour");
+        check(resourceText("/loottable/loottable_world_light.json").contains("\"colour\": 120"),
+                "world condition blocks use the condition green");
         check(resourceText("/loottable/loottable_pool_simple.json").contains("\"colour\": 120"),
                 "simple pools use the deep-green colour");
         check(resourceText("/loottable/$loottable_functions.json").contains("\"color\": 280"),
@@ -738,10 +739,10 @@ public final class LootTableSelfCheck {
                         .contains("\"name\": \"max\""),
                 "random any enchant exposes a level range");
         check(resourceText("/loottable/loottable_world_block_tag.json")
-                        .contains("\"toolbox_id\": \"loottable_blocks\"")
-                        && resourceText("/loottable/loottable_world_block_tag.json")
-                        .contains("\"colour\": 60"),
-                "block tag is a block condition");
+                        .contains("\"colour\": 120")
+                        && !resourceText("/loottable/loottable_world_block_tag.json")
+                        .contains("\"toolbox_id\""),
+                "block tag is a hidden green block condition");
         check(resourceText("/lang/texts.properties").contains("Current structure is tagged"),
                 "structure tag label is current structure");
         check(resourceText("/loottable/loottable_item_selector.json")
@@ -749,8 +750,8 @@ public final class LootTableSelfCheck {
                 "item selector is an item value block");
         check(entryBlock.contains("\"name\": \"item\""),
                 "item entry has an item input");
-        check(resourceText("/loottable/loottable_entity_has_potion.json").contains("\"colour\": 195"),
-                "entity condition uses the native entity color");
+        check(resourceText("/loottable/loottable_entity_has_potion.json").contains("\"colour\": 120"),
+                "condition blocks use the condition green");
         check(entryBlock.contains("\"colour\": 350"), "item entry uses the native item color");
         check(entryBlock.contains("\"NumberProvider\""), "item count accepts number providers");
         check(resourceText("/loottable/loottable_uniform.json")
@@ -892,8 +893,9 @@ public final class LootTableSelfCheck {
         String uuidJson = LootTableJsonWriter.write(uuidResult.model(), "test", "blocks/stone", false);
         check(uuidJson.contains("\"name\": \"00000000-0000-0000-0000-000000000000\""),
                 "UUID scoreboard provider writes a fixed UUID name");
-        check(resourceText("/loottable/$loottable_scoreboard.json").contains("\"parent_category\": \"loottable_numbers\""),
-                "scoreboard category is nested under numbers");
+        check(resourceText("/loottable/$loottable_scoreboard.json").contains("\"parent_category\": \"loottable_numbers\"")
+                        && resourceText("/loottable/$loottable_scoreboard.json").contains("\"color\": 230"),
+                "scoreboard category is nested under numbers and uses the number blue");
     }
 
     private static void validConditionValueBlocks() {
@@ -910,6 +912,20 @@ public final class LootTableSelfCheck {
         check(resourceText("/loottable/loottable_entry_item.json").contains("\"name\": \"conditions\"")
                         && resourceText("/loottable/loottable_entry_item.json").contains("\"type\": \"input_value\""),
                 "entry condition socket is a value input");
+        check(resourceText("/loottable/loottable_logic_and.json").contains("\"toolbox_init\": [\"<mutation inputs=\\\"1\\\"></mutation>\"]")
+                        && !resourceText("/loottable/loottable_logic_and.json").contains("loottable_random_chance"),
+                "all conditions starts with one empty input");
+        check(resourceText("/loottable/loottable_logic_not.json").contains("\"toolbox_init\": []")
+                        && !resourceText("/loottable/loottable_logic_not.json").contains("loottable_random_chance"),
+                "not starts with one empty input");
+        check(resourceText("/loottable/loottable_logic_and.json").contains("\"colour\": 120")
+                        && resourceText("/loottable/loottable_logic_not.json").contains("\"colour\": 120")
+                        && resourceText("/loottable/loottable_boolean.json").contains("%{BKY_LOGIC_HUE}"),
+                "condition combiners are green and the boolean selector keeps its logic colour");
+        check(resourceText("/loottable/loottable_score_entity.json").contains("%{BKY_MATH_HUE}")
+                        && resourceText("/loottable/loottable_score_player.json").contains("%{BKY_MATH_HUE}")
+                        && resourceText("/loottable/loottable_score_uuid.json").contains("%{BKY_MATH_HUE}"),
+                "score providers use the number blue");
         check(resourceText("/blockly/js/loottable_mutators.js").contains("loottable_condition_all_mutator")
                         && resourceText("/blockly/js/loottable_mutators.js").contains("loottable_pool_if_mutator"),
                 "condition and pool mutators are registered");
@@ -1025,12 +1041,12 @@ public final class LootTableSelfCheck {
                         && containerResource.contains("\"toolbox_id\": \"loottable_item_components\""),
                 "container item resource exposes its mutator");
         String randomChance = resourceText("/loottable/loottable_random_chance.json");
-        check(randomChance.contains("%{BKY_LOGIC_HUE}")
+        check(randomChance.contains("\"colour\": 120")
                         && randomChance.contains("\"toolbox_id\": \"loottable_logic\""),
-                "random chance moved to the logic category");
+                "random chance uses the green condition colour");
         String mainhand = resourceText("/loottable/loottable_entity_mainhand_item.json");
-        check(mainhand.contains("\"toolbox_id\": \"loottable_entities\""),
-                "main-hand item is in the entity category");
+        check(!mainhand.contains("\"toolbox_id\""),
+                "main-hand item is hidden with entity conditions");
     }
 
     private static void validItemConditionsAndDamage() {
@@ -1371,6 +1387,14 @@ public final class LootTableSelfCheck {
             return new String(input.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException exception) {
             throw new AssertionError("Could not read resource: " + path, exception);
+        }
+    }
+
+    private static boolean resourceExists(String path) {
+        try (InputStream input = LootTableSelfCheck.class.getResourceAsStream(path)) {
+            return input != null;
+        } catch (IOException exception) {
+            throw new AssertionError("Could not inspect resource: " + path, exception);
         }
     }
 

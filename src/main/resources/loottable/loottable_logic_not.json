@@ -4,12 +4,10 @@
     {"type": "input_value", "name": "condition", "check": "LootTableCondition"}
   ],
   "inputsInline": false,
-  "colour": 210,
+  "colour": 120,
   "mcreator": {
     "toolbox_id": "loottable_conditions",
-    "toolbox_init": [
-      "<value name=\"condition\"><block type=\"loottable_random_chance\"><field name=\"chance\">0.5</field></block></value>"
-    ],
+    "toolbox_init": [],
     "inputs": ["condition"]
   },
   "output": "LootTableCondition"

@@ -19,7 +19,7 @@
     }
   ],
   "inputsInline": true,
-  "colour": 350,
+  "colour": 120,
   "tooltip": "Checks a custom text NBT tag on an item.",
   "mcreator": {
     "toolbox_id": "loottable_items",

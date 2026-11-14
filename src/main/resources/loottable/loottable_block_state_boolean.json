@@ -17,9 +17,8 @@
     }
   ],
   "inputsInline": true,
-  "colour": 60,
+  "colour": 120,
   "mcreator": {
-    "toolbox_id": "loottable_blocks",
     "toolbox_init": [
       "<value name=\"property\"><block type=\"loottable_empty_text\"><field name=\"TEXT\">waterlogged</field></block></value>",
       "<value name=\"block\"><block type=\"loottable_provided_blockstate\"></block></value>",

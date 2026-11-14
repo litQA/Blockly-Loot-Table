@@ -29,14 +29,16 @@ Supported condition blocks:
   structure tag, smokey, light level, block tag and x/y/z position
 - nested `and`, `or` and `not` condition value blocks
 
-Every condition block is an A-type value block. Pool and entry conditions
-accept one `LootTableCondition` value directly; use `All conditions` or
-`Any condition` to combine several conditions. The parent **Conditions**
-category also contains `Not`, which negates one condition value.
+Every condition block is an A-type value block and uses the condition green.
+Pool and entry conditions accept one `LootTableCondition` value directly; use
+`All conditions` or `Any condition` to combine several conditions. The parent
+**Conditions** category also contains `Not`, which negates one condition value.
+These three combiners start with an empty input instead of an example block.
 
-Block, entity, item, damage and world conditions are grouped under the
-**Conditions** parent category, while each subcategory keeps its own colour.
-The **Loot table** category and pool blocks use deep green.
+Item, damage and world conditions are the visible subcategories under
+**Conditions**. Block and entity condition blocks remain supported for existing
+projects but their subcategories are hidden from the palette. The **Loot table**
+category and pool blocks use deep green.
 
 Same-level location checks are merged into one `minecraft:location_check`
 predicate when their keys do not conflict, so dimension, biome, position and
@@ -106,9 +108,10 @@ fixed, and the compared value is a typed input block: a boolean selector, an
 integer value, or a text value such as `upper`. This keeps the generated
 `block_state_property` values explicit and stable.
 
-`Random chance` lives in the **Logic** category and uses the native logic
-colour. The main-hand item block is in **Entity conditions**. Item producers
-live in **Item components**; item-comparison blocks stay in **Item conditions**.
+`Random chance` lives in the **Logic** category and uses the condition green.
+The main-hand item block is hidden together with the entity condition
+subcategory. Item producers live in **Item components**; item-comparison
+blocks stay in **Item conditions**.
 
 The count input accepts a bare number or a number provider. The **Numbers**
 category contains the terminal `Integer` and `Float` blocks, the constant
@@ -116,7 +119,7 @@ category contains the terminal `Integer` and `Float` blocks, the constant
 provider blocks. `Uniform` and `Binomial` can be nested inside one another, and
 their sockets accept either a bare number or a provider.
 
-The **Scoreboard** subcategory uses the earth-yellow number colour and provides
+The **Scoreboard** subcategory uses the same number blue as **Numbers** and provides
 three `minecraft:score` number providers: an entity score selected by the
 entity value socket, a fixed player name, and a fixed UUID string. Each block
 has a scoreboard objective name (default `scoreboard_name`) and a literal scale
@@ -311,8 +314,8 @@ longer ships a preset-template selector.
 - Dimension, biome, biome tag, structure, structure tag, smokey, light and
   position conditions at the same chain level merge into one
   `minecraft:location_check` predicate instead of repeating the condition.
-- Block-tag conditions write `predicate.block.blocks` as `#<tag>` and appear in
-  the Block conditions category.
+- Block-tag conditions write `predicate.block.blocks` as `#<tag>`; the block
+  condition subcategory is hidden, but the block remains readable in old projects.
 - The structure-tag block is labelled **Current structure is tagged**.
 - The item count socket accepts `Integer`, `Float`, `Integer provider`,
   `Float provider`, `Uniform` or `Binomial`; generated JSON uses a bare number
@@ -328,17 +331,19 @@ longer ships a preset-template selector.
   socket on a pool or entry.
 - The block selector displays only the selector field, without a
   `Block to test` prefix.
-- Entity and item blocks use the native entity and item colors, and NBT blocks
-  use the native logic, math and text hues.
-- The **Logic**, **Minecraft components** and **Loot table** categories render
-  their blocks without overlap or empty entries, and **Loot conditions** is
-  absent.
+- Entity and item blocks use the native entity and item colors; all A-type
+  condition blocks use the condition green; NBT value blocks use the native
+  logic, math and text hues.
+- The **Conditions**, **Minecraft components**, **Item components** and
+  **Loot table** categories render their blocks without overlap or empty
+  entries. The Block conditions and Entity conditions subcategories are hidden.
 - The Conditions root contains `All conditions`, `Any condition` and `Not`.
   `All conditions` and `Any condition` add/remove value rows dynamically; `Not`
-  takes one condition. The Logic category contains only `random chance` and the
-  true/false selector.
-- A score provider produces `minecraft:score`; the entity variant uses a
-  context target, while the player-name and UUID variants use fixed names.
+  takes one condition. All three start with empty inputs. The Logic category
+  contains only `random chance` and the true/false selector.
+- The Scoreboard providers use the Numbers blue and produce `minecraft:score`;
+  the entity variant uses a context target, while the player-name and UUID
+  variants use fixed names.
 - Referencing another loot table shows the circular-reference warning.
 - The entry item socket accepts the empty item selector and the **Item with
   enchantment** value block. The enchanted item block starts with one row, adds

@@ -2,14 +2,11 @@
   "message0": "All conditions",
   "args0": [],
   "inputsInline": false,
-  "colour": 210,
+  "colour": 120,
   "mutator": "loottable_condition_all_mutator",
   "mcreator": {
     "toolbox_id": "loottable_conditions",
-    "toolbox_init": [
-      "<mutation inputs=\"1\"></mutation>",
-      "<value name=\"condition0\"><block type=\"loottable_random_chance\"><field name=\"chance\">0.5</field></block></value>"
-    ]
+    "toolbox_init": ["<mutation inputs=\"1\"></mutation>"]
   },
   "output": "LootTableCondition"
 }

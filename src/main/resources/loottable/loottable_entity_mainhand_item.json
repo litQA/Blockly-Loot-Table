@@ -10,7 +10,6 @@
   "output": "MCItem",
   "colour": 350,
   "mcreator": {
-    "toolbox_id": "loottable_entities",
     "inputs": [
       "entity"
     ],

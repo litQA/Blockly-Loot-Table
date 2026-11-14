@@ -13,9 +13,8 @@
     }
   ],
   "inputsInline": true,
-  "colour": 195,
+  "colour": 120,
   "mcreator": {
-    "toolbox_id": "loottable_entities",
     "fields": [
       "potion"
     ],

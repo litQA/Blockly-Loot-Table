@@ -10,7 +10,7 @@
     }
   ],
   "inputsInline": true,
-  "colour": "%{BKY_LOGIC_HUE}",
+  "colour": 120,
   "mcreator": {
     "toolbox_id": "loottable_logic",
     "toolbox_init": [],

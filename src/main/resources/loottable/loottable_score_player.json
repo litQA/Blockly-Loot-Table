@@ -21,7 +21,7 @@
     }
   ],
   "inputsInline": true,
-  "colour": 35,
+  "colour": "%{BKY_MATH_HUE}",
   "mcreator": {
     "toolbox_id": "loottable_scoreboard",
     "toolbox_init": [

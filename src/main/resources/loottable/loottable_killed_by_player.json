@@ -1,8 +1,7 @@
 {
   "args0": [],
-  "colour": 195,
+  "colour": 120,
   "mcreator": {
-    "toolbox_id": "loottable_entities",
     "toolbox_init": []
   },
   "output": "LootTableCondition"

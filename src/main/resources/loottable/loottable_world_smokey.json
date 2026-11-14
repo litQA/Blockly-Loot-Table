@@ -3,7 +3,7 @@
   "message0": "is above a campfire (smokey)",
   "args0": [],
   "inputsInline": true,
-  "colour": 35,
+  "colour": 120,
   "mcreator": {
     "toolbox_id": "loottable_world",
     "toolbox_init": []
