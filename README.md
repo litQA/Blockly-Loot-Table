@@ -117,7 +117,8 @@ NBT on 1.20.2-1.20.4, and the `minecraft:potion_contents` component on 1.20.5+.
 No base potion template is written, because vanilla concatenates the base
 potion's effects with `custom_effects` and duplicates the effect. To keep a
 readable item name, the producer writes a translated `item_name` component on
-1.20.5+ (`item.minecraft.<item>.effect.<effect>`), or the equivalent
+1.20.5+ (`item.minecraft.<item>.effect.<effect>`) whose value is an escaped
+JSON string, or the equivalent
 `display.Name` text component in the older NBT formats.
 
 **Entity has potion (complex range)** adds duration and amplifier ranges on top
@@ -197,7 +198,7 @@ Definitions are supplied for these MCreator 2026.1 generator folder names:
 
 The 1.21+ generators write to `data/<namespace>/loot_table/`; earlier
 generators write to `data/<namespace>/loot_tables/`. Definitions for Fabric
-1.20.1, 1.21.1 and 1.21.11 are also included so the plugin follows the Fabric
+1.20.1, 1.21.1 and 1.21.8 are also included so the plugin follows the Fabric
 generator plugin when it is available. Minecraft 26.x uses a different loot
 table schema and must be handled by a separate `plugin-branch-26.x` source
 branch.

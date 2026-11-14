@@ -26,6 +26,15 @@ public final class JsonText {
         return builder.toString();
     }
 
+    /**
+     * Renders a value as compact JSON for components that store JSON as text.
+     */
+    public static String inline(Object value) {
+        StringBuilder builder = new StringBuilder();
+        writeCompactValue(builder, value);
+        return builder.toString();
+    }
+
     private static void writeValue(StringBuilder builder, Object value, int depth) {
         if (value == null) {
             builder.append("null");
@@ -33,6 +42,43 @@ public final class JsonText {
             writeObject(builder, map, depth);
         } else if (value instanceof List<?> list) {
             writeArray(builder, list, depth);
+        } else if (value instanceof RawJson raw) {
+            builder.append(raw.json());
+        } else if (value instanceof String text) {
+            writeString(builder, text);
+        } else if (value instanceof Number number) {
+            builder.append(formatNumber(number));
+        } else if (value instanceof Boolean bool) {
+            builder.append(bool);
+        } else {
+            writeString(builder, String.valueOf(value));
+        }
+    }
+
+    private static void writeCompactValue(StringBuilder builder, Object value) {
+        if (value == null) {
+            builder.append("null");
+        } else if (value instanceof Map<?, ?> map) {
+            builder.append('{');
+            int index = 0;
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                if (index++ > 0) {
+                    builder.append(',');
+                }
+                writeString(builder, String.valueOf(entry.getKey()));
+                builder.append(':');
+                writeCompactValue(builder, entry.getValue());
+            }
+            builder.append('}');
+        } else if (value instanceof List<?> list) {
+            builder.append('[');
+            for (int index = 0; index < list.size(); index++) {
+                if (index > 0) {
+                    builder.append(',');
+                }
+                writeCompactValue(builder, list.get(index));
+            }
+            builder.append(']');
         } else if (value instanceof RawJson raw) {
             builder.append(raw.json());
         } else if (value instanceof String text) {

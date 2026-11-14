@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.1.1.96-beta
+
+### Fixed
+
+- The potion `minecraft:item_name` component is now written as an escaped JSON
+  string, matching the vanilla component codec. Previously the component was an
+  inline object and could make the generated loot table fail to load.
+- Removed the Fabric 1.21.11 generator definitions from the 2026.1 branch; the
+  supported Fabric range now ends at 1.21.8.
+
+### Verified
+
+- Self-check 575 checks; potion JSON, generator resources and packaging pass.
+
 ## 1.1.1.92-beta
 
 ### Fixed

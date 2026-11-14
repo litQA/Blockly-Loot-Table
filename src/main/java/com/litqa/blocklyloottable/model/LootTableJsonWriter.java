@@ -484,7 +484,7 @@ public final class LootTableJsonWriter {
 
                     Map<String, Object> components = new LinkedHashMap<>();
                     components.put("minecraft:potion_contents", potionContents);
-                    components.put("minecraft:item_name", itemName);
+                    components.put("minecraft:item_name", JsonText.inline(itemName));
 
                     json.put("function", "minecraft:set_components");
                     json.put("components", components);

@@ -12,6 +12,13 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.1.1.96-beta
+
+- Serialize `minecraft:item_name` as a compact, escaped JSON string. The
+  component codec treats the value as JSON text, not as an inline object.
+- Dropped the Fabric 1.21.11 definitions from this branch. The 2026.1 branch now
+  supports Fabric through 1.21.8 only.
+
 ### 1.1.1.92-beta
 
 - Removed the base potion template from the potion item producer. Vanilla
@@ -430,7 +437,7 @@ workspace metadata is modified.
    Definitions are supplied for the Forge, NeoForge and Fabric generator names
    listed in `README.md`. The first manual test gate covers the generators
    shipped with the local MCreator 2026.1 installation. Fabric 1.20.1, 1.21.1 and
-   1.21.11 definitions are present for when the matching Fabric generator plugin
+   1.21.8 definitions are present for when the matching Fabric generator plugin
    is installed but are not shipped with 2026.1.
 
 9. **Minecraft 26.x is out of scope for this branch.**

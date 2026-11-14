@@ -1100,8 +1100,7 @@ public final class LootTableSelfCheck {
                         && modernPotion.contains("\"id\": \"minecraft:speed\"")
                         && modernPotion.contains("\"amplifier\": 1")
                         && modernPotion.contains("\"duration\": 300")
-                        && modernPotion.contains("\"minecraft:item_name\"")
-                        && modernPotion.contains("item.minecraft.potion.effect.speed")
+                        && modernPotion.contains("\"minecraft:item_name\": \"{\\\"translate\\\":\\\"item.minecraft.potion.effect.speed\\\",\\\"italic\\\":false}\"")
                         && !modernPotion.contains("\"potion\": "),
                 "potion item uses custom effects and an item name on 1.20.5+");
         String namespacedPotion = LootTableJsonWriter.write(
@@ -1530,11 +1529,12 @@ public final class LootTableSelfCheck {
                 + "<field name=\"value\">600</field></block></value></block>";
         String potionJson = writeItemEntry(potion, VersionCompat.Features.modern());
         check(potionJson.contains("\"custom_effects\": ["), "potion custom effects");
-        check(potionJson.contains("\"minecraft:item_name\": {"), "potion item name");
-        check(potionJson.contains("\"translate\": \"item.minecraft.potion.effect.speed\""),
-                "potion translated item name");
+        check(potionJson.contains("\"minecraft:item_name\": \"{\\\"translate\\\":\\\"item.minecraft.potion.effect.speed\\\",\\\"italic\\\":false}\""),
+                "potion item name is a JSON string");
         check(!potionJson.contains("\"potion\": \""), "potion has no base template");
         check(!potionJson.contains("\"Potion:\""), "potion has no legacy base template");
+        check(!resourceExists("/fabric-1.21.11/blockly_loot_table.definition.yaml"),
+                "Fabric 1.21.11 definitions are not bundled");
     }
 
     private static void validPotionRangeCondition() {
