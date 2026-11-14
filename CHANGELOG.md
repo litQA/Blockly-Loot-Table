@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.3.71-beta
+## 1.0.3.73-beta
 
 ### Changed
 
@@ -8,6 +8,9 @@
   instead of an embedded example condition.
 - The Block conditions and Entity conditions subcategories remain visible and
   their original toolbox assignments are restored.
+- Fixed the block/entity NBT condition labels so they reference exactly the
+  three block arguments (`tag`, block/entity, value); the extra `%4`
+  placeholder made the toolbox categories fail to render in the editor.
 - All A-type condition blocks now use the condition green, regardless of their
   original block, entity, world or item category colour.
 - The three Scoreboard number providers now use the same blue as the rest of

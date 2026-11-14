@@ -166,6 +166,17 @@ public final class LootTableSelfCheck {
                 fileName + " keeps the boolean field placeholder");
         check(properties.getProperty("blockly.block.loottable_empty_text").contains("%1"),
                 fileName + " keeps the empty-text field placeholder");
+        for (String nbtBlock : new String[]{
+                "loottable_block_nbt_logic",
+                "loottable_block_nbt_number",
+                "loottable_block_nbt_text",
+                "loottable_entity_nbt_logic",
+                "loottable_entity_nbt_number",
+                "loottable_entity_nbt_text"}) {
+            String label = properties.getProperty("blockly.block." + nbtBlock, "");
+            check(label.contains("%3") && !label.contains("%4"),
+                    fileName + " matches the three NBT block arguments");
+        }
         check(properties.containsKey("blockly.category.loottable_conditions"),
                 fileName + " exposes the conditions parent category");
         check(LootTableSelfCheck.class.getResourceAsStream("/loottable/$loottable_conditions.json") != null,
