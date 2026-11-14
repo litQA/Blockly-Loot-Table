@@ -293,10 +293,22 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
     }
 
     private void updateDependencies() {
-        dependencyLabel.setText(L10N.t("elementgui.blockly_loot_table.dependencies") + " "
-                + (currentType() == LootTableType.ENTITY
-                ? "entity, source entity, world"
-                : "blockstate, target entity, source entity, world"));
+        String prefix = L10N.t("elementgui.blockly_loot_table.dependencies");
+        String block = dependencyName("#D4A017", "block");
+        String entity = dependencyName("#2AA198", "entity");
+        String targetEntity = dependencyName("#2AA198", "target_entity");
+        String sourceEntity = dependencyName("#2AA198", "source_entity");
+        String world = dependencyName("#A68A52", "world");
+        String damage = dependencyName("#E05A9A", "damage");
+        String dependencies = currentType() == LootTableType.ENTITY
+                ? entity + ", " + sourceEntity + ", " + world + ", " + damage
+                : block + ", " + targetEntity + ", " + sourceEntity + ", " + world;
+        dependencyLabel.setText("<html><font size='+1'><b>" + prefix + " " + dependencies
+                + "</b></font></html>");
+    }
+
+    private static String dependencyName(String color, String key) {
+        return "<font color='" + color + "'>" + L10N.t("elementgui.blockly_loot_table.dep." + key) + "</font>";
     }
 
     private void updateManualPathState() {

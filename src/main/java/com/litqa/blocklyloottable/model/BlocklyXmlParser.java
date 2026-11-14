@@ -108,7 +108,7 @@ public final class BlocklyXmlParser {
         if (startBlock != null) {
             parsePoolChain(nextBlock(startBlock), effectiveType, effectiveResolver, effectiveProvidedBlock, model, report);
             for (Element block : topBlocks) {
-                if (block != startBlock && "loottable_pool".equals(block.getAttribute("type"))) {
+                if (block != startBlock && isPool(block.getAttribute("type"))) {
                     report.addWarning("loottable_pool",
                             "A pool block is not connected to the start block and was ignored.");
                 }
@@ -117,7 +117,7 @@ public final class BlocklyXmlParser {
             report.addWarning(null, "No loot table start block was found; top-level pools will still be read.");
             int poolIndex = 0;
             for (Element block : topBlocks) {
-                if ("loottable_pool".equals(block.getAttribute("type"))) {
+                if (isPool(block.getAttribute("type"))) {
                     poolIndex++;
                     parsePool(block, poolIndex, effectiveType, effectiveResolver, effectiveProvidedBlock, model, report);
                 }
@@ -130,12 +130,16 @@ public final class BlocklyXmlParser {
         return new ParseResult(model, report);
     }
 
+    private static boolean isPool(String blockType) {
+        return "loottable_pool".equals(blockType) || "loottable_pool_simple".equals(blockType);
+    }
+
     private static int parsePoolChain(Element first, LootTableType type, ItemNameResolver resolver,
             String providedBlock, LootTableModel model, ValidationReport report) {
         int poolCount = 0;
         for (Element block = first; block != null; block = nextBlock(block)) {
             String blockType = block.getAttribute("type");
-            if ("loottable_pool".equals(blockType)) {
+            if (isPool(blockType)) {
                 poolCount++;
                 parsePool(block, poolCount, type, resolver, providedBlock, model, report);
             } else if (!"loottable_start".equals(blockType)) {
@@ -612,19 +616,19 @@ public final class BlocklyXmlParser {
                 if (resolvedBlock.isBlank()) {
                     return null;
                 }
-                String property = fieldValue(block, "property").trim();
-                String value = fieldValue(block, "value").trim();
+                String property = parseTextInput(block, "property", "", blockType, report).trim();
+                if (property.isBlank()) {
+                    property = fieldValue(block, "property").trim();
+                }
+                String value = parseBlockStateValue(block, blockType, report);
                 if (property.isBlank()) {
                     report.addWarning(blockType,
                             "Block state property has no property name and was skipped.");
                     return null;
                 }
-                if (value.isBlank()) {
+                if (value == null || value.isBlank()) {
                     report.addWarning(blockType, "Block state property has no comparison value and was skipped.");
                     return null;
-                }
-                if ("loottable_block_state_boolean".equals(blockType)) {
-                    value = value.toLowerCase(java.util.Locale.ROOT);
                 }
                 condition.getProperties().put("block", resolvedBlock);
                 condition.getProperties().put("property", property);
@@ -683,13 +687,11 @@ public final class BlocklyXmlParser {
             case "loottable_killed_by_player_or_pets" -> {
                 condition.getTerms().add(new LootTableModel.Condition(
                         "loottable_killed_by_player", "minecraft:killed_by_player"));
-                for (String pet : List.of("minecraft:wolf", "minecraft:cat", "minecraft:parrot")) {
-                    LootTableModel.Condition petCondition = new LootTableModel.Condition(
-                            "loottable_entity_pet", "minecraft:entity_properties");
-                    petCondition.getProperties().put("entity", "attacker");
-                    petCondition.getProperties().put("type", pet);
-                    condition.getTerms().add(petCondition);
-                }
+                LootTableModel.Condition tamedCondition = new LootTableModel.Condition(
+                        "loottable_entity_nbt_logic", "minecraft:entity_properties");
+                tamedCondition.getProperties().put("entity", "this");
+                tamedCondition.getProperties().put("nbt", "{Tame:1b}");
+                condition.getTerms().add(tamedCondition);
             }
             case "loottable_time_check", "loottable_time_day", "loottable_time_periodic" -> {
                 if (!parseTimeCheckCondition(block, blockType, condition, report)) {
@@ -924,13 +926,11 @@ public final class BlocklyXmlParser {
 
     private static boolean parseDamageCondition(Element block, String blockType,
             LootTableModel.Condition condition, ValidationReport report) {
-        String tag;
-        if ("loottable_damage_tag".equals(blockType)) {
-            tag = parseTextInput(block, "tag", "minecraft:is_projectile", blockType, report).trim();
-        } else {
-            String type = fieldValue(block, "damagetype").trim();
-            tag = damageTypeTag(type, blockType, report);
+        if ("loottable_damage_type".equals(blockType)) {
+            report.addWarning(blockType, "当前minecraft版本不支持这个条件，它将被跳过");
+            return false;
         }
+        String tag = parseTextInput(block, "tag", "minecraft:is_projectile", blockType, report).trim();
         if (tag.isBlank()) {
             report.addWarning(blockType, "Damage condition has no damage tag and was skipped.");
             return false;
@@ -1178,6 +1178,44 @@ public final class BlocklyXmlParser {
      *
      * @return SNBT value or {@code null} when the value is invalid
      */
+    private static String parseBlockStateValue(Element block, String blockType, ValidationReport report) {
+        Element valueBlock = valueBlock(block, "value");
+        if (valueBlock == null) {
+            return fieldValue(block, "value").trim();
+        }
+        if (blockType.endsWith("_boolean")) {
+            String raw = fieldValue(valueBlock, "BOOL").toLowerCase(Locale.ROOT);
+            if (raw.isBlank()) {
+                raw = fieldValue(valueBlock, "value").toLowerCase(Locale.ROOT);
+            }
+            if ("true".equals(raw) || "1".equals(raw)) {
+                return "true";
+            }
+            if ("false".equals(raw) || "0".equals(raw)) {
+                return "false";
+            }
+            report.addWarning(blockType, "Block state boolean value is not true or false and was skipped.");
+            return null;
+        }
+        if (blockType.endsWith("_integer")) {
+            LootTableModel.NumberProvider value = parseNumberValue(valueBlock, 0.0, false,
+                    "Block state integer value", report);
+            if (!isSimpleNumber(value)) {
+                report.addWarning(blockType,
+                        "Block state integer value must be a constant number and was skipped.");
+                return null;
+            }
+            return Long.toString((long) value.getValue());
+        }
+        String valueType = valueBlock.getAttribute("type");
+        if ("loottable_empty_text".equals(valueType) || "text".equals(valueType)) {
+            return fieldValue(valueBlock, "TEXT").trim();
+        }
+        report.addWarning(blockType,
+                "Block state text value " + valueType + " is not supported and was skipped.");
+        return null;
+    }
+
     private static String nbtComparisonValue(Element block, String blockType, ValidationReport report) {
         Element valueBlock = valueBlock(block, "value");
         if (valueBlock != null) {

@@ -1,9 +1,8 @@
 {
   "args0": [],
   "nextStatement": "LootTablePool",
-  "colour": 20,
+  "colour": 120,
   "mcreator": {
     "toolbox_init": []
   }
 }
-

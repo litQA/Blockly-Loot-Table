@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.0.3.55-beta
+
+### New Content
+
+- Added a **Conditions** parent category with block, entity, item, damage and
+  world condition subcategories.
+- Added a condition-free **Pool with rolls** block for loot tables that do not
+  need a pool condition chain.
+- Added a bold, colour-coded context dependency summary to the editor header.
+
+### Changed
+
+- Block-state boolean, integer and enum conditions now use text input blocks
+  for the property name and typed input blocks for the comparison value. The
+  equality operator is fixed and no longer editable.
+- World conditions now use the native earth-yellow colour. The Minecraft
+  components category uses the native red colour. Loot table and pool blocks
+  use the deep-green colour.
+- Exact damage-type conditions are skipped with a clear warning because
+  Minecraft 1.21.1 has no exact damage-type predicate.
+- `Killed by player or pets` now checks the tamed-mob NBT marker `Tame:1b`
+  instead of matching individual pet entity types.
+
 ## 1.0.3.52-beta
 
 ### New Content

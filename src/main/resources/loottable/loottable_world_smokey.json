@@ -5,7 +5,7 @@
   "previousStatement": "LootTableCondition",
   "nextStatement": "LootTableCondition",
   "inputsInline": true,
-  "colour": 210,
+  "colour": 35,
   "mcreator": {
     "toolbox_id": "loottable_world",
     "toolbox_init": []

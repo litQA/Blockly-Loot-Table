@@ -12,6 +12,20 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.0.3.55-beta
+
+- Grouped all condition categories under a **Conditions** parent category while
+  preserving each subcategory colour.
+- Added a condition-free pool block and aligned the loot-table/pool, world and
+  Minecraft-components category colours with the native palette.
+- Block-state property conditions now take text and typed value inputs; the
+  fixed equality operator is no longer a selectable field.
+- Exact damage-type conditions are skipped with the warning
+  `当前minecraft版本不支持这个条件，它将被跳过`.
+- `Killed by player or pets` now matches the `Tame:1b` entity NBT marker.
+- The editor dependency summary is bold, larger and colour-coded by dependency
+  type.
+
 ### 1.0.3.52-beta
 
 - Added item predicate conditions for item type, durability, count and custom

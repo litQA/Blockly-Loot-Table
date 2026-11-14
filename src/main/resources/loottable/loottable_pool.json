@@ -30,7 +30,7 @@
   "inputsInline": false,
   "previousStatement": "LootTablePool",
   "nextStatement": "LootTablePool",
-  "colour": 20,
+  "colour": 120,
   "mcreator": {
     "toolbox_id": "loottable",
     "toolbox_init": [],
@@ -48,4 +48,3 @@
     ]
   }
 }
-

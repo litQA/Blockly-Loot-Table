@@ -18,8 +18,9 @@ Supported condition blocks:
   block; Entity tables test the selected entity)
 - block and entity NBT logic, number and text comparisons
 - item identity, durability and count conditions, plus item NBT comparisons
-- damage-type and damage-tag conditions
-- `killed_by_player_or_pets` (an `any_of` approximation)
+- damage-tag conditions (exact damage-type conditions are skipped with a warning)
+- `killed_by_player_or_pets` (an `any_of` approximation using the `Tame:1b`
+  marker)
 - item enchantment conditions with an item input, minimum level and optional
   maximum level
 - enchanted-item value blocks with dynamic enchantment rows and NumberProvider
@@ -28,6 +29,10 @@ Supported condition blocks:
   structure tag, smokey, light level, block tag and x/y/z position
 - nested `and`, `or` and `not` logic conditions
 
+Block, entity, item, damage and world conditions are grouped under the
+**Conditions** parent category, while each subcategory keeps its own colour.
+The **Loot table** category and pool blocks use deep green.
+
 Same-level location checks are merged into one `minecraft:location_check`
 predicate when their keys do not conflict, so dimension, biome, position and
 block-tag tests become a single AND predicate. Item predicates are merged the
@@ -35,15 +40,16 @@ same way: same-level identity, durability, count and NBT tests become one
 `minecraft:match_tool` or one `entity_properties.equipment.mainhand` predicate.
 
 **Damage conditions** test the source damage with a vanilla damage tag.
-Minecraft 1.21.1 has no exact damage-type predicate, so `is <type> type damage`
-maps common types to the closest vanilla tag; unmapped types are skipped with a
-warning. **Killed by player or pets** expands to an `any_of` of the player-kill
-condition and common pet entity types because vanilla has no aggregate
-condition.
+Minecraft 1.21.1 has no exact damage-type predicate, so the exact damage-type
+block is skipped with
+`当前minecraft版本不支持这个条件，它将被跳过` and generates no condition.
+**Killed by player or pets** expands to an `any_of` of the player-kill
+condition and the `Tame:1b` entity NBT marker used by tamed mobs.
 
-The **Minecraft components** category provides the empty item selector,
-provided-blockstate, block selector, event/target entity, source entity,
-immediate source entity, source player and entity main-hand item blocks. The
+The **Minecraft components** category uses the native red colour and provides
+the block state, block selector, entity/source dependencies, source damage and
+empty text blocks. The **Item components** category uses the same red colour and
+contains the item-only producers. The
 provided blockstate resolves to the block named by the effective loot table
 path, so an element with manual path `mymod:blocks/custom_ore` supplies
 `mymod:custom_ore` even when the selected target differs.
@@ -58,20 +64,22 @@ Each loot table has exactly one start block; extra start blocks are ignored with
 a warning.
 
 Pools support `rolls`, `bonus_rolls`, conditions and weighted item entries.
-Entries require an **Item selector** input, a number count input, a weight, a
-condition chain and a function chain. The item input also accepts the
-**Item with enchantment** value block and the four randomized enchantment item
-variants. **Item with enchantments** writes `minecraft:set_enchantments` with
-dynamic rows whose levels accept a bare number or a number provider. The four
-other variants write `minecraft:enchant_randomly` or
-`minecraft:enchant_with_levels`; their enchantment list rows use MCreator's
-`enchantments` datalist, and the treasure checkbox omits `options` when checked
-so treasure enchantments are eligible, while an unchecked box restricts to
-`#minecraft:on_random_loot`.
+The condition-free **Pool with rolls** block uses the same deep-green colour and
+is useful when a pool needs no condition chain. Entries require an **Item
+selector** input, a number count input, a weight, a condition chain and a
+function chain. The item input also accepts the **Item with enchantment** value
+block and the four randomized enchantment item variants. **Item with
+enchantments** writes `minecraft:set_enchantments` with dynamic rows whose
+levels accept a bare number or a number provider. The four other variants write
+`minecraft:enchant_randomly` or `minecraft:enchant_with_levels`; their
+enchantment list rows use MCreator's `enchantments` datalist, and the treasure
+checkbox omits `options` when checked so treasure enchantments are eligible,
+while an unchecked box restricts to `#minecraft:on_random_loot`.
 
-The **Item components** category contains every A-1 item producer: the empty
-item selector, enchanted-item variants, custom NBT and container contents. The
-three NBT blocks add boolean, number or text SNBT to the item's `tag`. On 1.20.5+
+The **Item components** category contains every A-1 item producer: the
+enchanted-item variants, custom NBT and container contents, together with the
+empty item selector value block. The three NBT blocks add boolean, number or
+text SNBT to the item's `tag`. On 1.20.5+
 they emit `minecraft:set_custom_data`; older generators receive
 `minecraft:set_nbt`. NBT tag names are text inputs; the value socket accepts a
 logic, number or text block. Number NBT accepts only a constant value because
@@ -82,7 +90,13 @@ right-aligned. It emits `minecraft:set_contents` with `type` before 1.20.5 and
 with `component` from 1.20.5 onward. A floating-point literal count is rejected
 so the generated container remains valid.
 
-`Random chance` now lives in the **Logic** category and uses the native logic
+The three block-state condition blocks use the same input style as NBT
+conditions. The property name is a text input block, the equality operator is
+fixed, and the compared value is a typed input block: a boolean selector, an
+integer value, or a text value such as `upper`. This keeps the generated
+`block_state_property` values explicit and stable.
+
+`Random chance` lives in the **Logic** category and uses the native logic
 colour. The main-hand item block is in **Entity conditions**. Item producers
 live in **Item components**; item-comparison blocks stay in **Item conditions**.
 
@@ -177,10 +191,13 @@ gradlew.bat selfCheck
 5. Save. Invalid condition scopes are marked in the Blockly workspace, shown in
    the compile notes panel, and block saving and generation.
 
-The context dependencies shown in the editor are:
+The context dependencies shown in the editor are bold, slightly larger and
+colour-coded:
 
-- Block: `provided blockstate, block selector, target entity (player breaker only), world`
-- Entity: `event/target entity, source entity, immediate source entity, source player, main-hand item, world`
+- Block: `blockstate` (yellow), `target entity` (teal, player breaker only),
+  `source entity` (teal), `world` (earth yellow)
+- Entity: `entity` (teal), `source entity` (teal), `world` (earth yellow),
+  `damage source` (pink)
 
 ## Examples
 

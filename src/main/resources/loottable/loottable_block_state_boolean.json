@@ -1,8 +1,9 @@
 {
   "args0": [
     {
-      "type": "field_input",
-      "name": "property"
+      "type": "input_value",
+      "name": "property",
+      "check": "String"
     },
     {
       "type": "input_value",
@@ -10,28 +11,9 @@
       "check": "MCItemBlock"
     },
     {
-      "type": "field_dropdown",
-      "name": "operator",
-      "options": [
-        [
-          "=",
-          "="
-        ]
-      ]
-    },
-    {
-      "type": "field_dropdown",
+      "type": "input_value",
       "name": "value",
-      "options": [
-        [
-          "true",
-          "true"
-        ],
-        [
-          "false",
-          "false"
-        ]
-      ]
+      "check": "Boolean"
     }
   ],
   "inputsInline": true,
@@ -41,17 +23,14 @@
   "mcreator": {
     "toolbox_id": "loottable_blocks",
     "toolbox_init": [
-      "<field name=\"property\">waterlogged</field>",
-      "<value name=\"block\"><block type=\"loottable_provided_blockstate\"></block></value>"
-    ],
-    "fields": [
-      "property",
-      "operator",
-      "value"
+      "<value name=\"property\"><block type=\"loottable_empty_text\"><field name=\"TEXT\">waterlogged</field></block></value>",
+      "<value name=\"block\"><block type=\"loottable_provided_blockstate\"></block></value>",
+      "<value name=\"value\"><block type=\"loottable_boolean\"><field name=\"BOOL\">TRUE</field></block></value>"
     ],
     "inputs": [
-      "block"
+      "property",
+      "block",
+      "value"
     ]
   }
 }
-

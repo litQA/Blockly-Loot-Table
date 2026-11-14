@@ -157,10 +157,10 @@ public final class LootTableSelfCheck {
                 fileName + " keeps the boolean field placeholder");
         check(properties.getProperty("blockly.block.loottable_empty_text").contains("%1"),
                 fileName + " keeps the empty-text field placeholder");
-        check(!properties.containsKey("blockly.category.loottable_conditions"),
-                fileName + " no longer exposes the loot conditions category");
-        check(LootTableSelfCheck.class.getResourceAsStream("/loottable/$loottable_conditions.json") == null,
-                "loot conditions category resource is removed");
+        check(properties.containsKey("blockly.category.loottable_conditions"),
+                fileName + " exposes the conditions parent category");
+        check(LootTableSelfCheck.class.getResourceAsStream("/loottable/$loottable_conditions.json") != null,
+                "conditions parent category resource exists");
     }
 
     private static void itemMapping() {
@@ -198,6 +198,13 @@ public final class LootTableSelfCheck {
         check(json.contains("\"condition\": \"minecraft:survives_explosion\""), "survives explosion exists");
         check(json.contains("\"raining\": true"), "weather check raining exists");
         check(json.contains("\"thundering\": false"), "weather check thundering exists");
+
+        String simpleXml = blockTableXml(entry("Blocks.DIAMOND_ORE", 1, 1), "")
+                .replace("type=\"loottable_pool\"", "type=\"loottable_pool_simple\"");
+        BlocklyXmlParser.ParseResult simpleResult = BlocklyXmlParser.parse(
+                simpleXml, LootTableType.BLOCK, value -> value);
+        check(!simpleResult.report().hasErrors(), "simple pool has no errors");
+        check(simpleResult.model().getPools().size() == 1, "simple pool is parsed");
     }
 
     private static void validEntityTable() {
@@ -222,11 +229,11 @@ public final class LootTableSelfCheck {
         BlocklyXmlParser.ParseResult booleanResult = BlocklyXmlParser.parse(blockTableXml(
                 entry("Blocks.DIAMOND_ORE", 1, 1),
                 condition("loottable_block_state_boolean",
-                        "<field name=\"property\">waterlogged</field>"
+                        "<value name=\"property\"><block type=\"loottable_empty_text\"><field name=\"TEXT\">waterlogged</field></block></value>"
                                 + "<value name=\"block\"><block type=\"loottable_block_selector\">"
                                 + "<field name=\"block\">Blocks.OAK_LOG</field></block></value>"
-                                + "<field name=\"operator\">=</field>"
-                                + "<field name=\"value\">true</field>")), LootTableType.BLOCK, resolver);
+                                + "<value name=\"value\"><block type=\"loottable_boolean\">"
+                                + "<field name=\"BOOL\">TRUE</field></block></value>")), LootTableType.BLOCK, resolver);
         check(!booleanResult.report().hasErrors(), "boolean block state condition has no errors");
         String booleanJson = LootTableJsonWriter.write(booleanResult.model(), "test", "blocks/log", false);
         check(booleanJson.contains("\"condition\": \"minecraft:block_state_property\""),
@@ -239,10 +246,10 @@ public final class LootTableSelfCheck {
         BlocklyXmlParser.ParseResult integerResult = BlocklyXmlParser.parse(blockTableXml(
                 entry("Blocks.DIAMOND_ORE", 1, 1),
                 condition("loottable_block_state_integer",
-                        "<field name=\"property\">age</field>"
+                        "<value name=\"property\"><block type=\"loottable_empty_text\"><field name=\"TEXT\">age</field></block></value>"
                                 + "<value name=\"block\"><block type=\"loottable_provided_blockstate\"></block></value>"
-                                + "<field name=\"operator\">=</field>"
-                                + "<field name=\"value\">3</field>")), LootTableType.BLOCK, resolver,
+                                + "<value name=\"value\"><block type=\"loottable_integer\">"
+                                + "<field name=\"value\">3</field></block></value>")), LootTableType.BLOCK, resolver,
                 "minecraft:oak_log");
         check(!integerResult.report().hasErrors(), "provided blockstate condition has no errors");
         String integerJson = LootTableJsonWriter.write(integerResult.model(), "test", "blocks/log", false);
@@ -253,11 +260,11 @@ public final class LootTableSelfCheck {
         BlocklyXmlParser.ParseResult enumResult = BlocklyXmlParser.parse(blockTableXml(
                 entry("Blocks.DIAMOND_ORE", 1, 1),
                 condition("loottable_block_state_enum",
-                        "<field name=\"property\">half</field>"
+                        "<value name=\"property\"><block type=\"loottable_empty_text\"><field name=\"TEXT\">half</field></block></value>"
                                 + "<value name=\"block\"><block type=\"loottable_block_selector\">"
                                 + "<field name=\"block\">Blocks.STONE</field></block></value>"
-                                + "<field name=\"operator\">=</field>"
-                                + "<field name=\"value\">upper</field>")), LootTableType.BLOCK, resolver);
+                                + "<value name=\"value\"><block type=\"loottable_empty_text\">"
+                                + "<field name=\"TEXT\">upper</field></block></value>")), LootTableType.BLOCK, resolver);
         check(!enumResult.report().hasErrors(), "enum block state condition has no errors");
         String enumJson = LootTableJsonWriter.write(enumResult.model(), "test", "blocks/stone", false);
         check(enumJson.contains("\"half\": \"upper\""), "enum block state property value exists");
@@ -520,14 +527,25 @@ public final class LootTableSelfCheck {
                 "statement checks use Blockly string form");
         check(resourceText("/loottable/loottable_logic_not.json").contains("\"check\": \"LootTableCondition\""),
                 "logic terms only accept conditions");
-        check(resourceText("/loottable/$loottable_components.json").contains("\"color\": 120"),
-                "minecraft components category exists");
+        check(resourceText("/loottable/$loottable_components.json").contains("\"color\": 350"),
+                "minecraft components category is red");
         check(resourceText("/loottable/$loottable_items.json").contains("\"color\": 350"),
                 "item category exists");
         check(resourceText("/loottable/$loottable_numbers.json").contains("\"color\": 230"),
                 "number category exists");
         check(resourceText("/loottable/$loottable_logic.json").contains("\"color\": 210"),
                 "logic category exists");
+        check(resourceText("/loottable/$loottable_conditions.json").contains("\"color\": 120"),
+                "conditions parent category exists");
+        check(resourceText("/loottable/$loottable_blocks.json")
+                        .contains("\"parent_category\": \"loottable_conditions\""),
+                "block conditions are nested under conditions");
+        check(resourceText("/loottable/$loottable_world.json").contains("\"color\": 35"),
+                "world conditions use the earth-yellow colour");
+        check(resourceText("/loottable/loottable_world_light.json").contains("\"colour\": 35"),
+                "world condition blocks use the earth-yellow colour");
+        check(resourceText("/loottable/loottable_pool_simple.json").contains("\"colour\": 120"),
+                "simple pools use the deep-green colour");
         check(resourceText("/loottable/$loottable_functions.json").contains("\"color\": 280"),
                 "function category exists");
         for (String functionFile : new String[]{
@@ -828,16 +846,15 @@ public final class LootTableSelfCheck {
                         && !legacyItemJson.contains("\"minecraft:damage\""),
                 "pre-1.20.5 item durability uses the top-level predicate");
 
-        String damage = condition("loottable_damage_type",
-                "<field name=\"damagetype\">arrow</field>");
+        String damage = condition("loottable_damage_type", "");
         BlocklyXmlParser.ParseResult damageResult = BlocklyXmlParser.parse(blockTableXml(
                 entry("Blocks.STONE", 1, 1), damage), LootTableType.BLOCK, value -> value);
-        check(!damageResult.report().hasErrors(), "damage type condition has no errors");
+        check(!damageResult.report().hasErrors(), "damage type condition is skipped without an error");
+        check(damageResult.report().summary().contains("当前minecraft版本不支持这个条件，它将被跳过"),
+                "unsupported damage type warning is shown");
         String damageJson = LootTableJsonWriter.write(damageResult.model(), "test", "blocks/stone", false);
-        check(damageJson.contains("\"condition\": \"minecraft:damage_source_properties\""),
-                "damage type condition writes damage_source_properties");
-        check(damageJson.contains("\"id\": \"#minecraft:is_projectile\""),
-                "arrow maps to the projectile damage tag");
+        check(!damageJson.contains("\"condition\": \"minecraft:damage_source_properties\""),
+                "unsupported damage type emits no condition code");
 
         String nbt = condition("loottable_item_has_nbt_text",
                 "<value name=\"tag\"><block type=\"loottable_empty_text\">"
@@ -864,8 +881,8 @@ public final class LootTableSelfCheck {
         check(petJson.contains("\"condition\": \"minecraft:any_of\"")
                         && petJson.contains("\"condition\": \"minecraft:killed_by_player\""),
                 "killed by player or pets expands to any_of");
-        check(petJson.contains("\"minecraft:wolf\"") && petJson.contains("\"minecraft:cat\""),
-                "killed by player or pets includes pet types");
+        check(petJson.contains("\"nbt\": \"{Tame:1b}\""),
+                "killed by player or pets uses the tamed NBT predicate");
 
         String components = resourceText("/loottable/$loottable_item_components.json");
         String damageCategory = resourceText("/loottable/$loottable_damage_conditions.json");

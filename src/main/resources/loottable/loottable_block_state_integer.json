@@ -1,8 +1,9 @@
 {
   "args0": [
     {
-      "type": "field_input",
-      "name": "property"
+      "type": "input_value",
+      "name": "property",
+      "check": "String"
     },
     {
       "type": "input_value",
@@ -10,20 +11,9 @@
       "check": "MCItemBlock"
     },
     {
-      "type": "field_dropdown",
-      "name": "operator",
-      "options": [
-        [
-          "=",
-          "="
-        ]
-      ]
-    },
-    {
-      "type": "field_number",
+      "type": "input_value",
       "name": "value",
-      "value": 0,
-      "precision": 1
+      "check": "Number"
     }
   ],
   "inputsInline": true,
@@ -33,17 +23,14 @@
   "mcreator": {
     "toolbox_id": "loottable_blocks",
     "toolbox_init": [
-      "<field name=\"property\">age</field>",
-      "<value name=\"block\"><block type=\"loottable_provided_blockstate\"></block></value>"
-    ],
-    "fields": [
-      "property",
-      "operator",
-      "value"
+      "<value name=\"property\"><block type=\"loottable_empty_text\"><field name=\"TEXT\">age</field></block></value>",
+      "<value name=\"block\"><block type=\"loottable_provided_blockstate\"></block></value>",
+      "<value name=\"value\"><block type=\"loottable_integer\"><field name=\"value\">0</field></block></value>"
     ],
     "inputs": [
-      "block"
+      "property",
+      "block",
+      "value"
     ]
   }
 }
-
