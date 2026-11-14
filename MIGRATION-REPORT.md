@@ -12,6 +12,14 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.1.0.75-beta
+
+- Advanced-pool statement metadata now uses named objects. MCreator's block
+  loader rejects plain strings in `mcreator.statements`, which previously kept
+  the three condition pools out of the toolbox.
+- The nested loot-table entry with functions now accepts a condition value and
+  writes it to the generated nested entry.
+
 ### 1.1.0.74-beta
 
 - Build numbers are monotonic again: the temporary `1.1.0.1` regression is

@@ -287,7 +287,7 @@ public final class BlocklyXmlParser {
             }
             LootTableModel.Entry entry = "loottable_entry_loot_table".equals(blockType)
                     || "loottable_entry_loot_table_simple".equals(blockType)
-                            ? parseLootTableEntry(block, resolver, report)
+                            ? parseLootTableEntry(block, type, resolver, providedBlock, report)
                             : parseEntry(block, type, resolver, providedBlock, report);
             if (entry != null) {
                 entries.add(entry);
@@ -297,8 +297,8 @@ public final class BlocklyXmlParser {
         return entryCount;
     }
 
-    private static LootTableModel.Entry parseLootTableEntry(Element block, ItemNameResolver resolver,
-            ValidationReport report) {
+    private static LootTableModel.Entry parseLootTableEntry(Element block, LootTableType type,
+            ItemNameResolver resolver, String providedBlock, ValidationReport report) {
         String table = parseTextInput(block, "table", "minecraft:entities/zombie",
                 block.getAttribute("type"), report).trim();
         if (table.isBlank()) {
@@ -316,6 +316,8 @@ public final class BlocklyXmlParser {
         entry.setType("minecraft:loot_table");
         entry.setLootTable(table);
         entry.setWeight(readWholeNumber(block, "weight", 1, 1, "Nested loot table weight", report));
+        parseConditions(block, "conditions", type, resolver, providedBlock,
+                entry.getConditions(), report);
         parseFunctionChain(statementFirstBlock(block, "functions"), entry.getFunctions(), report);
         return entry;
     }

@@ -14,6 +14,11 @@
       "precision": 1
     },
     {
+      "type": "input_value",
+      "name": "conditions",
+      "check": "LootTableCondition"
+    },
+    {
       "type": "input_statement",
       "name": "functions",
       "check": "LootTableFunction"
@@ -32,7 +37,8 @@
       "weight"
     ],
     "inputs": [
-      "table"
+      "table",
+      "conditions"
     ],
     "statements": [
       {

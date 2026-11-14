@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.1.0.75-beta
+
+### Fixed
+
+- Advanced-pool `mcreator.statements` metadata now uses named objects. MCreator
+  previously failed to load all three condition pools with
+  `Expected BEGIN_OBJECT but was STRING at path $.statements[0]`.
+
+### Added
+
+- The nested `Loot table ..., weight ..., functions ...` entry now has a
+  `conditions` value socket. Conditions are emitted alongside the nested table's
+  `value`/`name`, weight and functions.
+
+### Verified
+
+- Self-check 530 checks; all 111 loottable JSON resources and the mutator script
+  validate.
+
 ## 1.1.0.74-beta
 
 ### Changed

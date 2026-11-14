@@ -54,7 +54,9 @@
       "condition0"
     ],
     "statements": [
-      "entries0"
+      {
+        "name": "entries0"
+      }
     ],
     "fields": [
       "rolls",

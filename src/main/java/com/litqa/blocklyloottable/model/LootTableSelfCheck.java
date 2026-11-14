@@ -502,6 +502,9 @@ public final class LootTableSelfCheck {
                               <field name="TEXT">minecraft:entities/zombie</field>
                             </block></value>
                             <field name="weight">2</field>
+                            <value name="conditions">
+                              <block type="loottable_random_chance"><field name="chance">0.25</field></block>
+                            </value>
                             <statement name="functions">
                               <block type="loottable_function_limit_count">
                                 <value name="limit"><block type="loottable_integer">
@@ -529,6 +532,8 @@ public final class LootTableSelfCheck {
                 "nested loot table warns about circular references");
         check(poolJson.contains("\"function\": \"minecraft:limit_count\""),
                 "nested loot table functions are written");
+        check(countOccurrences(poolJson, "\"condition\": \"minecraft:random_chance\"") >= 2,
+                "nested loot table entry writes its conditions");
 
         String legacyJson = LootTableJsonWriter.write(poolResult.model(), "test", "blocks/choice", false, false);
         check(legacyJson.contains("\"name\": \"minecraft:entities/zombie\""),
@@ -957,6 +962,11 @@ public final class LootTableSelfCheck {
         check(sameBlockJson.contains("\"condition\": \"minecraft:block_state_property\"")
                         && sameBlockJson.contains("\"block\": \"minecraft:oak_log\""),
                 "same-block condition writes a block-state predicate");
+
+        String compactPoolIf = resourceText("/loottable/loottable_pool_if.json")
+                .replaceAll("\\s+", "");
+        check(compactPoolIf.contains("\"statements\":[{\"name\":\"entries0\"}]"),
+                "advanced pool statement metadata uses named objects");
 
         String mutatorJs = resourceText("/blockly/js/loottable_mutators.js");
         check(mutatorJs.contains("loottable_condition_all_mutator")

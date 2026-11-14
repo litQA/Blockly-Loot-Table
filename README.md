@@ -80,8 +80,8 @@ rows; the base `if` branch is part of the block body, `else if` rows can be adde
 or removed freely, and `else` is always last. They generate a
 `minecraft:alternatives` entry and can nest any normal entry. Entries require an **Item selector** input, a
 number count input, a weight, one condition value and a function chain. Two
-additional entries call another loot table directly: one includes a function
-chain, one does not. On 1.21+ the generated `minecraft:loot_table` entry uses
+additional entries call another loot table directly: the full variant includes
+a condition value and a function chain, the compact variant includes neither. On 1.21+ the generated `minecraft:loot_table` entry uses
 `value`; older generators receive `name`. The item input also accepts the
 **Item with enchantment** value block and the four randomized enchantment item
 variants. **Item with
