@@ -17,8 +17,6 @@
     }
   ],
   "inputsInline": true,
-  "previousStatement": "LootTableCondition",
-  "nextStatement": "LootTableCondition",
   "colour": "%{BKY_TEXTS_HUE}",
   "mcreator": {
     "toolbox_id": "loottable_entities",
@@ -32,5 +30,6 @@
       "entity",
       "value"
     ]
-  }
+  },
+  "output": "LootTableCondition"
 }

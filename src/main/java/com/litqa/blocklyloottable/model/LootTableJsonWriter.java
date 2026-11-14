@@ -184,6 +184,21 @@ public final class LootTableJsonWriter {
                 json.put("p", numberProviderToJson(provider.getP()));
                 yield json;
             }
+            case "score" -> {
+                Map<String, Object> json = new LinkedHashMap<>();
+                Map<String, Object> target = new LinkedHashMap<>();
+                target.put("type", "minecraft:" + provider.getScoreTargetType());
+                if ("fixed".equals(provider.getScoreTargetType())) {
+                    target.put("name", provider.getScoreTarget());
+                } else {
+                    target.put("target", provider.getScoreTarget());
+                }
+                json.put("type", "minecraft:score");
+                json.put("target", target);
+                json.put("score", provider.getScoreName());
+                json.put("scale", JsonText.floating(provider.getScoreScale()));
+                yield json;
+            }
             default -> {
                 Map<String, Object> json = new LinkedHashMap<>();
                 json.put("type", "minecraft:constant");
@@ -612,7 +627,14 @@ public final class LootTableJsonWriter {
                 json.put("condition", "minecraft:any_of");
                 json.put("terms", terms);
             }
-            case "loottable_logic_and", "loottable_logic_or" -> {
+            case "loottable_logic_and" -> {
+                List<Object> terms = conditionsToJson(condition.getTerms(), itemComponents);
+                if (terms.isEmpty()) {
+                    return null;
+                }
+                json.put("terms", terms);
+            }
+            case "loottable_logic_or" -> {
                 List<Object> terms = conditionTermsToJson(condition.getTerms(), itemComponents);
                 if (terms.isEmpty()) {
                     return null;

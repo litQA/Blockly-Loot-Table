@@ -23,8 +23,6 @@
     }
   ],
   "inputsInline": true,
-  "previousStatement": "LootTableCondition",
-  "nextStatement": "LootTableCondition",
   "colour": 350,
   "mcreator": {
     "toolbox_id": "loottable_items",
@@ -41,5 +39,6 @@
       "min",
       "max"
     ]
-  }
+  },
+  "output": "LootTableCondition"
 }

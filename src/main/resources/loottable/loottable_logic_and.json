@@ -1,24 +1,15 @@
 {
-  "args0": [
-    {
-      "type": "input_statement",
-      "name": "conditions",
-      "check": "LootTableCondition"
-    }
-  ],
+  "message0": "All conditions",
+  "args0": [],
   "inputsInline": false,
-  "previousStatement": "LootTableCondition",
-  "nextStatement": "LootTableCondition",
   "colour": 210,
+  "mutator": "loottable_condition_all_mutator",
   "mcreator": {
-    "toolbox_id": "loottable_logic",
+    "toolbox_id": "loottable_conditions",
     "toolbox_init": [
-      "<statement name=\"conditions\"><block type=\"loottable_random_chance\"><field name=\"chance\">0.5</field></block></statement>"
-    ],
-    "statements": [
-      {
-        "name": "conditions"
-      }
+      "<mutation inputs=\"1\"></mutation>",
+      "<value name=\"condition0\"><block type=\"loottable_random_chance\"><field name=\"chance\">0.5</field></block></value>"
     ]
-  }
+  },
+  "output": "LootTableCondition"
 }

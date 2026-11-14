@@ -17,8 +17,6 @@
     }
   ],
   "inputsInline": true,
-  "previousStatement": "LootTableCondition",
-  "nextStatement": "LootTableCondition",
   "colour": 60,
   "mcreator": {
     "toolbox_id": "loottable_blocks",
@@ -32,5 +30,6 @@
       "block",
       "value"
     ]
-  }
+  },
+  "output": "LootTableCondition"
 }

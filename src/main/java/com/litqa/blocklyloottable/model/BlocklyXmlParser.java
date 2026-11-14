@@ -166,8 +166,7 @@ public final class BlocklyXmlParser {
         pool.setBonusRolls(readWholeNumber(block, "bonus_rolls", 0, 0,
                 "Pool " + poolIndex + " bonus rolls", report));
 
-        parseConditionChain(statementFirstBlock(block, "conditions"), type, resolver, providedBlock,
-                pool.getConditions(), report);
+        parseConditions(block, "conditions", type, resolver, providedBlock, pool.getConditions(), report);
         int entryCount;
         if (isChoicePool(block.getAttribute("type"))) {
             entryCount = parseChoicePool(block, poolIndex, type, resolver, providedBlock, pool, report);
@@ -189,11 +188,11 @@ public final class BlocklyXmlParser {
         alternatives.setType("minecraft:alternatives");
         String blockType = block.getAttribute("type");
 
-        int branches = addChoiceBranch(alternatives, block, "conditions1", "entries1", poolIndex, type, resolver,
-                providedBlock, report);
-        if ("loottable_pool_if_else_if".equals(blockType)) {
-            branches += addChoiceBranch(alternatives, block, "conditions2", "entries2", poolIndex, type, resolver,
-                    providedBlock, report);
+        int branchCount = mutationInputCount(block);
+        int branches = 0;
+        for (int index = 0; index < branchCount; index++) {
+            branches += addChoiceBranch(alternatives, block, "condition" + index, "entries" + index,
+                    poolIndex, type, resolver, providedBlock, report);
         }
         if ("loottable_pool_if_else".equals(blockType)) {
             branches += addChoiceElseBranch(alternatives, block, "entries_else", poolIndex, type, resolver,
@@ -220,7 +219,7 @@ public final class BlocklyXmlParser {
         }
         LootTableModel.Entry group = new LootTableModel.Entry();
         group.setType("minecraft:group");
-        parseConditionChain(statementFirstBlock(block, conditionInput), type, resolver, providedBlock,
+        parseConditions(block, conditionInput, type, resolver, providedBlock,
                 group.getConditions(), report);
         if (group.getConditions().isEmpty()) {
             report.addWarning("loottable_pool", "An if branch has no condition and was skipped.");
@@ -289,6 +288,8 @@ public final class BlocklyXmlParser {
                     "Loot table tags are not supported in nested loot table entries; '" + table + "' was skipped.");
             return null;
         }
+        report.addWarning(block.getAttribute("type"),
+                "记住，引用战利品表时严禁直接或间接引用自己，否则会造成游戏崩溃或无法进入存档。");
         LootTableModel.Entry entry = new LootTableModel.Entry();
         entry.setType("minecraft:loot_table");
         entry.setLootTable(table);
@@ -317,7 +318,7 @@ public final class BlocklyXmlParser {
         entry.setWeight(readWholeNumber(block, "weight", 1, 1, "Entry weight", report));
         entry.getFunctions().addAll(itemSpec.functions());
 
-        parseConditionChain(statementFirstBlock(block, "conditions"), type, resolver, providedBlock,
+        parseConditions(block, "conditions", type, resolver, providedBlock,
                 entry.getConditions(), report);
         parseFunctionChain(statementFirstBlock(block, "functions"), entry.getFunctions(), report);
         return entry;
@@ -479,6 +480,8 @@ public final class BlocklyXmlParser {
                             "A loot-table contents item has no valid loot table id and was skipped.");
                     yield null;
                 }
+                report.addWarning(itemType,
+                        "记住，引用战利品表时严禁直接或间接引用自己，否则会造成游戏崩溃或无法进入存档。");
                 String component = fieldValue(itemBlock, "component").trim();
                 if (component.isBlank()) {
                     component = "minecraft:container";
@@ -692,6 +695,20 @@ public final class BlocklyXmlParser {
         };
     }
 
+    private static void parseConditions(Element block, String inputName, LootTableType type, ItemNameResolver resolver,
+            String providedBlock, List<LootTableModel.Condition> conditions, ValidationReport report) {
+        Element value = valueBlock(block, inputName);
+        if (value != null) {
+            LootTableModel.Condition condition = parseCondition(value, type, resolver, providedBlock, report);
+            if (condition != null) {
+                conditions.add(condition);
+            }
+            return;
+        }
+        // Legacy workspaces used statement chains for condition slots.
+        parseConditionChain(statementFirstBlock(block, inputName), type, resolver, providedBlock, conditions, report);
+    }
+
     private static void parseConditionChain(Element first, LootTableType type, ItemNameResolver resolver,
             String providedBlock, List<LootTableModel.Condition> conditions, ValidationReport report) {
         for (Element block = first; block != null; block = nextBlock(block)) {
@@ -841,17 +858,16 @@ public final class BlocklyXmlParser {
                 }
             }
             case "loottable_logic_not" -> {
-                if (!parseLogicTerms(block, blockType, type, resolver, providedBlock, condition, report)) {
+                Element value = valueBlock(block, "condition");
+                if (value == null) {
+                    report.addWarning(blockType, "Not condition has no nested condition and was skipped.");
                     return null;
                 }
-                if (condition.getTerms().size() == 1) {
-                    condition.setTerm(condition.getTerms().get(0));
-                } else {
-                    LootTableModel.Condition allOf = new LootTableModel.Condition(
-                            "loottable_logic_and", "minecraft:all_of");
-                    allOf.getTerms().addAll(condition.getTerms());
-                    condition.setTerm(allOf);
+                LootTableModel.Condition term = parseCondition(value, type, resolver, providedBlock, report);
+                if (term == null) {
+                    return null;
                 }
+                condition.setTerm(term);
             }
             default -> {
                 // Killed by player and survives explosion carry no extra fields.
@@ -863,12 +879,23 @@ public final class BlocklyXmlParser {
     private static boolean parseLogicTerms(Element block, String blockType, LootTableType type,
             ItemNameResolver resolver, String providedBlock, LootTableModel.Condition condition,
             ValidationReport report) {
-        Element first = statementFirstBlock(block, "conditions");
-        if (first == null) {
-            report.addWarning(blockType, "Logic condition has no nested condition and was skipped.");
-            return false;
+        int count = mutationInputCount(block);
+        for (int index = 0; index < count; index++) {
+            Element value = valueBlock(block, "condition" + index);
+            if (value != null) {
+                LootTableModel.Condition term = parseCondition(value, type, resolver, providedBlock, report);
+                if (term != null) {
+                    condition.getTerms().add(term);
+                }
+            }
         }
-        parseConditionChain(first, type, resolver, providedBlock, condition.getTerms(), report);
+        if (condition.getTerms().isEmpty()) {
+            // Legacy C-shaped logic blocks used a statement chain.
+            Element first = statementFirstBlock(block, "conditions");
+            if (first != null) {
+                parseConditionChain(first, type, resolver, providedBlock, condition.getTerms(), report);
+            }
+        }
         if (condition.getTerms().isEmpty()) {
             report.addWarning(blockType, "Logic condition has no valid nested condition and was skipped.");
             return false;
@@ -1614,6 +1641,37 @@ public final class BlocklyXmlParser {
                         report);
                 return LootTableModel.NumberProvider.binomial(trials, probability);
             }
+            case "loottable_score_entity" -> {
+                String target = parseEntityValue(valueBlock, "entity", LootTableType.ENTITY, report);
+                String score = parseTextInput(valueBlock, "score", "scoreboard_name",
+                        valueType, report).trim();
+                if (target.isBlank() || score.isBlank()) {
+                    report.addWarning(valueType, "Scoreboard entity score is incomplete and was skipped.");
+                    return LootTableModel.NumberProvider.number(0, false);
+                }
+                return LootTableModel.NumberProvider.scoreContext(target, score, scoreScale(valueBlock, report));
+            }
+            case "loottable_score_player" -> {
+                String player = parseTextInput(valueBlock, "player", "Steve", valueType, report).trim();
+                String score = parseTextInput(valueBlock, "score", "scoreboard_name",
+                        valueType, report).trim();
+                if (player.isBlank() || score.isBlank()) {
+                    report.addWarning(valueType, "Scoreboard player score is incomplete and was skipped.");
+                    return LootTableModel.NumberProvider.number(0, false);
+                }
+                return LootTableModel.NumberProvider.scoreFixed(player, score, scoreScale(valueBlock, report));
+            }
+            case "loottable_score_uuid" -> {
+                String uuid = parseTextInput(valueBlock, "uuid", "00000000-0000-0000-0000-000000000000",
+                        valueType, report).trim();
+                String score = parseTextInput(valueBlock, "score", "scoreboard_name",
+                        valueType, report).trim();
+                if (uuid.isBlank() || score.isBlank()) {
+                    report.addWarning(valueType, "Scoreboard UUID score is incomplete and was skipped.");
+                    return LootTableModel.NumberProvider.number(0, false);
+                }
+                return LootTableModel.NumberProvider.scoreFixed(uuid, score, scoreScale(valueBlock, report));
+            }
             case "math_number" -> {
                 raw = fieldValue(valueBlock, "NUM");
                 return raw.contains(".")
@@ -1626,6 +1684,17 @@ public final class BlocklyXmlParser {
                 return LootTableModel.NumberProvider.number(fallback, fallbackFloating);
             }
         }
+    }
+
+    private static double scoreScale(Element block, ValidationReport report) {
+        LootTableModel.NumberProvider provider = parseNumberInput(block, "scale", 1.0, true,
+                "Scoreboard multiplier", report);
+        if (!isSimpleNumber(provider)) {
+            report.addWarning(block.getAttribute("type"),
+                    "Scoreboard multiplier must be a plain number; the default 1.0 was used.");
+            return 1.0;
+        }
+        return provider.getValue();
     }
 
     private static LootTableModel.NumberProvider integerNumber(Element block, String raw, double fallback,

@@ -3,11 +3,10 @@
   "message0": "killed by player or pets",
   "args0": [],
   "inputsInline": true,
-  "previousStatement": "LootTableCondition",
-  "nextStatement": "LootTableCondition",
   "colour": 195,
   "tooltip": "Minecraft loot table condition.",
   "mcreator": {
     "toolbox_id": "loottable_entities"
-  }
+  },
+  "output": "LootTableCondition"
 }

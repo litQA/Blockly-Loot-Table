@@ -22,7 +22,7 @@
       "precision": 1
     },
     {
-      "type": "input_statement",
+      "type": "input_value",
       "name": "conditions",
       "check": "LootTableCondition"
     },
@@ -47,12 +47,10 @@
     ],
     "inputs": [
       "item",
-      "count"
+      "count",
+      "conditions"
     ],
     "statements": [
-      {
-        "name": "conditions"
-      },
       {
         "name": "functions"
       }

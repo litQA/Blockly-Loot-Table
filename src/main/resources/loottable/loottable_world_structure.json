@@ -8,8 +8,6 @@
       "datalist": "structures"
     }
   ],
-  "previousStatement": "LootTableCondition",
-  "nextStatement": "LootTableCondition",
   "inputsInline": true,
   "colour": 35,
   "mcreator": {
@@ -18,5 +16,6 @@
     "fields": [
       "structure"
     ]
-  }
+  },
+  "output": "LootTableCondition"
 }

@@ -1,0 +1,39 @@
+{
+  "message0": "Player %1, score %2, scale %3",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "player",
+      "check": "String"
+    },
+    {
+      "type": "input_value",
+      "name": "score",
+      "check": "String"
+    },
+    {
+      "type": "input_value",
+      "name": "scale",
+      "check": [
+        "Number",
+        "NumberProvider"
+      ]
+    }
+  ],
+  "inputsInline": true,
+  "colour": 35,
+  "mcreator": {
+    "toolbox_id": "loottable_scoreboard",
+    "toolbox_init": [
+      "<value name=\"player\"><block type=\"loottable_empty_text\"><field name=\"TEXT\">Steve</field></block></value>",
+      "<value name=\"score\"><block type=\"loottable_empty_text\"><field name=\"TEXT\">scoreboard_name</field></block></value>",
+      "<value name=\"scale\"><block type=\"loottable_float\"><field name=\"value\">1.0</field></block></value>"
+    ],
+    "inputs": [
+      "player",
+      "score",
+      "scale"
+    ]
+  },
+  "output": "NumberProvider"
+}

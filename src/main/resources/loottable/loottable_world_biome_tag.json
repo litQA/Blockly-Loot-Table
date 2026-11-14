@@ -8,8 +8,6 @@
       "text": "minecraft:is_overworld"
     }
   ],
-  "previousStatement": "LootTableCondition",
-  "nextStatement": "LootTableCondition",
   "inputsInline": true,
   "colour": 35,
   "mcreator": {
@@ -18,5 +16,6 @@
     "fields": [
       "tag"
     ]
-  }
+  },
+  "output": "LootTableCondition"
 }

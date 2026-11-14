@@ -8,8 +8,6 @@
       "datalist": "dimensions"
     }
   ],
-  "previousStatement": "LootTableCondition",
-  "nextStatement": "LootTableCondition",
   "inputsInline": true,
   "colour": 35,
   "mcreator": {
@@ -18,5 +16,6 @@
     "fields": [
       "dimension"
     ]
-  }
+  },
+  "output": "LootTableCondition"
 }

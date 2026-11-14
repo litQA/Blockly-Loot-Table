@@ -139,9 +139,19 @@ public final class LootTableModel {
         private final NumberProvider max;
         private final NumberProvider n;
         private final NumberProvider p;
+        private final String scoreTargetType;
+        private final String scoreTarget;
+        private final String scoreName;
+        private final double scoreScale;
 
         private NumberProvider(String type, double value, boolean floating,
                 NumberProvider min, NumberProvider max, NumberProvider n, NumberProvider p) {
+            this(type, value, floating, min, max, n, p, "", "", "", 0);
+        }
+
+        private NumberProvider(String type, double value, boolean floating,
+                NumberProvider min, NumberProvider max, NumberProvider n, NumberProvider p,
+                String scoreTargetType, String scoreTarget, String scoreName, double scoreScale) {
             this.type = type;
             this.value = value;
             this.floating = floating;
@@ -149,6 +159,10 @@ public final class LootTableModel {
             this.max = max;
             this.n = n;
             this.p = p;
+            this.scoreTargetType = scoreTargetType;
+            this.scoreTarget = scoreTarget;
+            this.scoreName = scoreName;
+            this.scoreScale = scoreScale;
         }
 
         /**
@@ -183,6 +197,16 @@ public final class LootTableModel {
                     p == null ? number(1, true) : p);
         }
 
+        public static NumberProvider scoreContext(String target, String score, double scale) {
+            return new NumberProvider("score", 0, false, null, null, null, null,
+                    "context", target, score, scale);
+        }
+
+        public static NumberProvider scoreFixed(String name, String score, double scale) {
+            return new NumberProvider("score", 0, false, null, null, null, null,
+                    "fixed", name, score, scale);
+        }
+
         public String getType() {
             return type;
         }
@@ -209,6 +233,22 @@ public final class LootTableModel {
 
         public NumberProvider getP() {
             return p;
+        }
+
+        public String getScoreTargetType() {
+            return scoreTargetType;
+        }
+
+        public String getScoreTarget() {
+            return scoreTarget;
+        }
+
+        public String getScoreName() {
+            return scoreName;
+        }
+
+        public double getScoreScale() {
+            return scoreScale;
         }
     }
 

@@ -13,8 +13,6 @@
     }
   ],
   "inputsInline": true,
-  "previousStatement": "LootTableCondition",
-  "nextStatement": "LootTableCondition",
   "colour": 195,
   "mcreator": {
     "toolbox_id": "loottable_entities",
@@ -27,6 +25,6 @@
     "toolbox_init": [
       "<value name=\"entity\"><block type=\"loottable_entity_dependency\"></block></value>"
     ]
-  }
+  },
+  "output": "LootTableCondition"
 }
-

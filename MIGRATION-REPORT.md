@@ -12,6 +12,20 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.0.3.67-beta
+
+- Converted every condition block from a statement-chain block to an A-type
+  `LootTableCondition` value block. Pool and item-entry condition inputs now
+  take one condition value.
+- Reworked `All conditions` and `Any condition` into dynamic A-1 combiners and
+  `Not` into a single-value A block, all placed at the Conditions root.
+- Reworked all three alternatives pools to add/remove `if` and `else if`
+  condition-entry rows dynamically; the unconditional `else` row remains last.
+- Added Scoreboard `minecraft:score` number providers. The `scale` value is a
+  literal float, so non-constant providers are rejected with a warning.
+- Added a warning for any nested loot-table reference because the plugin cannot
+  inspect other files to detect a reference cycle.
+
 ### 1.0.3.61-beta
 
 - Added version-aware nested loot-table entries. Minecraft 1.21+ uses the
@@ -342,6 +356,3 @@ workspace metadata is modified.
     `LootTableFunction`. Third-party blocks must opt into the matching type to
     connect to these chains. NBT conditions compare one scalar tag at a time and
     do not provide a compound or list editor.
-
-
-

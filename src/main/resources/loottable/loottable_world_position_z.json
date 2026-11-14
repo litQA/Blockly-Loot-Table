@@ -11,8 +11,6 @@
       "precision": 1
     }
   ],
-  "previousStatement": "LootTableCondition",
-  "nextStatement": "LootTableCondition",
   "inputsInline": true,
   "colour": 35,
   "mcreator": {
@@ -21,5 +19,6 @@
     "fields": [
       "value"
     ]
-  }
+  },
+  "output": "LootTableCondition"
 }

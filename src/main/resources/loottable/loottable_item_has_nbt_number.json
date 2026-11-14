@@ -22,8 +22,6 @@
     }
   ],
   "inputsInline": true,
-  "previousStatement": "LootTableCondition",
-  "nextStatement": "LootTableCondition",
   "colour": 350,
   "tooltip": "Checks a custom number NBT tag on an item.",
   "mcreator": {
@@ -38,5 +36,6 @@
       "tag",
       "value"
     ]
-  }
+  },
+  "output": "LootTableCondition"
 }

@@ -30,8 +30,6 @@
     }
   ],
   "inputsInline": true,
-  "previousStatement": "LootTableCondition",
-  "nextStatement": "LootTableCondition",
   "colour": 210,
   "mcreator": {
     "toolbox_id": "loottable_world",
@@ -40,6 +38,6 @@
       "raining",
       "thundering"
     ]
-  }
+  },
+  "output": "LootTableCondition"
 }
-

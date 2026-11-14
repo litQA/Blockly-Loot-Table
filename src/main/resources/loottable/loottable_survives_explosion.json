@@ -1,11 +1,9 @@
 {
   "args0": [],
-  "previousStatement": "LootTableCondition",
-  "nextStatement": "LootTableCondition",
   "colour": 60,
   "mcreator": {
     "toolbox_id": "loottable_blocks",
     "toolbox_init": []
-  }
+  },
+  "output": "LootTableCondition"
 }
-

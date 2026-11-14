@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.0.3.67-beta
+
+### New Content
+
+- Added three Scoreboard number providers under Numbers: entity context score,
+  fixed player-name score, and fixed UUID score. Each writes
+  `minecraft:score` with a literal scale.
+- Added a warning whenever a nested loot-table entry or loot-table-contents
+  block references another table, because direct or indirect self-reference is
+  not detectable by the plugin and can crash the game or prevent world loading.
+
+### Changed
+
+- Every condition is now an A-type `LootTableCondition` value block. Pool and
+  entry condition sockets accept one condition value instead of a statement
+  chain.
+- `All conditions` and `Any condition` are dynamic A-1 condition combiners at
+  the root of the Conditions category. `Not` now accepts exactly one condition
+  value and also lives at the Conditions root.
+- The three alternatives pools now use dynamic `if` / `else if` condition and
+  entry rows; `else` is a single bottom row.
+
 ## 1.0.3.61-beta
 
 ### New Content
@@ -445,7 +467,3 @@
 - The condition set is the first-phase subset documented in
   `MIGRATION-REPORT.md`.
 - Item tags and nested predicate editors are not implemented yet.
-
-
-
-

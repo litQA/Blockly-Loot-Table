@@ -27,7 +27,12 @@ Supported condition blocks:
   levels
 - time checks and location checks for dimension, biome, biome tag, structure,
   structure tag, smokey, light level, block tag and x/y/z position
-- nested `and`, `or` and `not` logic conditions
+- nested `and`, `or` and `not` condition value blocks
+
+Every condition block is an A-type value block. Pool and entry conditions
+accept one `LootTableCondition` value directly; use `All conditions` or
+`Any condition` to combine several conditions. The parent **Conditions**
+category also contains `Not`, which negates one condition value.
 
 Block, entity, item, damage and world conditions are grouped under the
 **Conditions** parent category, while each subcategory keeps its own colour.
@@ -63,17 +68,17 @@ The `loottable_start` block is hidden from the toolbox and cannot be deleted.
 Each loot table has exactly one start block; extra start blocks are ignored with
 a warning.
 
-Pools support `rolls`, `bonus_rolls`, conditions and weighted item entries.
-The condition-free **Pool with rolls** block uses the same deep-green colour and
-is useful when a pool needs no condition chain. Three alternatives pool blocks
-add one `if` branch, an optional `else if` branch, or a final `else` branch.
-They generate a `minecraft:alternatives` entry and can nest any normal entry.
-Entries require an **Item selector** input, a number count input, a weight, a
-condition chain and a function chain. Two additional entries call another loot
-table directly: one includes a function chain, one does not. On 1.21+ the
-generated `minecraft:loot_table` entry uses `value`; older generators receive
-`name`. The item input also accepts the **Item with enchantment** value
-block and the four randomized enchantment item variants. **Item with
+Pools support `rolls`, `bonus_rolls`, one A-type condition value and weighted item
+entries. The condition-free **Pool with rolls** block uses the same deep-green
+colour. Three alternatives pool blocks provide dynamic `if` / `else if` rows and
+an optional bottom `else` row. They generate a `minecraft:alternatives` entry
+and can nest any normal entry. Entries require an **Item selector** input, a
+number count input, a weight, one condition value and a function chain. Two
+additional entries call another loot table directly: one includes a function
+chain, one does not. On 1.21+ the generated `minecraft:loot_table` entry uses
+`value`; older generators receive `name`. The item input also accepts the
+**Item with enchantment** value block and the four randomized enchantment item
+variants. **Item with
 enchantments** writes `minecraft:set_enchantments` with dynamic rows whose
 levels accept a bare number or a number provider. The four other variants write
 `minecraft:enchant_randomly` or `minecraft:enchant_with_levels`; their
@@ -110,6 +115,18 @@ category contains the terminal `Integer` and `Float` blocks, the constant
 `Integer provider` and `Float provider` blocks, and the `Uniform` and `Binomial`
 provider blocks. `Uniform` and `Binomial` can be nested inside one another, and
 their sockets accept either a bare number or a provider.
+
+The **Scoreboard** subcategory uses the earth-yellow number colour and provides
+three `minecraft:score` number providers: an entity score selected by the
+entity value socket, a fixed player name, and a fixed UUID string. Each block
+has a scoreboard objective name (default `scoreboard_name`) and a literal scale
+value (default `1.0`). Because 1.21.1 reads the scale as a static float, a
+provider scale is rejected with a warning.
+
+Referencing another loot table through a nested-entry or loot-table-contents
+block shows a warning: a direct or indirect self-reference can crash the game or
+prevent the world from loading. The plugin cannot inspect other files to prove
+a cycle, so the warning is advisory.
 
 The **Functions** category, colour 280, contains `Add value` and five
 loot-function blocks: `Add enchantment bonus` (uniform), `Add binomial
@@ -197,7 +214,7 @@ gradlew.bat selfCheck
    `<target namespace>:<blocks|entities>/<target path>`. Check **Manual path** to
    disable the selector and enter a path yourself; uncheck it to restore the
    automatic path. Manual block paths also drive **Provided blockstate**.
-4. Build the pool/entry/condition chain below the fixed start block.
+4. Build the pool/entry/condition value structure below the fixed start block.
 5. Save. Invalid condition scopes are marked in the Blockly workspace, shown in
    the compile notes panel, and block saving and generation.
 
@@ -306,19 +323,23 @@ longer ships a preset-template selector.
   selected count and `"add": true`.
 - A float block defaults to `1.0`; an integer block containing a decimal is
   truncated with a warning.
-- Pool, entry, condition and function blocks connect when their types match;
-  pulling a condition onto an entry chain is rejected by Blockly.
+- Pool, entry and function blocks connect only when their statement types
+  match. Conditions are A-type value blocks and connect to the single condition
+  socket on a pool or entry.
 - The block selector displays only the selector field, without a
   `Block to test` prefix.
 - Entity and item blocks use the native entity and item colors, and NBT blocks
   use the native logic, math and text hues.
-- The **Logic**, **Minecraft components** and **Loot tables** categories render
+- The **Logic**, **Minecraft components** and **Loot table** categories render
   their blocks without overlap or empty entries, and **Loot conditions** is
   absent.
-- The **Logic** category contains `and`, `or`, `not`, `random chance` and the
-  true/false selector; `and`/`or`/`not` can be nested in each other. `and`
-  emits `all_of`, `or` emits `any_of`, and `not` with multiple children emits
-  `inverted(all_of(...))`.
+- The Conditions root contains `All conditions`, `Any condition` and `Not`.
+  `All conditions` and `Any condition` add/remove value rows dynamically; `Not`
+  takes one condition. The Logic category contains only `random chance` and the
+  true/false selector.
+- A score provider produces `minecraft:score`; the entity variant uses a
+  context target, while the player-name and UUID variants use fixed names.
+- Referencing another loot table shows the circular-reference warning.
 - The entry item socket accepts the empty item selector and the **Item with
   enchantment** value block. The enchanted item block starts with one row, adds
   and removes rows dynamically, and emits `minecraft:set_enchantments` with the

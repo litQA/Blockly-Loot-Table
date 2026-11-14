@@ -14,8 +14,6 @@
     }
   ],
   "inputsInline": true,
-  "previousStatement": "LootTableCondition",
-  "nextStatement": "LootTableCondition",
   "colour": 350,
   "tooltip": "Minecraft loot table condition.",
   "mcreator": {
@@ -28,5 +26,6 @@
       "item",
       "other"
     ]
-  }
+  },
+  "output": "LootTableCondition"
 }
