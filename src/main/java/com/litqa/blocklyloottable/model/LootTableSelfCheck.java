@@ -159,6 +159,10 @@ public final class LootTableSelfCheck {
                 "blockly.block.loottable_entry_loot_table_simple",
                 "blockly.block.loottable_item_contents_loot",
                 "blockly.block.loottable_item_potion",
+                "blockly.block.loottable_item_potion.type.potion",
+                "blockly.block.loottable_item_potion.type.splash_potion",
+                "blockly.block.loottable_item_potion.type.lingering_potion",
+                "blockly.block.loottable_item_potion.type.tipped_arrow",
                 "blockly.block.loottable_function_apply_bonus_uniform",
                 "blockly.block.loottable_function_apply_bonus_binomial",
                 "blockly.block.loottable_function_apply_bonus_ore",
@@ -1219,6 +1223,15 @@ public final class LootTableSelfCheck {
         check(resourceText("/loottable/loottable_item_potion.json")
                         .contains("\"toolbox_id\": \"loottable_item_components\""),
                 "potion item is in the item components category");
+        check(resourceText("/loottable/loottable_item_potion.json")
+                        .contains("\"type\": \"field_loottable_potion_type\""),
+                "potion item uses the localized potion type field");
+        check(resourceText("/blockly/js/loottable_potion_field.js")
+                        .contains("FieldLootTablePotionType"),
+                "potion type field registers its localized dropdown");
+        check(resourceText("/blockly/js/loottable_mutators.js")
+                        .contains("localizePoolBaseLabels"),
+                "pool mutation localizes its base branch labels");
 
         String booleanJson = resourceText("/loottable/loottable_boolean.json");
         check(booleanJson.contains("%{BKY_LOGIC_HUE}")

@@ -25,26 +25,9 @@
       ]
     },
     {
-      "type": "field_dropdown",
+      "type": "field_loottable_potion_type",
       "name": "item_type",
-      "options": [
-        [
-          "Potion",
-          "potion"
-        ],
-        [
-          "Splash potion",
-          "splash_potion"
-        ],
-        [
-          "Lingering potion",
-          "lingering_potion"
-        ],
-        [
-          "Tipped arrow",
-          "tipped_arrow"
-        ]
-      ]
+      "value": "potion"
     }
   ],
   "inputsInline": true,

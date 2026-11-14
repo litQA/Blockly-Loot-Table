@@ -12,6 +12,12 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.2.0.111-beta
+
+- Standardized the source-dependency terminology and localized the pool
+  branch labels and potion item-type dropdown.
+- Updated the bundled mod-element icons to the current artwork.
+
 ### 1.2.0.109-beta
 
 - Added Data Pack generator definitions for 1.16.5 through 1.21.8. A Data Pack

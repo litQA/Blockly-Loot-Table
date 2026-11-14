@@ -223,7 +223,7 @@
         Blockly.Blocks['loottable_pool_mutator_else_if'] = {
             init: function () {
                 this.appendDummyInput()
-                    .appendField(label('blockly.block.loottable_pool_mutator.else_if', 'else if'));
+                    .appendField(label('blockly.block.loottable_pool_mutator.else_if', 'else if condition'));
                 this.setPreviousStatement(true);
                 this.setNextStatement(true);
                 this.setColour(120);
@@ -233,7 +233,7 @@
         Blockly.Blocks['loottable_pool_mutator_else'] = {
             init: function () {
                 this.appendDummyInput()
-                    .appendField(label('blockly.block.loottable_pool_mutator.else', 'else'));
+                    .appendField(label('blockly.block.loottable_pool_mutator.else', 'else entries'));
                 this.setPreviousStatement(true);
                 this.setNextStatement(false);
                 this.setColour(120);
@@ -241,10 +241,31 @@
             }
         };
 
+        function localizePoolBaseLabels(block) {
+            var labels = [
+                ['condition0', 'blockly.block.loottable_pool_mutator.if', 'if condition'],
+                ['entries0', 'blockly.block.loottable_pool_mutator.entries', 'entries']
+            ];
+            labels.forEach(function (entry) {
+                var input = block.getInput(entry[0]);
+                if (!input || !input.fieldRow) {
+                    return;
+                }
+                for (var i = 0; i < input.fieldRow.length; i++) {
+                    var field = input.fieldRow[i];
+                    if (field && typeof field.setValue === 'function') {
+                        field.setValue(label(entry[1], entry[2]));
+                        break;
+                    }
+                }
+            });
+        }
+
         function updatePoolBranches(block) {
             if (!block) {
                 return;
             }
+            localizePoolBaseLabels(block);
             for (var index = 1; index < 64; index++) {
                 if (block.getInput('condition' + index)) {
                     block.removeInput('condition' + index);
@@ -261,17 +282,17 @@
                 block.appendValueInput('condition' + i)
                     .setCheck(['LootTableCondition','LootTableConditionSafe'])
                     .setAlign(Blockly.Input.Align.RIGHT)
-                    .appendField(label('blockly.block.loottable_pool_mutator.else_if', 'else if'));
+                    .appendField(label('blockly.block.loottable_pool_mutator.else_if', 'else if condition'));
                 block.appendStatementInput('entries' + i)
                     .setCheck('LootTableEntry')
                     .setAlign(Blockly.Input.Align.RIGHT)
-                    .appendField(label('blockly.block.loottable_pool_mutator.do', 'do'));
+                    .appendField(label('blockly.block.loottable_pool_mutator.entries', 'entries'));
             }
             if (block.elseCount_) {
                 block.appendStatementInput('entries_else')
                     .setCheck('LootTableEntry')
                     .setAlign(Blockly.Input.Align.RIGHT)
-                    .appendField(label('blockly.block.loottable_pool_mutator.else', 'else'));
+                    .appendField(label('blockly.block.loottable_pool_mutator.else', 'else entries'));
             }
         }
 

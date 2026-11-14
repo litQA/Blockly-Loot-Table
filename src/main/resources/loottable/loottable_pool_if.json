@@ -27,7 +27,7 @@
       "align": "RIGHT"
     }
   ],
-  "message2": "do %1",
+  "message2": "entries %1",
   "args2": [
     {
       "type": "input_statement",

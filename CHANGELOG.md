@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.0.111-beta
+
+### Changed
+
+- Refined the Chinese and English source-dependency wording: source entity,
+  immediate source entity, source player and provided damage source.
+- Localized the pool branch labels (`if condition`, `entries`, `else if
+  condition`, `else entries`) and the potion item-type dropdown.
+- Replaced the mod element icons in all bundled themes with the new
+  `blockly_loot_table.png` artwork.
+
 ## 1.2.0.109-beta
 
 ### Added

@@ -5,6 +5,10 @@ The element builds `pools -> entries -> conditions` visually and generates
 standard Minecraft loot table JSON. It does not generate Java and does not
 modify MCreator's native loot table element or generator templates.
 
+The editor chrome, source-dependency labels, pool branch labels and potion
+item-type dropdown are localized in English and Simplified Chinese. The mod
+element icon uses the plugin artwork in every bundled theme.
+
 ## Scope
 
 Supported condition blocks:
@@ -279,10 +283,10 @@ colour-coded:
 - Block: `blockstate` (yellow), `target entity` (teal, player breaker only),
   `source entity` (teal), `world` (earth yellow)
 - Entity: `entity` (teal), `source entity` (teal), `world` (earth yellow),
-  `damage source` (pink)
+  `provided damage source` (pink)
 - Chest: `looter` (teal, optional), `world` (earth yellow); no tool, block-state
   or explosion-radius parameter
-  `damage source` (pink)
+  `provided damage source` (pink)
 
 ## Examples
 
