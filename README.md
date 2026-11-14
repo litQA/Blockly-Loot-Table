@@ -29,6 +29,11 @@ Supported condition blocks:
 - time checks and location checks for dimension, biome, biome tag, structure,
   structure tag, smokey, light level, block tag and x/y/z position
 - nested `and`, `or` and `not` condition value blocks
+- entity sprinting and sneaking flag conditions (Entity, Block and Chest contexts)
+- Chest loot tables with the 57 vanilla chest/structure paths in a localized,
+  searchable selector; Chest has no tool, block-state or explosion-radius
+  parameter, so conditions that require those parameters are rejected with an
+  editor error
 
 Every condition block is an A-type value block and uses the condition green.
 Pool and entry conditions accept one `LootTableCondition` value directly; use
@@ -251,14 +256,16 @@ gradlew.bat selfCheck
 
 ## Usage
 
-1. Choose `Block` or `Entity`.
+1. Choose `Block`, `Entity` or `Chest`.
 2. For a Block table, select the target block with the icon selector next to the
    type. For an Entity table, the selector becomes a text button that opens
-   MCreator's native entity selector.
+   MCreator's native entity selector. For a Chest table, the text button opens a
+   searchable, localized list of the standard chest and structure loot tables.
 3. The path is generated automatically as
-   `<target namespace>:<blocks|entities>/<target path>`. Check **Manual path** to
-   disable the selector and enter a path yourself; uncheck it to restore the
-   automatic path. Manual block paths also drive **Provided blockstate**.
+   `<target namespace>:<blocks|entities|chests>/<target path>`. Check **Manual
+   path** to disable the selector and enter a path yourself; uncheck it to
+   restore the automatic path. Manual block paths also drive **Provided
+   blockstate**.
 4. Build the pool/entry/condition value structure below the fixed start block.
 5. Save. Invalid condition scopes are marked in the Blockly workspace, shown in
    the compile notes panel, and block saving and generation.
@@ -269,6 +276,9 @@ colour-coded:
 - Block: `blockstate` (yellow), `target entity` (teal, player breaker only),
   `source entity` (teal), `world` (earth yellow)
 - Entity: `entity` (teal), `source entity` (teal), `world` (earth yellow),
+  `damage source` (pink)
+- Chest: `looter` (teal, optional), `world` (earth yellow); no tool, block-state
+  or explosion-radius parameter
   `damage source` (pink)
 
 ## Examples
@@ -302,9 +312,10 @@ longer ships a preset-template selector.
 - The element can be created, saved and reopened with its Blockly document.
 - The start block is not in the toolbox and cannot be deleted.
 - The header shows one target control next to the type: an icon button for Block
-  tables and a native entity-selection button for Entity tables. Manual path
-  disables the selector and enables path editing; automatic mode disables the
-  path field and regenerates the path.
+  tables, a native entity-selection button for Entity tables, and a localized
+  searchable chest-path button for Chest tables. Manual path disables the
+  selector and enables path editing; automatic mode disables the path field and
+  regenerates the path.
 - Selecting a zombie creates `minecraft:entities/zombie`, not
   `minecraft:entities/EntityType.ZOMBIE`.
 - A Block table with `random_chance` and a diamond ore entry saves.
@@ -331,6 +342,14 @@ longer ships a preset-template selector.
   player breaks the block.
 - A Block table using the breaker's main-hand item and an enchantment condition
   emits the `equipment.mainhand` predicate with `entity: "this"`.
+- A Chest table exposes a searchable chest list, generates
+  `loot_table/chests/<path>` and rejects tool, block-state, block-tag and
+  explosion-dependent conditions.
+- Sprinting and sneaking conditions emit
+  `predicate.flags.is_sprinting`/`is_sneaking` with the selected entity target.
+- A nested loot table accepts block/world/random/weather/time conditions; entity,
+  item and damage conditions are rejected so the nested table is not skipped by
+  a context-only predicate.
 - Block and entity NBT logic/number/text conditions emit `location_check` and
   `entity_properties` with the expected SNBT value.
 - The enchantment condition emits the
@@ -427,4 +446,8 @@ registry lists rather than per-item compatibility filtering. Nested loot-table
 entries with conditions in a Block table are evaluated against the breaking
 player (`this`); entity-specific nested tables can therefore be skipped when the
 player entity is absent or does not satisfy the condition. The generated 1.21
-entry uses the version-correct `value` field.
+entry uses the version-correct `value` field. Nested-entry conditions are
+restricted to the `LootTableConditionSafe` type; entity-, item- and
+damage-dependent conditions are rejected at save time. Chest tables have no
+tool or block-state parameter, so match-tool, block-state, block-NBT and
+explosion-related conditions are rejected for that type.

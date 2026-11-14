@@ -184,6 +184,18 @@ public final class RegistryNames {
         }
         if (type == LootTableType.ENTITY) {
             effectiveTarget = normalizeEntityName(effectiveTarget);
+        } else if (type == LootTableType.CHEST) {
+            String chestPath = effectiveTarget.toLowerCase(Locale.ROOT);
+            if (!chestPath.contains(":")) {
+                chestPath = "minecraft:" + chestPath;
+            }
+            int chestColon = chestPath.indexOf(':');
+            String chestNamespace = chestPath.substring(0, chestColon);
+            String chestValue = chestPath.substring(chestColon + 1);
+            if (chestValue.startsWith("chests/")) {
+                return chestNamespace + ":" + chestValue;
+            }
+            return chestNamespace + ":chests/" + sanitizePathSegment(chestValue);
         }
 
         String namespace = modid;

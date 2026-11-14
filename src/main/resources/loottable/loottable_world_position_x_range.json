@@ -29,5 +29,5 @@
       "max"
     ]
   },
-  "output": "LootTableCondition"
+  "output": "LootTableConditionSafe"
 }

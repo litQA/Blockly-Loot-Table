@@ -5,5 +5,5 @@
     "toolbox_init": [],
     "toolbox_id": "loottable_blocks"
   },
-  "output": "LootTableCondition"
+  "output": "LootTableConditionSafe"
 }

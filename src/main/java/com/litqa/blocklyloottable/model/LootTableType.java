@@ -6,7 +6,8 @@ package com.litqa.blocklyloottable.model;
 public enum LootTableType {
 
     BLOCK("Block", "minecraft:block", "blocks"),
-    ENTITY("Entity", "minecraft:entity", "entities");
+    ENTITY("Entity", "minecraft:entity", "entities"),
+    CHEST("Chest", "minecraft:chest", "chests");
 
     private final String displayName;
     private final String jsonType;
@@ -46,6 +47,9 @@ public enum LootTableType {
         }
         if ("Entity".equalsIgnoreCase(normalized) || "minecraft:entity".equalsIgnoreCase(normalized)) {
             return ENTITY;
+        }
+        if ("Chest".equalsIgnoreCase(normalized) || "minecraft:chest".equalsIgnoreCase(normalized)) {
+            return CHEST;
         }
         return BLOCK;
     }

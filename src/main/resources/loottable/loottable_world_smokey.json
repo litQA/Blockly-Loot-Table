@@ -8,5 +8,5 @@
     "toolbox_id": "loottable_world",
     "toolbox_init": []
   },
-  "output": "LootTableCondition"
+  "output": "LootTableConditionSafe"
 }

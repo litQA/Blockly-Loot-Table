@@ -1,7 +1,7 @@
 {
   "message0": "Not %1",
   "args0": [
-    {"type": "input_value", "name": "condition", "check": "LootTableCondition"}
+    {"type": "input_value", "name": "condition", "check": ["LootTableCondition","LootTableConditionSafe"]}
   ],
   "inputsInline": false,
   "colour": 120,

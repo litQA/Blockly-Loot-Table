@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.1.1.106-beta
+
+### Added
+
+- Chest loot-table type with a searchable, localized selector for 57 vanilla
+  chest and structure paths. Chest generation uses the selected path under
+  `loot_table/chests/` on 1.21+ and rejects conditions that require the absent
+  tool, block-state or explosion-radius context parameters.
+- Entity sprinting and sneaking flag conditions.
+- `LootTableConditionSafe` output for block/world/weather/time/random
+  conditions. Nested loot-table entries accept only this output so entity-,
+  item- and damage-dependent conditions cannot make the nested table context
+  invalid at runtime.
+
+### Changed
+
+- Enchantment condition labels now consistently end with “on item”.
+- The enchantment range defaults to Integer 1 through Infinity; the Infinity
+  upper bound omits `max`.
+- The full custom-name item producer uses inline inputs.
+
+### Verified
+
+- Self-check 603 checks; loot-table JSON and mutator JavaScript validation pass.
+
 ## 1.1.1.96-beta
 
 ### Fixed

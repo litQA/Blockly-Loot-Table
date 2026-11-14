@@ -1,0 +1,57 @@
+minecraft:chests/abandoned_mineshaft	Abandoned Mineshaft	废弃矿井运输矿车
+minecraft:chests/ancient_city	Ancient City	远古城市宝箱
+minecraft:chests/ancient_city_ice_box	Ancient City Ice Box	远古城市冰窖宝箱
+minecraft:chests/bastion_bridge	Bastion Bridge	堡垒遗迹桥梁箱子
+minecraft:chests/bastion_hoglin_stable	Bastion Hoglin Stable	堡垒遗迹疣猪兽棚箱子
+minecraft:chests/bastion_other	Bastion Other	堡垒遗迹其他箱子
+minecraft:chests/bastion_treasure	Bastion Treasure	堡垒遗迹宝藏室箱子
+minecraft:chests/buried_treasure	Buried Treasure	埋藏的宝藏
+minecraft:chests/desert_pyramid	Desert Pyramid	沙漠神殿宝藏室箱子
+minecraft:chests/end_city_treasure	End City Treasure	末地城箱子
+minecraft:chests/igloo_chest	Igloo Chest	雪屋地下室箱子
+minecraft:chests/jungle_temple	Jungle Temple	丛林神庙箱子
+minecraft:chests/jungle_temple_dispenser	Jungle Temple Dispenser	丛林神庙发射器
+minecraft:chests/nether_bridge	Nether Bridge	下界要塞箱子
+minecraft:chests/pillager_outpost	Pillager Outpost	掠夺者前哨站箱子
+minecraft:chests/ruined_portal	Ruined Portal	废弃传送门箱子
+minecraft:chests/shipwreck_map	Shipwreck Map	沉船地图箱
+minecraft:chests/shipwreck_supply	Shipwreck Supply	沉船补给箱
+minecraft:chests/shipwreck_treasure	Shipwreck Treasure	沉船宝箱
+minecraft:chests/simple_dungeon	Simple Dungeon	刷怪房箱子
+minecraft:chests/spawn_bonus_chest	Spawn Bonus Chest	奖励箱（新世界生成时）
+minecraft:chests/stronghold_corridor	Stronghold Corridor	要塞台阶祭坛箱子
+minecraft:chests/stronghold_crossing	Stronghold Crossing	要塞储存室箱子
+minecraft:chests/stronghold_library	Stronghold Library	要塞图书馆箱子
+minecraft:chests/trial_chambers/corridor	Trial Chambers Corridor	柱廊/楼道箱子
+minecraft:chests/trial_chambers/entrance	Trial Chambers Entrance	入口箱子
+minecraft:chests/trial_chambers/intersection	Trial Chambers Intersection	交叉口箱子
+minecraft:chests/trial_chambers/intersection_barrel	Trial Chambers Intersection Barrel	交叉口木桶
+minecraft:chests/trial_chambers/reward	Trial Chambers Reward	宝库/奖励战利品
+minecraft:chests/trial_chambers/reward_common	Trial Chambers Reward Common	普通宝库（普通）
+minecraft:chests/trial_chambers/reward_ominous	Trial Chambers Reward Ominous	不祥宝库战利品
+minecraft:chests/trial_chambers/reward_ominous_common	Trial Chambers Reward Ominous Common	不祥宝库（普通）
+minecraft:chests/trial_chambers/reward_ominous_rare	Trial Chambers Reward Ominous Rare	不祥宝库（稀有）
+minecraft:chests/trial_chambers/reward_ominous_unique	Trial Chambers Reward Ominous Unique	不祥宝库（独有）
+minecraft:chests/trial_chambers/reward_rare	Trial Chambers Reward Rare	宝库（稀有）
+minecraft:chests/trial_chambers/reward_unique	Trial Chambers Reward Unique	宝库（独有）
+minecraft:chests/trial_chambers/supply	Trial Chambers Supply	补给箱（柱廊/楼道）
+minecraft:chests/underwater_ruin_big	Underwater Ruin Big	海底废墟大型建筑物箱子
+minecraft:chests/underwater_ruin_small	Underwater Ruin Small	海底废墟小型建筑物箱子
+minecraft:chests/village	Village	村庄箱子
+minecraft:chests/village_armorer	Village Armorer	盔甲匠箱子
+minecraft:chests/village_butcher	Village Butcher	屠夫箱子
+minecraft:chests/village_cartographer	Village Cartographer	制图师箱子
+minecraft:chests/village_desert_house	Village Desert House	沙漠房屋箱子
+minecraft:chests/village_fisher	Village Fisher	渔夫箱子
+minecraft:chests/village_fletcher	Village Fletcher	制箭师箱子
+minecraft:chests/village_mason	Village Mason	石匠箱子
+minecraft:chests/village_plains_house	Village Plains House	平原房屋箱子
+minecraft:chests/village_savanna_house	Village Savanna House	热带草原房屋箱子
+minecraft:chests/village_shepherd	Village Shepherd	牧羊人箱子
+minecraft:chests/village_snowy_house	Village Snowy House	积雪房屋箱子
+minecraft:chests/village_taiga_house	Village Taiga House	针叶林房屋箱子
+minecraft:chests/village_tannery	Village Tannery	皮匠箱子
+minecraft:chests/village_temple	Village Temple	牧师箱子
+minecraft:chests/village_toolsmith	Village Toolsmith	工具匠箱子
+minecraft:chests/village_weaponsmith	Village Weaponsmith	武器匠箱子
+minecraft:chests/woodland_mansion	Woodland Mansion	林地府邸箱子

@@ -16,7 +16,7 @@
     {
       "type": "input_value",
       "name": "conditions",
-      "check": "LootTableCondition"
+      "check": "LootTableConditionSafe"
     },
     {
       "type": "input_statement",

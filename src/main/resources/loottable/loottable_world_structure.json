@@ -17,5 +17,5 @@
       "structure"
     ]
   },
-  "output": "LootTableCondition"
+  "output": "LootTableConditionSafe"
 }

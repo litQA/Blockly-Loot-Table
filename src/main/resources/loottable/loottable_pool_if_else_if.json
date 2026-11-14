@@ -23,7 +23,7 @@
     {
       "type": "input_value",
       "name": "condition0",
-      "check": "LootTableCondition",
+      "check": ["LootTableCondition","LootTableConditionSafe"],
       "align": "RIGHT"
     }
   ],

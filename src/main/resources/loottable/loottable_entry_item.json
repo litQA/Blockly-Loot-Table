@@ -24,7 +24,7 @@
     {
       "type": "input_value",
       "name": "conditions",
-      "check": "LootTableCondition"
+      "check": ["LootTableCondition","LootTableConditionSafe"]
     },
     {
       "type": "input_statement",

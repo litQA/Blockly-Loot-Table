@@ -189,7 +189,7 @@
                 'condition',
                 function (thisBlock, inputName, index) {
                     thisBlock.appendValueInput(inputName + index)
-                        .setCheck('LootTableCondition')
+                        .setCheck(['LootTableCondition','LootTableConditionSafe'])
                         .setAlign(Blockly.Input.Align.RIGHT)
                         .appendField(label('blockly.block.loottable_condition_mutator.input', 'Condition'));
                 },
@@ -259,7 +259,7 @@
             var elseifCount = Math.max(0, Math.min(63, block.elseifCount_ || 0));
             for (var i = 1; i <= elseifCount; i++) {
                 block.appendValueInput('condition' + i)
-                    .setCheck('LootTableCondition')
+                    .setCheck(['LootTableCondition','LootTableConditionSafe'])
                     .setAlign(Blockly.Input.Align.RIGHT)
                     .appendField(label('blockly.block.loottable_pool_mutator.else_if', 'else if'));
                 block.appendStatementInput('entries' + i)

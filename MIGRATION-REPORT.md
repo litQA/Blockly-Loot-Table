@@ -12,6 +12,19 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.1.1.106-beta
+
+- Added the Chest element type. Chest context has no tool, block-state or
+  explosion-radius parameter, so match-tool, block-state, block-NBT and
+  explosion-dependent conditions are rejected instead of generating a condition
+  that can never match.
+- Added sprinting/sneaking entity predicates.
+- Added the safe condition subtype for nested loot-table entries. Entity, item,
+  damage and kill conditions remain valid for normal entries but are blocked
+  from nested loot-table conditions.
+- Corrected enchantment label order/defaults and made the full custom-name
+  producer inline.
+
 ### 1.1.1.96-beta
 
 - Serialize `minecraft:item_name` as a compact, escaped JSON string. The

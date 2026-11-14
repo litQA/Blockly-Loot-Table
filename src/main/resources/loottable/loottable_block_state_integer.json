@@ -31,5 +31,5 @@
     ],
     "toolbox_id": "loottable_blocks"
   },
-  "output": "LootTableCondition"
+  "output": "LootTableConditionSafe"
 }

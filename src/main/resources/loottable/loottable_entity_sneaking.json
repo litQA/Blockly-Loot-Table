@@ -1,0 +1,24 @@
+{
+  "type": "loottable_entity_sneaking",
+  "message0": "%1 is sneaking",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "entity",
+      "check": "Entity"
+    }
+  ],
+  "inputsInline": true,
+  "colour": 120,
+  "tooltip": "Checks the selected entity's sneaking flag.",
+  "mcreator": {
+    "toolbox_id": "loottable_entities",
+    "toolbox_init": [
+      "<value name=\"entity\"><block type=\"loottable_source_player_dependency\"></block></value>"
+    ],
+    "inputs": [
+      "entity"
+    ]
+  },
+  "output": "LootTableCondition"
+}

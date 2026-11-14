@@ -39,5 +39,5 @@
       "thundering"
     ]
   },
-  "output": "LootTableCondition"
+  "output": "LootTableConditionSafe"
 }

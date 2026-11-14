@@ -17,5 +17,5 @@
       "dimension"
     ]
   },
-  "output": "LootTableCondition"
+  "output": "LootTableConditionSafe"
 }

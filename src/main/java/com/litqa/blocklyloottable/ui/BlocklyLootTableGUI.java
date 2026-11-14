@@ -6,6 +6,7 @@ import com.litqa.blocklyloottable.model.Issue;
 import com.litqa.blocklyloottable.model.JsonText;
 import com.litqa.blocklyloottable.model.LootTableType;
 import com.litqa.blocklyloottable.model.ValidationReport;
+import com.litqa.blocklyloottable.util.ChestCollections;
 import com.litqa.blocklyloottable.util.RegistryNames;
 import net.mcreator.blockly.BlocklyCompileNote;
 import net.mcreator.blockly.data.BlocklyLoader;
@@ -61,9 +62,10 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
 
     private final MCreator mcreatorRef;
 
-    private final JComboBox<String> lootTableType = new JComboBox<>(new String[]{"Block", "Entity"});
+    private final JComboBox<String> lootTableType = new JComboBox<>(new String[]{"Block", "Entity", "Chest"});
     private final JButton blockTargetSelector = new JButton();
     private final JButton entityTargetSelector = new JButton();
+    private final JButton chestTargetSelector = new JButton();
     private final JCheckBox manualPath = new JCheckBox();
     private final VTextField path = new VTextField(15);
     private String targetValue = "";
@@ -153,6 +155,9 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
         entityTargetSelector.setToolTipText(L10N.t("elementgui.blockly_loot_table.target.tooltip"));
         entityTargetSelector.setPreferredSize(new Dimension(180, 30));
         entityTargetSelector.setFocusPainted(false);
+        chestTargetSelector.setToolTipText(L10N.t("elementgui.blockly_loot_table.target.chest_tooltip"));
+        chestTargetSelector.setPreferredSize(new Dimension(180, 30));
+        chestTargetSelector.setFocusPainted(false);
         updateTargetSelectorState();
         path.setToolTipText(L10N.t("elementgui.blockly_loot_table.path.tooltip"));
         manualPath.setSelected(false);
@@ -168,6 +173,7 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
         });
         blockTargetSelector.addActionListener(event -> openTargetSelector());
         entityTargetSelector.addActionListener(event -> openTargetSelector());
+        chestTargetSelector.addActionListener(event -> openTargetSelector());
         path.getDocument().addDocumentListener(new SimpleDocumentListener(() -> {
             if (!refreshing) {
                 refreshValidation();
@@ -195,6 +201,7 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
         constraints.fill = GridBagConstraints.NONE;
         header.add(blockTargetSelector, constraints);
         header.add(entityTargetSelector, constraints);
+        header.add(chestTargetSelector, constraints);
 
         constraints.gridx = 3;
         constraints.gridwidth = 2;
@@ -235,9 +242,15 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
         targetValue = value == null ? "" : value.trim();
         if (currentType() == LootTableType.ENTITY) {
             targetValue = RegistryNames.normalizeEntityName(targetValue);
+        } else if (currentType() == LootTableType.CHEST && !targetValue.isBlank()) {
+            Workspace workspace = mcreatorRef.getWorkspace();
+            if (workspace != null) {
+                targetValue = RegistryNames.autoPath(workspace, LootTableType.CHEST, targetValue, "");
+            }
         }
         updateTargetIcon();
         updateEntityTargetText();
+        updateChestTargetText();
         if (!manualPath.isSelected()) {
             updateAutomaticPath();
         }
@@ -245,11 +258,16 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
     }
 
     private void updateTargetSelectorState() {
-        boolean entity = currentType() == LootTableType.ENTITY;
-        blockTargetSelector.setVisible(!entity);
+        LootTableType type = currentType();
+        boolean block = type == LootTableType.BLOCK;
+        boolean entity = type == LootTableType.ENTITY;
+        boolean chest = type == LootTableType.CHEST;
+        blockTargetSelector.setVisible(block);
         entityTargetSelector.setVisible(entity);
+        chestTargetSelector.setVisible(chest);
         updateTargetIcon();
         updateEntityTargetText();
+        updateChestTargetText();
     }
 
     private void updateTargetIcon() {
@@ -292,6 +310,23 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
         entityTargetSelector.setIcon(null);
     }
 
+    private void updateChestTargetText() {
+        if (currentType() != LootTableType.CHEST) {
+            chestTargetSelector.setText("");
+            return;
+        }
+        String display = targetValue;
+        for (DataListEntry entry : ChestCollections.entries()) {
+            if (targetValue.equals(entry.getName())) {
+                display = entry.getReadableName();
+                break;
+            }
+        }
+        chestTargetSelector.setText(display.isBlank()
+                ? L10N.t("elementgui.blockly_loot_table.target.select_chest")
+                : display);
+    }
+
     private void updateDependencies() {
         String prefix = L10N.t("elementgui.blockly_loot_table.dependencies");
         String block = dependencyName("#D4A017", "block");
@@ -300,9 +335,11 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
         String sourceEntity = dependencyName("#2AA198", "source_entity");
         String world = dependencyName("#A68A52", "world");
         String damage = dependencyName("#E05A9A", "damage");
-        String dependencies = currentType() == LootTableType.ENTITY
-                ? entity + ", " + sourceEntity + ", " + world + ", " + damage
-                : block + ", " + targetEntity + ", " + sourceEntity + ", " + world;
+        String dependencies = switch (currentType()) {
+            case ENTITY -> entity + ", " + sourceEntity + ", " + world + ", " + damage;
+            case CHEST -> targetEntity + ", " + world;
+            case BLOCK -> block + ", " + targetEntity + ", " + sourceEntity + ", " + world;
+        };
         dependencyLabel.setText("<html><b>" + prefix + " " + dependencies
                 + "</b></html>");
     }
@@ -315,6 +352,7 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
         boolean manual = manualPath.isSelected();
         blockTargetSelector.setEnabled(!manual);
         entityTargetSelector.setEnabled(!manual);
+        chestTargetSelector.setEnabled(!manual);
         path.setEditable(manual);
         if (!manual) {
             updateAutomaticPath();
@@ -328,9 +366,11 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
         Workspace workspace = mcreatorRef.getWorkspace();
         String resolvedTarget = "";
         if (!targetValue.isEmpty() && workspace != null) {
-            resolvedTarget = currentType() == LootTableType.ENTITY
-                    ? RegistryNames.resolveEntity(workspace, targetValue)
-                    : RegistryNames.resolveBlockOrItem(workspace, targetValue);
+            resolvedTarget = switch (currentType()) {
+                case ENTITY -> RegistryNames.resolveEntity(workspace, targetValue);
+                case CHEST -> targetValue;
+                case BLOCK -> RegistryNames.resolveBlockOrItem(workspace, targetValue);
+            };
             if (resolvedTarget.isBlank()) {
                 resolvedTarget = targetValue;
             }
@@ -362,6 +402,14 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
                     L10N.t("dialog.selector.entity.message"));
             if (selected != null) {
                 setTargetValue(RegistryNames.resolveEntity(workspace, selected.getName()));
+            }
+        } else if (currentType() == LootTableType.CHEST) {
+            DataListEntry selected = DataListSelectorDialog.openSelectorDialog(mcreatorRef,
+                    ignored -> ChestCollections.entries(),
+                    L10N.t("elementgui.blockly_loot_table.target.chest_title"),
+                    L10N.t("elementgui.blockly_loot_table.target.chest_message"));
+            if (selected != null) {
+                setTargetValue(selected.getName());
             }
         } else {
             MCItem selected = MCItemSelectorDialog.openSelectorDialog(mcreatorRef, ElementUtil::loadBlocks);
@@ -474,7 +522,7 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
 
     private BlocklyLootTable buildElement(String xml) {
         BlocklyLootTable element = new BlocklyLootTable(modElement);
-        element.lootTableType = currentType() == LootTableType.ENTITY ? "Entity" : "Block";
+        element.lootTableType = currentType().getDisplayName();
         element.target = targetValue;
         element.manualPath = manualPath.isSelected();
         element.path = path.getText() == null ? "" : path.getText().trim();
@@ -483,15 +531,24 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
     }
 
     private LootTableType currentType() {
-        return "Entity".equals(lootTableType.getSelectedItem()) ? LootTableType.ENTITY : LootTableType.BLOCK;
+        return switch (String.valueOf(lootTableType.getSelectedItem())) {
+            case "Entity" -> LootTableType.ENTITY;
+            case "Chest" -> LootTableType.CHEST;
+            default -> LootTableType.BLOCK;
+        };
     }
 
     @Override
     public void openInEditingMode(BlocklyLootTable element) {
-        lootTableType.setSelectedItem(element.getLootTableTypeEnum() == LootTableType.ENTITY ? "Entity" : "Block");
+        lootTableType.setSelectedItem(element.getLootTableTypeEnum().getDisplayName());
         targetValue = element.target == null ? "" : element.target.trim();
         if (element.getLootTableTypeEnum() == LootTableType.ENTITY) {
             targetValue = RegistryNames.normalizeEntityName(targetValue);
+        } else if (element.getLootTableTypeEnum() == LootTableType.CHEST && !targetValue.isBlank()) {
+            Workspace workspace = mcreatorRef.getWorkspace();
+            if (workspace != null) {
+                targetValue = RegistryNames.autoPath(workspace, LootTableType.CHEST, targetValue, "");
+            }
         }
         updateTargetSelectorState();
         manualPath.setSelected(element.manualPath);

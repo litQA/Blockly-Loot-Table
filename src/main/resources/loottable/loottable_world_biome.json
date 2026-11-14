@@ -17,5 +17,5 @@
       "biome"
     ]
   },
-  "output": "LootTableCondition"
+  "output": "LootTableConditionSafe"
 }

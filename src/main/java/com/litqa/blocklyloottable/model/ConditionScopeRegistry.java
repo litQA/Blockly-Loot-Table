@@ -16,19 +16,19 @@ public final class ConditionScopeRegistry {
 
     static {
         register(new ConditionDefinition("loottable_random_chance", "minecraft:random_chance",
-                ConditionScope.BLOCK_AND_ENTITY, "Random chance"));
+                ConditionScope.ALL_CONTEXTS, "Random chance"));
         register(new ConditionDefinition("loottable_killed_by_player", "minecraft:killed_by_player",
                 ConditionScope.ENTITY_ONLY, "Killed by player"));
         register(new ConditionDefinition("loottable_survives_explosion", "minecraft:survives_explosion",
                 ConditionScope.BLOCK_ONLY, "Survives explosion"));
         register(new ConditionDefinition("loottable_weather_check", "minecraft:weather_check",
-                ConditionScope.BLOCK_AND_ENTITY, "Weather check"));
+                ConditionScope.ALL_CONTEXTS, "Weather check"));
         register(new ConditionDefinition("loottable_logic_and", "minecraft:all_of",
-                ConditionScope.BLOCK_AND_ENTITY, "All conditions"));
+                ConditionScope.ALL_CONTEXTS, "All conditions"));
         register(new ConditionDefinition("loottable_logic_or", "minecraft:any_of",
-                ConditionScope.BLOCK_AND_ENTITY, "Any condition"));
+                ConditionScope.ALL_CONTEXTS, "Any condition"));
         register(new ConditionDefinition("loottable_logic_not", "minecraft:inverted",
-                ConditionScope.BLOCK_AND_ENTITY, "Negated conditions"));
+                ConditionScope.ALL_CONTEXTS, "Negated conditions"));
         register(new ConditionDefinition("loottable_block_state_boolean", "minecraft:block_state_property",
                 ConditionScope.BLOCK_ONLY, "Block state boolean property"));
         register(new ConditionDefinition("loottable_block_state_integer", "minecraft:block_state_property",
@@ -38,9 +38,13 @@ public final class ConditionScopeRegistry {
         register(new ConditionDefinition("loottable_block_same", "minecraft:all_of",
                 ConditionScope.BLOCK_ONLY, "Same block"));
         register(new ConditionDefinition("loottable_entity_has_potion", "minecraft:entity_properties",
-                ConditionScope.BLOCK_AND_ENTITY, "Entity has potion effect"));
+                ConditionScope.ALL_CONTEXTS, "Entity has potion effect"));
         register(new ConditionDefinition("loottable_entity_has_potion_range", "minecraft:entity_properties",
-                ConditionScope.BLOCK_AND_ENTITY, "Entity has potion effect range"));
+                ConditionScope.ALL_CONTEXTS, "Entity has potion effect range"));
+        register(new ConditionDefinition("loottable_entity_sprinting", "minecraft:entity_properties",
+                ConditionScope.ALL_CONTEXTS, "Entity is sprinting"));
+        register(new ConditionDefinition("loottable_entity_sneaking", "minecraft:entity_properties",
+                ConditionScope.ALL_CONTEXTS, "Entity is sneaking"));
         register(new ConditionDefinition("loottable_block_nbt_logic", "minecraft:location_check",
                 ConditionScope.BLOCK_ONLY, "Block logic NBT"));
         register(new ConditionDefinition("loottable_block_nbt_number", "minecraft:location_check",
@@ -48,41 +52,41 @@ public final class ConditionScopeRegistry {
         register(new ConditionDefinition("loottable_block_nbt_text", "minecraft:location_check",
                 ConditionScope.BLOCK_ONLY, "Block text NBT"));
         register(new ConditionDefinition("loottable_entity_nbt_logic", "minecraft:entity_properties",
-                ConditionScope.ENTITY_ONLY, "Entity logic NBT"));
+                ConditionScope.ALL_CONTEXTS, "Entity logic NBT"));
         register(new ConditionDefinition("loottable_entity_nbt_number", "minecraft:entity_properties",
-                ConditionScope.ENTITY_ONLY, "Entity number NBT"));
+                ConditionScope.ALL_CONTEXTS, "Entity number NBT"));
         register(new ConditionDefinition("loottable_entity_nbt_text", "minecraft:entity_properties",
-                ConditionScope.ENTITY_ONLY, "Entity text NBT"));
+                ConditionScope.ALL_CONTEXTS, "Entity text NBT"));
         register(new ConditionDefinition("loottable_item_has_enchantment_min", "minecraft:match_tool",
-                ConditionScope.BLOCK_AND_ENTITY, "Item has enchantment at least"));
+                ConditionScope.ALL_CONTEXTS, "Item has enchantment at least"));
         register(new ConditionDefinition("loottable_item_has_enchantment_range", "minecraft:match_tool",
-                ConditionScope.BLOCK_AND_ENTITY, "Item has enchantment in range"));
+                ConditionScope.ALL_CONTEXTS, "Item has enchantment in range"));
         register(new ConditionDefinition("loottable_item_has_enchantment_exact", "minecraft:match_tool",
-                ConditionScope.BLOCK_AND_ENTITY, "Item has exact enchantment level"));
+                ConditionScope.ALL_CONTEXTS, "Item has exact enchantment level"));
         register(new ConditionDefinition("loottable_item_same", "minecraft:match_tool",
-                ConditionScope.BLOCK_AND_ENTITY, "Items are the same"));
+                ConditionScope.ALL_CONTEXTS, "Items are the same"));
         register(new ConditionDefinition("loottable_item_durability_range", "minecraft:match_tool",
-                ConditionScope.BLOCK_AND_ENTITY, "Item durability in range"));
+                ConditionScope.ALL_CONTEXTS, "Item durability in range"));
         register(new ConditionDefinition("loottable_item_durability_exact", "minecraft:match_tool",
-                ConditionScope.BLOCK_AND_ENTITY, "Item exact durability"));
+                ConditionScope.ALL_CONTEXTS, "Item exact durability"));
         register(new ConditionDefinition("loottable_item_durability_at_least", "minecraft:match_tool",
-                ConditionScope.BLOCK_AND_ENTITY, "Item durability at least"));
+                ConditionScope.ALL_CONTEXTS, "Item durability at least"));
         register(new ConditionDefinition("loottable_item_durability_at_most", "minecraft:match_tool",
-                ConditionScope.BLOCK_AND_ENTITY, "Item durability at most"));
+                ConditionScope.ALL_CONTEXTS, "Item durability at most"));
         register(new ConditionDefinition("loottable_item_count", "minecraft:match_tool",
-                ConditionScope.BLOCK_AND_ENTITY, "Item count is"));
+                ConditionScope.ALL_CONTEXTS, "Item count is"));
         register(new ConditionDefinition("loottable_item_count_at_least", "minecraft:match_tool",
-                ConditionScope.BLOCK_AND_ENTITY, "Item count at least"));
+                ConditionScope.ALL_CONTEXTS, "Item count at least"));
         register(new ConditionDefinition("loottable_item_count_at_most", "minecraft:match_tool",
-                ConditionScope.BLOCK_AND_ENTITY, "Item count at most"));
+                ConditionScope.ALL_CONTEXTS, "Item count at most"));
         register(new ConditionDefinition("loottable_item_count_range", "minecraft:match_tool",
-                ConditionScope.BLOCK_AND_ENTITY, "Item count in range"));
+                ConditionScope.ALL_CONTEXTS, "Item count in range"));
         register(new ConditionDefinition("loottable_item_has_nbt_logic", "minecraft:match_tool",
-                ConditionScope.BLOCK_AND_ENTITY, "Item logic NBT"));
+                ConditionScope.ALL_CONTEXTS, "Item logic NBT"));
         register(new ConditionDefinition("loottable_item_has_nbt_number", "minecraft:match_tool",
-                ConditionScope.BLOCK_AND_ENTITY, "Item number NBT"));
+                ConditionScope.ALL_CONTEXTS, "Item number NBT"));
         register(new ConditionDefinition("loottable_item_has_nbt_text", "minecraft:match_tool",
-                ConditionScope.BLOCK_AND_ENTITY, "Item text NBT"));
+                ConditionScope.ALL_CONTEXTS, "Item text NBT"));
         register(new ConditionDefinition("loottable_damage_type", "minecraft:damage_source_properties",
                 ConditionScope.BLOCK_AND_ENTITY, "Damage type"));
         register(new ConditionDefinition("loottable_damage_tag", "minecraft:damage_source_properties",
@@ -90,39 +94,39 @@ public final class ConditionScopeRegistry {
         register(new ConditionDefinition("loottable_killed_by_player_or_pets", "minecraft:any_of",
                 ConditionScope.ENTITY_ONLY, "Killed by player or pets"));
         register(new ConditionDefinition("loottable_time_check", "minecraft:time_check",
-                ConditionScope.BLOCK_AND_ENTITY, "World time"));
+                ConditionScope.ALL_CONTEXTS, "World time"));
         register(new ConditionDefinition("loottable_time_day", "minecraft:time_check",
-                ConditionScope.BLOCK_AND_ENTITY, "Time of day"));
+                ConditionScope.ALL_CONTEXTS, "Time of day"));
         register(new ConditionDefinition("loottable_time_periodic", "minecraft:time_check",
-                ConditionScope.BLOCK_AND_ENTITY, "Time in period"));
+                ConditionScope.ALL_CONTEXTS, "Time in period"));
         register(new ConditionDefinition("loottable_world_dimension", "minecraft:location_check",
-                ConditionScope.BLOCK_AND_ENTITY, "Dimension"));
+                ConditionScope.ALL_CONTEXTS, "Dimension"));
         register(new ConditionDefinition("loottable_world_biome", "minecraft:location_check",
-                ConditionScope.BLOCK_AND_ENTITY, "Biome"));
+                ConditionScope.ALL_CONTEXTS, "Biome"));
         register(new ConditionDefinition("loottable_world_biome_tag", "minecraft:location_check",
-                ConditionScope.BLOCK_AND_ENTITY, "Biome tag"));
+                ConditionScope.ALL_CONTEXTS, "Biome tag"));
         register(new ConditionDefinition("loottable_world_smokey", "minecraft:location_check",
-                ConditionScope.BLOCK_AND_ENTITY, "Smokey location"));
+                ConditionScope.ALL_CONTEXTS, "Smokey location"));
         register(new ConditionDefinition("loottable_world_structure", "minecraft:location_check",
-                ConditionScope.BLOCK_AND_ENTITY, "Structure"));
+                ConditionScope.ALL_CONTEXTS, "Structure"));
         register(new ConditionDefinition("loottable_world_structure_tag", "minecraft:location_check",
-                ConditionScope.BLOCK_AND_ENTITY, "Structure tag"));
+                ConditionScope.ALL_CONTEXTS, "Structure tag"));
         register(new ConditionDefinition("loottable_world_light", "minecraft:location_check",
-                ConditionScope.BLOCK_AND_ENTITY, "Light level"));
+                ConditionScope.ALL_CONTEXTS, "Light level"));
         register(new ConditionDefinition("loottable_world_light_range", "minecraft:location_check",
-                ConditionScope.BLOCK_AND_ENTITY, "Light level range"));
+                ConditionScope.ALL_CONTEXTS, "Light level range"));
         register(new ConditionDefinition("loottable_world_position_x", "minecraft:location_check",
-                ConditionScope.BLOCK_AND_ENTITY, "X position"));
+                ConditionScope.ALL_CONTEXTS, "X position"));
         register(new ConditionDefinition("loottable_world_position_y", "minecraft:location_check",
-                ConditionScope.BLOCK_AND_ENTITY, "Y position"));
+                ConditionScope.ALL_CONTEXTS, "Y position"));
         register(new ConditionDefinition("loottable_world_position_z", "minecraft:location_check",
-                ConditionScope.BLOCK_AND_ENTITY, "Z position"));
+                ConditionScope.ALL_CONTEXTS, "Z position"));
         register(new ConditionDefinition("loottable_world_position_x_range", "minecraft:location_check",
-                ConditionScope.BLOCK_AND_ENTITY, "X position range"));
+                ConditionScope.ALL_CONTEXTS, "X position range"));
         register(new ConditionDefinition("loottable_world_position_y_range", "minecraft:location_check",
-                ConditionScope.BLOCK_AND_ENTITY, "Y position range"));
+                ConditionScope.ALL_CONTEXTS, "Y position range"));
         register(new ConditionDefinition("loottable_world_position_z_range", "minecraft:location_check",
-                ConditionScope.BLOCK_AND_ENTITY, "Z position range"));
+                ConditionScope.ALL_CONTEXTS, "Z position range"));
         register(new ConditionDefinition("loottable_world_block_tag", "minecraft:location_check",
                 ConditionScope.BLOCK_ONLY, "Block tag"));
     }

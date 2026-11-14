@@ -706,6 +706,19 @@ public final class LootTableJsonWriter {
                 predicate.put("effects", effects);
                 json.put("predicate", predicate);
             }
+            case "loottable_entity_sprinting", "loottable_entity_sneaking" -> {
+                String entity = string(condition.getProperties().get("entity"));
+                String flag = string(condition.getProperties().get("flag"));
+                if (entity.isBlank() || flag.isBlank()) {
+                    return null;
+                }
+                json.put("entity", entity);
+                Map<String, Object> flags = new LinkedHashMap<>();
+                flags.put(flag, true);
+                Map<String, Object> predicate = new LinkedHashMap<>();
+                predicate.put("flags", flags);
+                json.put("predicate", predicate);
+            }
             case "loottable_block_nbt_logic", "loottable_block_nbt_number", "loottable_block_nbt_text" -> {
                 String block = string(condition.getProperties().get("block"));
                 String nbt = string(condition.getProperties().get("nbt"));

@@ -30,9 +30,9 @@ public class BlocklyLootTable extends GeneratableElement {
     public static final String XML_BASE = "<xml xmlns=\"https://developers.google.com/blockly/xml\">"
             + "<block type=\"loottable_start\" deletable=\"false\" x=\"40\" y=\"40\"></block></xml>";
 
-    /** Stored display name of the loot table type: {@code Block} or {@code Entity}. */
+    /** Stored display name of the loot table type: {@code Block}, {@code Entity} or {@code Chest}. */
     public String lootTableType = "Block";
-    /** Selected block or entity registry name used to build the automatic path. */
+    /** Selected block, entity or chest registry name used to build the automatic path. */
     public String target = "";
     /** When true the path field is user controlled and the target selector is disabled. */
     public boolean manualPath = false;
@@ -51,15 +51,22 @@ public class BlocklyLootTable extends GeneratableElement {
     }
 
     public String getDependencyLabel() {
-        return getLootTableTypeEnum() == LootTableType.ENTITY
-                ? "event/target entity, source entity, immediate source entity, source player, main-hand item, world"
-                : "provided blockstate, block selector, target entity (player breaker only), world";
+        return switch (getLootTableTypeEnum()) {
+            case ENTITY -> "event/target entity, source entity, immediate source entity, source player, "
+                    + "main-hand item, world";
+            case CHEST -> "target entity (looter, optional), world";
+            case BLOCK -> "provided blockstate, block selector, target entity (player breaker only), world";
+        };
     }
 
     public String getTargetRegistryName() {
         Workspace workspace = getWorkspace();
         if (workspace == null || target == null || target.isBlank()) {
             return "";
+        }
+        if (getLootTableTypeEnum() == LootTableType.CHEST) {
+            String resolved = RegistryNames.autoPath(workspace, LootTableType.CHEST, target, "");
+            return resolved.isBlank() ? target.trim() : resolved;
         }
         String resolved = getLootTableTypeEnum() == LootTableType.ENTITY
                 ? RegistryNames.resolveEntity(workspace, target)
@@ -126,6 +133,9 @@ public class BlocklyLootTable extends GeneratableElement {
      * @return registry name of the provided block, or the selected target
      */
     public String getProvidedBlockRegistryName() {
+        if (getLootTableTypeEnum() == LootTableType.CHEST) {
+            return "";
+        }
         String configured = path == null ? "" : path.trim();
         if (!configured.isEmpty()) {
             RegistryNames.PathCheck check = RegistryNames.checkPath(configured, workspaceModId());
@@ -148,6 +158,10 @@ public class BlocklyLootTable extends GeneratableElement {
 
         if (target != null && !target.isBlank() && getTargetRegistryName().isBlank()) {
             report.addWarning(null, "The selected target could not be resolved. The path may be incorrect.");
+        }
+        if (getLootTableTypeEnum() == LootTableType.CHEST
+                && (target == null || target.isBlank())) {
+            report.addError(null, "Select a chest loot table before saving.");
         }
 
         report.merge(parseResult.report());

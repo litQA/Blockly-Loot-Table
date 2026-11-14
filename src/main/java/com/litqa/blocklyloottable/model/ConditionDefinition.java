@@ -24,7 +24,7 @@ public record ConditionDefinition(String blockType, String jsonType, ConditionSc
         String repair = switch (scope) {
             case BLOCK_ONLY -> "Change the loot table type to Block or remove this condition.";
             case ENTITY_ONLY -> "Change the loot table type to Entity or remove this condition.";
-            case BLOCK_AND_ENTITY -> "Remove this condition.";
+            case BLOCK_AND_ENTITY, ALL_CONTEXTS -> "Remove this condition.";
         };
         return readableName + " (" + blockType + ") is only available for "
                 + scope.getAllowedContextLabel() + " loot tables; the current table type is "

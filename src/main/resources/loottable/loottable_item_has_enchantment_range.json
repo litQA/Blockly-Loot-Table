@@ -35,7 +35,7 @@
     "toolbox_init": [
       "<value name=\"item\"><block type=\"loottable_entity_mainhand_item\"><value name=\"entity\"><block type=\"loottable_source_entity_dependency\"></block></value></block></value>",
       "<value name=\"min\"><block type=\"loottable_integer\"><field name=\"value\">1</field></block></value>",
-      "<value name=\"max\"><block type=\"loottable_integer\"><field name=\"value\">3</field></block></value>"
+      "<value name=\"max\"><block type=\"loottable_infinity\"></block></value>"
     ],
     "fields": [
       "enhancement"

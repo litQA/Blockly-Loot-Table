@@ -1,6 +1,6 @@
 {
   "type": "loottable_item_has_enchantment_exact",
-  "message0": "%1 has enchantment %2 at exactly level %3",
+  "message0": "Has enchantment %2 at exactly level %3 on item %1",
   "args0": [
     {
       "type": "input_value",

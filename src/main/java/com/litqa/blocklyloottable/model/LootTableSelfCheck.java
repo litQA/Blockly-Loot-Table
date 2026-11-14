@@ -35,6 +35,7 @@ public final class LootTableSelfCheck {
         validLogicConditions();
         validScoreboardProviders();
         validConditionValueBlocks();
+        validChestAndEntityConditions();
         validEnchantedItem();
         validItemDataAndContainers();
         validEnchantItemFunctions();
@@ -166,6 +167,13 @@ public final class LootTableSelfCheck {
                 "blockly.block.loottable_boolean",
                 "blockly.block.loottable_block_same",
                 "blockly.block.loottable_block_same.tooltip",
+                "blockly.block.loottable_entity_sprinting",
+                "blockly.block.loottable_entity_sneaking",
+                "blockly.category.loottable_conditions",
+                "elementgui.blockly_loot_table.target.select_chest",
+                "elementgui.blockly_loot_table.target.chest_tooltip",
+                "elementgui.blockly_loot_table.target.chest_title",
+                "elementgui.blockly_loot_table.target.chest_message",
                 "blockly.block.loottable_pool_mutator.do",
                 "blockly.block.loottable_empty_text")) {
             check(properties.containsKey(key), fileName + " contains " + key);
@@ -693,19 +701,21 @@ public final class LootTableSelfCheck {
                         && pool.contains("\"nextStatement\": \"LootTablePool\""),
                 "pools only chain to pools");
         check(pool.contains("\"check\": \"LootTableEntry\""), "pool entries only accept entries");
-        check(pool.contains("\"check\": \"LootTableCondition\""), "pool conditions only accept conditions");
+        check(pool.contains("\"check\": [\"LootTableCondition\",\"LootTableConditionSafe\"]"),
+                "pool conditions only accept condition values");
         check(entryBlock.contains("\"previousStatement\": \"LootTableEntry\"")
                         && entryBlock.contains("\"nextStatement\": \"LootTableEntry\""),
                 "entries only chain to entries");
-        check(entryBlock.contains("\"check\": \"LootTableCondition\""),
-                "entry conditions only accept conditions");
+        check(entryBlock.contains("\"check\": [\"LootTableCondition\",\"LootTableConditionSafe\"]"),
+                "entry conditions only accept condition values");
         check(entryBlock.contains("\"check\": \"LootTableFunction\""),
                 "entry functions only accept functions");
         check(!start.contains("\"nextStatement\": {") && !pool.contains("\"previousStatement\": {")
                         && !entryBlock.contains("\"previousStatement\": {"),
                 "statement checks use Blockly string form");
-        check(resourceText("/loottable/loottable_logic_not.json").contains("\"check\": \"LootTableCondition\""),
-                "logic terms only accept conditions");
+        check(resourceText("/loottable/loottable_logic_not.json")
+                        .contains("\"check\": [\"LootTableCondition\",\"LootTableConditionSafe\"]"),
+                "logic terms accept condition values");
         check(resourceText("/loottable/$loottable_components.json").contains("\"color\": 350"),
                 "minecraft components category is red");
         check(resourceText("/loottable/$loottable_items.json").contains("\"color\": 350"),
@@ -936,11 +946,19 @@ public final class LootTableSelfCheck {
                 "loottable_damage_tag.json", "loottable_world_dimension.json",
                 "loottable_logic_and.json", "loottable_logic_not.json")) {
             String json = resourceText("/loottable/" + file);
-            check(json.contains("\"output\": \"LootTableCondition\""),
-                    file + " exposes a condition value");
+            String expected = switch (file) {
+                case "loottable_random_chance.json", "loottable_block_nbt_logic.json",
+                        "loottable_world_dimension.json" -> "LootTableConditionSafe";
+                default -> "LootTableCondition";
+            };
+            check(json.contains("\"output\": \"" + expected + "\""),
+                    file + " exposes the expected condition value");
             check(!json.contains("\"previousStatement\"") && !json.contains("\"nextStatement\""),
                     file + " has no statement connectors");
         }
+        check(resourceText("/loottable/loottable_entry_loot_table.json")
+                        .contains("\"check\": \"LootTableConditionSafe\""),
+                "nested loot table accepts only safe conditions");
         check(resourceText("/loottable/loottable_entry_item.json").contains("\"name\": \"conditions\"")
                         && resourceText("/loottable/loottable_entry_item.json").contains("\"type\": \"input_value\""),
                 "entry condition socket is a value input");
@@ -984,6 +1002,80 @@ public final class LootTableSelfCheck {
                 "condition and native-style pool mutators are registered");
         check(mutatorJs.contains("elseifCount_") && mutatorJs.contains("updatePoolBranches(this)"),
                 "pool mutator follows the if/else-if/else shape");
+    }
+
+    private static void validChestAndEntityConditions() {
+        for (String file : List.of("loottable_entity_sprinting.json", "loottable_entity_sneaking.json")) {
+            String json = resourceText("/loottable/" + file);
+            check(json.contains("\"output\": \"LootTableCondition\"")
+                            && json.contains("\"colour\": 120")
+                            && json.contains("loottable_source_player_dependency"),
+                    file + " is a green entity condition with the player default");
+        }
+
+        BlocklyXmlParser.ParseResult sprintResult = BlocklyXmlParser.parse(entityTableXml(
+                entry("Items.ROTTEN_FLESH", 1, 1), condition("loottable_entity_sprinting", "")),
+                LootTableType.ENTITY, value -> value);
+        check(!sprintResult.report().hasErrors(), "sprint condition parses without errors");
+        String sprintJson = LootTableJsonWriter.write(sprintResult.model(), "test", "entities/zombie", false);
+        check(sprintJson.contains("\"is_sprinting\": true"), "sprint condition writes the flags predicate");
+
+        BlocklyXmlParser.ParseResult sneakResult = BlocklyXmlParser.parse(entityTableXml(
+                entry("Items.ROTTEN_FLESH", 1, 1), condition("loottable_entity_sneaking", "")),
+                LootTableType.ENTITY, value -> value);
+        check(!sneakResult.report().hasErrors(), "sneak condition parses without errors");
+        String sneakJson = LootTableJsonWriter.write(sneakResult.model(), "test", "entities/zombie", false);
+        check(sneakJson.contains("\"is_sneaking\": true"), "sneak condition writes the flags predicate");
+
+        String blockState = condition("loottable_block_state_boolean", "");
+        BlocklyXmlParser.ParseResult chestBlockState = BlocklyXmlParser.parse(blockTableXml(
+                entry("Items.STONE", 1, 1), blockState), LootTableType.CHEST, value -> value);
+        check(chestBlockState.report().hasErrors(), "chest tables reject block-state conditions");
+
+        String toolItem = condition("loottable_item_count",
+                value("item", "<block type=\"loottable_item_selector\">"
+                        + "<field name=\"item\">minecraft:stone</field></block>")
+                        + value("value", "<block type=\"loottable_integer\">"
+                                + "<field name=\"value\">1</field></block>"));
+        BlocklyXmlParser.ParseResult chestTool = BlocklyXmlParser.parse(blockTableXml(
+                entry("Items.STONE", 1, 1), toolItem), LootTableType.CHEST, value -> value);
+        check(chestTool.report().hasErrors(), "chest tables reject explicit tool item conditions");
+
+        String mainhand = condition("loottable_item_count",
+                value("item", "<block type=\"loottable_entity_mainhand_item\">"
+                        + value("entity", "<block type=\"loottable_source_entity_dependency\"></block>")
+                        + "</block>")
+                        + value("value", "<block type=\"loottable_integer\">"
+                                + "<field name=\"value\">1</field></block>"));
+        BlocklyXmlParser.ParseResult chestMainhand = BlocklyXmlParser.parse(blockTableXml(
+                entry("Items.STONE", 1, 1), mainhand), LootTableType.CHEST, value -> value);
+        check(!chestMainhand.report().hasErrors(), "chest tables allow the looter main-hand item");
+
+        String unsafeNested = "<block type=\"loottable_entry_loot_table\">"
+                + "<field name=\"table\">minecraft:chests/simple_dungeon</field>"
+                + "<field name=\"weight\">1</field>"
+                + value("conditions", condition("loottable_entity_sneaking", ""))
+                + "</block>";
+        BlocklyXmlParser.ParseResult nestedUnsafe = BlocklyXmlParser.parse(
+                blockTableXml(unsafeNested, ""), LootTableType.BLOCK, value -> value);
+        check(nestedUnsafe.report().hasErrors(), "nested loot tables reject entity conditions");
+
+        String safeNested = "<block type=\"loottable_entry_loot_table\">"
+                + "<field name=\"table\">minecraft:chests/simple_dungeon</field>"
+                + "<field name=\"weight\">1</field>"
+                + value("conditions", condition("loottable_random_chance",
+                        "<field name=\"chance\">0.5</field>"))
+                + "</block>";
+        BlocklyXmlParser.ParseResult nestedSafe = BlocklyXmlParser.parse(
+                blockTableXml(safeNested, ""), LootTableType.BLOCK, value -> value);
+        check(!nestedSafe.report().hasErrors(), "nested loot tables allow block/world-independent conditions");
+
+        check(RegistryNames.autoPath(null, LootTableType.CHEST, "abandoned_mineshaft", "")
+                        .equals("minecraft:chests/abandoned_mineshaft"),
+                "chest paths resolve to the chests folder");
+        check(resourceText("/loottable/chest_collections.tsv").lines()
+                        .filter(line -> !line.isBlank()).count() == 57,
+                "chest catalogue is bundled");
     }
 
     private static void validEnchantedItem() {

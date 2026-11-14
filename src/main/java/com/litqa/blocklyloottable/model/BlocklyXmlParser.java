@@ -321,6 +321,13 @@ public final class BlocklyXmlParser {
         entry.setWeight(readWholeNumber(block, "weight", 1, 1, "Nested loot table weight", report));
         parseConditions(block, "conditions", type, resolver, providedBlock,
                 entry.getConditions(), report);
+        for (LootTableModel.Condition condition : entry.getConditions()) {
+            if (!isSafeNestedCondition(condition)) {
+                report.addError(block.getAttribute("type"),
+                        "Nested loot tables do not support entity, item, or damage conditions; "
+                                + "remove the unsupported condition.");
+            }
+        }
         if (type == LootTableType.BLOCK && !entry.getConditions().isEmpty()) {
             report.addWarning(block.getAttribute("type"),
                     "A conditional nested loot table in a Block table is evaluated against the "
@@ -328,6 +335,36 @@ public final class BlocklyXmlParser {
         }
         parseFunctionChain(statementFirstBlock(block, "functions"), entry.getFunctions(), report);
         return entry;
+    }
+
+    private static boolean isSafeNestedCondition(LootTableModel.Condition condition) {
+        if (condition == null) {
+            return false;
+        }
+        String blockType = condition.getBlockType();
+        if (blockType == null) {
+            return false;
+        }
+        return switch (blockType) {
+            case "loottable_random_chance", "loottable_weather_check",
+                    "loottable_block_state_boolean", "loottable_block_state_integer",
+                    "loottable_block_state_enum", "loottable_block_same",
+                    "loottable_block_nbt_logic", "loottable_block_nbt_number",
+                    "loottable_block_nbt_text",
+                    "loottable_time_check", "loottable_time_day", "loottable_time_periodic",
+                    "loottable_world_dimension", "loottable_world_biome", "loottable_world_biome_tag",
+                    "loottable_world_smokey", "loottable_world_structure", "loottable_world_structure_tag",
+                    "loottable_world_light", "loottable_world_light_range",
+                    "loottable_world_position_x", "loottable_world_position_y",
+                    "loottable_world_position_z", "loottable_world_position_x_range",
+                    "loottable_world_position_y_range", "loottable_world_position_z_range",
+                    "loottable_world_block_tag", "loottable_survives_explosion" -> true;
+            case "loottable_logic_and", "loottable_logic_or" ->
+                    !condition.getTerms().isEmpty() && condition.getTerms().stream().allMatch(
+                            BlocklyXmlParser::isSafeNestedCondition);
+            case "loottable_logic_not" -> isSafeNestedCondition(condition.getTerm());
+            default -> false;
+        };
     }
 
     private static LootTableModel.Entry parseEntry(Element block, LootTableType type, ItemNameResolver resolver,
@@ -889,6 +926,15 @@ public final class BlocklyXmlParser {
                     return null;
                 }
             }
+            case "loottable_entity_sprinting", "loottable_entity_sneaking" -> {
+                String entity = parseEntityValue(block, "entity", type, report);
+                if (entity.isBlank()) {
+                    return null;
+                }
+                condition.getProperties().put("entity", entity);
+                condition.getProperties().put("flag",
+                        "loottable_entity_sprinting".equals(blockType) ? "is_sprinting" : "is_sneaking");
+            }
             case "loottable_block_nbt_logic", "loottable_block_nbt_number", "loottable_block_nbt_text" -> {
                 if (!parseBlockNbtCondition(block, blockType, providedBlock, resolver, condition, report)) {
                     return null;
@@ -1110,6 +1156,11 @@ public final class BlocklyXmlParser {
         }
         ItemSpec spec = parseItemProducer(sourceBlock, resolver, report);
         if (spec == null || spec.item().isBlank()) {
+            return null;
+        }
+        if (type == LootTableType.CHEST) {
+            report.addError(block.getAttribute("type"),
+                    "Chest loot tables do not provide the tool context; use the source entity's main-hand item.");
             return null;
         }
         return new ItemSource("tool", "", spec.item());
@@ -1343,7 +1394,7 @@ public final class BlocklyXmlParser {
                     readPlainIntegerInput(block, "level", 1, "Exact enchantment level", report)));
             maximum = minimum;
         } else {
-            minimum = readRangeBound(block, "min", range ? 0 : 1, false,
+            minimum = readRangeBound(block, "min", 1, false,
                     "Minimum enchantment level", report);
             maximum = range
                     ? readRangeBound(block, "max", null, true, "Maximum enchantment level", report)
@@ -2134,13 +2185,22 @@ public final class BlocklyXmlParser {
                 yield "this";
             }
             case "loottable_source_entity_dependency", "source_entity_from_deps" -> {
-                yield type == LootTableType.BLOCK ? "this" : "attacker";
+                yield switch (type) {
+                    case BLOCK, CHEST -> "this";
+                    case ENTITY -> "attacker";
+                };
             }
             case "loottable_immediate_source_entity_dependency", "immediate_source_entity_from_deps" -> {
-                yield type == LootTableType.BLOCK ? "this" : "direct_attacker";
+                yield switch (type) {
+                    case BLOCK, CHEST -> "this";
+                    case ENTITY -> "direct_attacker";
+                };
             }
             case "loottable_source_player_dependency", "source_player_from_deps" -> {
-                yield type == LootTableType.BLOCK ? "this" : "attacking_player";
+                yield switch (type) {
+                    case BLOCK, CHEST -> "this";
+                    case ENTITY -> "attacking_player";
+                };
             }
             default -> {
                 report.addWarning(valueType, "Entity value " + valueType + " is not supported and was skipped.");
