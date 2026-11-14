@@ -12,6 +12,17 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.1.0.77-beta
+
+- Added the **Potion effect** item component. Potion serialization is
+  version-gated because potion data changed twice in the supported 1.20-1.21
+  range: numeric `CustomPotionEffects` NBT on 1.20-1.20.1, namespaced
+  `custom_potion_effects` NBT on 1.20.2-1.20.4, and
+  `minecraft:potion_contents` with `set_components` on 1.20.5+.
+- Amplifier and duration accept number providers when they resolve to integer
+  literals; floating-point or dynamic providers are rejected with a warning
+  because the potion payload is static.
+
 ### 1.1.0.75-beta
 
 - Advanced-pool statement metadata now uses named objects. MCreator's block

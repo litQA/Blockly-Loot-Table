@@ -1,0 +1,69 @@
+{
+  "type": "loottable_item_potion",
+  "message0": "Potion effect %1, amplifier %2, duration %3, item %4",
+  "args0": [
+    {
+      "type": "field_data_list_selector",
+      "name": "potion",
+      "datalist": "effects",
+      "customEntryProviders": "potioneffect"
+    },
+    {
+      "type": "input_value",
+      "name": "amplifier",
+      "check": [
+        "Number",
+        "NumberProvider"
+      ]
+    },
+    {
+      "type": "input_value",
+      "name": "duration",
+      "check": [
+        "Number",
+        "NumberProvider"
+      ]
+    },
+    {
+      "type": "field_dropdown",
+      "name": "item_type",
+      "options": [
+        [
+          "Potion",
+          "potion"
+        ],
+        [
+          "Splash potion",
+          "splash_potion"
+        ],
+        [
+          "Lingering potion",
+          "lingering_potion"
+        ],
+        [
+          "Tipped arrow",
+          "tipped_arrow"
+        ]
+      ]
+    }
+  ],
+  "inputsInline": false,
+  "output": "MCItem",
+  "colour": 350,
+  "tooltip": "Creates a potion item with a custom effect.",
+  "mcreator": {
+    "toolbox_id": "loottable_item_components",
+    "inputs": [
+      "amplifier",
+      "duration"
+    ],
+    "fields": [
+      "potion",
+      "item_type"
+    ],
+    "toolbox_init": [
+      "<value name=\"amplifier\"><block type=\"loottable_integer\"><field name=\"value\">0</field></block></value>",
+      "<value name=\"duration\"><block type=\"loottable_integer\"><field name=\"value\">600</field></block></value>"
+    ]
+  }
+}

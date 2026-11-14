@@ -362,6 +362,26 @@ public final class BlocklyXmlParser {
             String item = resolveItemSelector(itemBlock, resolver, report);
             return item.isBlank() ? null : new ItemSpec(item, new ArrayList<>());
         }
+        if ("loottable_item_potion".equals(itemType)) {
+            String effect = normalizedEnchantment(fieldValue(itemBlock, "potion"));
+            if (effect.isBlank()) {
+                report.addWarning(itemType, "A potion item has no potion effect and was skipped.");
+                return null;
+            }
+            String item = switch (fieldValue(itemBlock, "item_type").trim()) {
+                case "splash_potion" -> "minecraft:splash_potion";
+                case "lingering_potion" -> "minecraft:lingering_potion";
+                case "tipped_arrow" -> "minecraft:tipped_arrow";
+                default -> "minecraft:potion";
+            };
+            LootTableModel.LootFunction function = new LootTableModel.LootFunction(itemType);
+            function.getProperties().put("effect", effect);
+            function.getProperties().put("amplifier",
+                    readPlainIntegerInput(itemBlock, "amplifier", 0, "Potion amplifier", report));
+            function.getProperties().put("duration",
+                    readPlainIntegerInput(itemBlock, "duration", 600, "Potion duration", report));
+            return new ItemSpec(item, List.of(function));
+        }
 
         Element baseBlock = valueBlock(itemBlock, "item");
         if (baseBlock == null) {

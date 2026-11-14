@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.1.0.77-beta
+
+### Added
+
+- Added the **Potion effect** item component. It creates a potion, splash
+  potion, lingering potion or tipped arrow with a selected effect, integer
+  amplifier and integer duration.
+- The generated potion data is version-specific: numeric `CustomPotionEffects`
+  NBT on 1.20-1.20.1, namespaced `custom_potion_effects` NBT on 1.20.2-1.20.4,
+  and the `minecraft:potion_contents` component on 1.20.5+.
+
+### Verified
+
+- Self-check 537 checks; all loottable JSON resources and the mutator script
+  validate.
+
 ## 1.1.0.75-beta
 
 ### Fixed

@@ -152,6 +152,7 @@ public final class LootTableSelfCheck {
                 "blockly.block.loottable_entry_loot_table",
                 "blockly.block.loottable_entry_loot_table_simple",
                 "blockly.block.loottable_item_contents_loot",
+                "blockly.block.loottable_item_potion",
                 "blockly.block.loottable_function_apply_bonus_uniform",
                 "blockly.block.loottable_function_apply_bonus_binomial",
                 "blockly.block.loottable_function_apply_bonus_ore",
@@ -1074,6 +1075,44 @@ public final class LootTableSelfCheck {
                 containerResult.model(), "test", "blocks/bundle", false, false);
         check(legacyContainer.contains("\"type\": \"minecraft:bundle_contents\""),
                 "container item uses the pre-1.20.5 type field");
+
+        String potion = "<block type=\"loottable_item_potion\">"
+                + "<field name=\"potion\">minecraft:speed</field>"
+                + "<field name=\"item_type\">potion</field>"
+                + "<value name=\"amplifier\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">1</field></block></value>"
+                + "<value name=\"duration\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">300</field></block></value></block>";
+        BlocklyXmlParser.ParseResult potionResult = BlocklyXmlParser.parse(blockTableXml(
+                entryWithItem(potion, count, 1), ""), LootTableType.BLOCK, value -> value);
+        check(!potionResult.report().hasErrors(), "potion item parses without errors");
+        String modernPotion = LootTableJsonWriter.write(
+                potionResult.model(), "test", "blocks/potion", false, true, true);
+        check(modernPotion.contains("\"function\": \"minecraft:set_components\"")
+                        && modernPotion.contains("\"minecraft:potion_contents\"")
+                        && modernPotion.contains("\"id\": \"minecraft:speed\"")
+                        && modernPotion.contains("\"amplifier\": 1")
+                        && modernPotion.contains("\"duration\": 300"),
+                "potion item uses potion_contents on 1.20.5+");
+        String namespacedPotion = LootTableJsonWriter.write(
+                potionResult.model(), "test", "blocks/potion", false, false, true);
+        check(namespacedPotion.contains("\"function\": \"minecraft:set_nbt\"")
+                        && namespacedPotion.contains("custom_potion_effects")
+                        && namespacedPotion.contains("id:\\\"minecraft:speed\\\"")
+                        && namespacedPotion.contains("amplifier:1")
+                        && namespacedPotion.contains("duration:300"),
+                "potion item uses namespaced NBT on 1.20.2-1.20.4");
+        String legacyPotion = LootTableJsonWriter.write(
+                potionResult.model(), "test", "blocks/potion", false, false, false);
+        check(legacyPotion.contains("\"function\": \"minecraft:set_nbt\"")
+                        && legacyPotion.contains("CustomPotionEffects")
+                        && legacyPotion.contains("Id:1")
+                        && legacyPotion.contains("Amplifier:1")
+                        && legacyPotion.contains("Duration:300"),
+                "potion item uses numeric NBT on 1.20-1.20.1");
+        check(resourceText("/loottable/loottable_item_potion.json")
+                        .contains("\"toolbox_id\": \"loottable_item_components\""),
+                "potion item is in the item components category");
 
         String booleanJson = resourceText("/loottable/loottable_boolean.json");
         check(booleanJson.contains("%{BKY_LOGIC_HUE}")

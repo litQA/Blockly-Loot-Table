@@ -104,7 +104,13 @@ with one item socket and one Number/NumberProvider count socket per row. Rows
 default to an empty item selector and Integer 1, and both sockets are
 right-aligned. It emits `minecraft:set_contents` with `type` before 1.20.5 and
 with `component` from 1.20.5 onward. A floating-point literal count is rejected
-so the generated container remains valid.
+so the generated container remains valid. **Potion effect** creates a potion,
+splash potion, lingering potion or tipped arrow with a selected effect,
+amplifier and duration. Amplifier and duration accept numbers or number
+providers but must resolve to integer literals. Potion data is version-gated:
+numeric `CustomPotionEffects` NBT on 1.20-1.20.1, namespaced
+`custom_potion_effects` NBT on 1.20.2-1.20.4, and the
+`minecraft:potion_contents` component on 1.20.5+.
 
 The three block-state condition blocks use the same input style as NBT
 conditions. The property name is a text input block, the equality operator is

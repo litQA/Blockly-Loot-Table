@@ -11,6 +11,51 @@ import java.util.Map;
  */
 public final class LootTableJsonWriter {
 
+    /**
+     * The potion NBT layout changed in 1.20.2, which is earlier than the item
+     * component transition. The flag is scoped to the current generation call.
+     */
+    private static final ThreadLocal<Boolean> NAMESPACED_POTION_NBT = ThreadLocal
+            .withInitial(() -> Boolean.TRUE);
+
+    /**
+     * Numeric potion effect ids used by the 1.20-1.20.1 item NBT format.
+     */
+    private static final Map<String, Integer> LEGACY_POTION_IDS = Map.ofEntries(
+            Map.entry("minecraft:speed", 1),
+            Map.entry("minecraft:slowness", 2),
+            Map.entry("minecraft:haste", 3),
+            Map.entry("minecraft:mining_fatigue", 4),
+            Map.entry("minecraft:strength", 5),
+            Map.entry("minecraft:instant_health", 6),
+            Map.entry("minecraft:instant_damage", 7),
+            Map.entry("minecraft:jump_boost", 8),
+            Map.entry("minecraft:nausea", 9),
+            Map.entry("minecraft:regeneration", 10),
+            Map.entry("minecraft:resistance", 11),
+            Map.entry("minecraft:fire_resistance", 12),
+            Map.entry("minecraft:water_breathing", 13),
+            Map.entry("minecraft:invisibility", 14),
+            Map.entry("minecraft:blindness", 15),
+            Map.entry("minecraft:night_vision", 16),
+            Map.entry("minecraft:hunger", 17),
+            Map.entry("minecraft:weakness", 18),
+            Map.entry("minecraft:poison", 19),
+            Map.entry("minecraft:wither", 20),
+            Map.entry("minecraft:health_boost", 21),
+            Map.entry("minecraft:absorption", 22),
+            Map.entry("minecraft:saturation", 23),
+            Map.entry("minecraft:glowing", 24),
+            Map.entry("minecraft:levitation", 25),
+            Map.entry("minecraft:luck", 26),
+            Map.entry("minecraft:unluck", 27),
+            Map.entry("minecraft:slow_falling", 28),
+            Map.entry("minecraft:conduit_power", 29),
+            Map.entry("minecraft:dolphins_grace", 30),
+            Map.entry("minecraft:bad_omen", 31),
+            Map.entry("minecraft:hero_of_the_village", 32),
+            Map.entry("minecraft:darkness", 33));
+
     private LootTableJsonWriter() {
     }
 
@@ -24,20 +69,37 @@ public final class LootTableJsonWriter {
      */
     public static String write(LootTableModel model, String namespace, String path, boolean includeRandomSequence,
             boolean itemComponents) {
-        Map<String, Object> root = new LinkedHashMap<>();
-        root.put("type", model.getType().getJsonType());
+        return write(model, namespace, path, includeRandomSequence, itemComponents, itemComponents);
+    }
 
-        List<Object> pools = new ArrayList<>();
-        for (LootTableModel.Pool pool : model.getPools()) {
-            pools.add(poolToJson(pool, itemComponents));
-        }
-        root.put("pools", pools);
+    /**
+     * @param itemComponents      true for 1.20.5+ where item components replaced
+     *                            item NBT in loot functions
+     * @param namespacedPotionNbt true for 1.20.2+ where potion effects use
+     *                            namespaced ids in {@code custom_potion_effects}
+     */
+    public static String write(LootTableModel model, String namespace, String path, boolean includeRandomSequence,
+            boolean itemComponents, boolean namespacedPotionNbt) {
+        Boolean previous = NAMESPACED_POTION_NBT.get();
+        NAMESPACED_POTION_NBT.set(namespacedPotionNbt);
+        try {
+            Map<String, Object> root = new LinkedHashMap<>();
+            root.put("type", model.getType().getJsonType());
 
-        if (includeRandomSequence) {
-            String randomSequence = (namespace == null ? "" : namespace) + ":" + (path == null ? "" : path);
-            root.put("random_sequence", randomSequence);
+            List<Object> pools = new ArrayList<>();
+            for (LootTableModel.Pool pool : model.getPools()) {
+                pools.add(poolToJson(pool, itemComponents));
+            }
+            root.put("pools", pools);
+
+            if (includeRandomSequence) {
+                String randomSequence = (namespace == null ? "" : namespace) + ":" + (path == null ? "" : path);
+                root.put("random_sequence", randomSequence);
+            }
+            return JsonText.write(root);
+        } finally {
+            NAMESPACED_POTION_NBT.set(previous);
         }
-        return JsonText.write(root);
     }
 
     private static Map<String, Object> poolToJson(LootTableModel.Pool pool, boolean itemComponents) {
@@ -325,6 +387,47 @@ public final class LootTableJsonWriter {
                 Map<String, Object> json = new LinkedHashMap<>();
                 json.put("function", itemComponents ? "minecraft:set_custom_data" : "minecraft:set_nbt");
                 json.put("tag", tag);
+                return json;
+            }
+            case "loottable_item_potion" -> {
+                String effect = string(function.getProperties().get("effect"));
+                if (effect.isBlank()) {
+                    return null;
+                }
+                int amplifier = intProperty(function.getProperties().get("amplifier"), 0);
+                int duration = intProperty(function.getProperties().get("duration"), 600);
+                Map<String, Object> json = new LinkedHashMap<>();
+                if (itemComponents) {
+                    Map<String, Object> customEffect = new LinkedHashMap<>();
+                    customEffect.put("id", effect);
+                    customEffect.put("amplifier", amplifier);
+                    customEffect.put("duration", duration);
+
+                    Map<String, Object> potionContents = new LinkedHashMap<>();
+                    potionContents.put("custom_effects", List.of(customEffect));
+
+                    Map<String, Object> components = new LinkedHashMap<>();
+                    components.put("minecraft:potion_contents", potionContents);
+
+                    json.put("function", "minecraft:set_components");
+                    json.put("components", components);
+                    return json;
+                }
+
+                if (Boolean.TRUE.equals(NAMESPACED_POTION_NBT.get())) {
+                    json.put("function", "minecraft:set_nbt");
+                    json.put("tag", "{custom_potion_effects:[{id:\"" + effect + "\",amplifier:"
+                            + amplifier + ",duration:" + duration + "}]}");
+                    return json;
+                }
+
+                int legacyId = LEGACY_POTION_IDS.getOrDefault(effect, -1);
+                if (legacyId < 0) {
+                    return null;
+                }
+                json.put("function", "minecraft:set_nbt");
+                json.put("tag", "{CustomPotionEffects:[{Id:" + legacyId + ",Amplifier:"
+                        + amplifier + ",Duration:" + duration + "}]}");
                 return json;
             }
             case "loottable_item_container" -> {

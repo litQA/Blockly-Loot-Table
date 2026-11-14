@@ -43,6 +43,17 @@ public final class VersionCompat {
         return compareVersion(minecraftVersion(workspace), 1, 20, 5) >= 0;
     }
 
+    /**
+     * Potion effect NBT changed in 1.20.2 from numeric effect ids to namespaced
+     * ids under {@code custom_potion_effects}.
+     *
+     * @param workspace current workspace
+     * @return {@code true} for Minecraft 1.20.2 or newer
+     */
+    public static boolean usesNamespacedPotionNbt(Workspace workspace) {
+        return compareVersion(minecraftVersion(workspace), 1, 20, 2) >= 0;
+    }
+
     private static int compareVersion(String version, int majorTarget, int minorTarget, int patchTarget) {
         if (version == null || version.isBlank()) {
             return -1;
