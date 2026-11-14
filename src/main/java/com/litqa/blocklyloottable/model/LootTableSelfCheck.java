@@ -688,10 +688,14 @@ public final class LootTableSelfCheck {
                 "logic category exists");
         check(resourceText("/loottable/$loottable_conditions.json").contains("\"color\": 120"),
                 "conditions parent category exists");
-        check(!resourceExists("/loottable/$loottable_blocks.json"),
-                "block conditions category is hidden");
-        check(!resourceExists("/loottable/$loottable_entities.json"),
-                "entity conditions category is hidden");
+        check(resourceText("/loottable/$loottable_blocks.json").contains("\"color\": 60")
+                        && resourceText("/loottable/$loottable_blocks.json")
+                        .contains("\"parent_category\": \"loottable_conditions\""),
+                "block conditions category is visible");
+        check(resourceText("/loottable/$loottable_entities.json").contains("\"color\": 195")
+                        && resourceText("/loottable/$loottable_entities.json")
+                        .contains("\"parent_category\": \"loottable_conditions\""),
+                "entity conditions category is visible");
         check(resourceText("/loottable/$loottable_world.json").contains("\"color\": 35"),
                 "world conditions use the earth-yellow colour");
         check(resourceText("/loottable/loottable_world_light.json").contains("\"colour\": 120"),
@@ -740,9 +744,9 @@ public final class LootTableSelfCheck {
                 "random any enchant exposes a level range");
         check(resourceText("/loottable/loottable_world_block_tag.json")
                         .contains("\"colour\": 120")
-                        && !resourceText("/loottable/loottable_world_block_tag.json")
-                        .contains("\"toolbox_id\""),
-                "block tag is a hidden green block condition");
+                        && resourceText("/loottable/loottable_world_block_tag.json")
+                        .contains("\"toolbox_id\": \"loottable_blocks\""),
+                "block tag is a green block condition");
         check(resourceText("/lang/texts.properties").contains("Current structure is tagged"),
                 "structure tag label is current structure");
         check(resourceText("/loottable/loottable_item_selector.json")
@@ -1045,8 +1049,31 @@ public final class LootTableSelfCheck {
                         && randomChance.contains("\"toolbox_id\": \"loottable_logic\""),
                 "random chance uses the green condition colour");
         String mainhand = resourceText("/loottable/loottable_entity_mainhand_item.json");
-        check(!mainhand.contains("\"toolbox_id\""),
-                "main-hand item is hidden with entity conditions");
+        check(mainhand.contains("\"toolbox_id\": \"loottable_entities\""),
+                "main-hand item is in the entity category");
+        for (String file : new String[]{
+                "loottable_block_nbt_logic.json",
+                "loottable_block_nbt_number.json",
+                "loottable_block_nbt_text.json",
+                "loottable_block_state_boolean.json",
+                "loottable_block_state_enum.json",
+                "loottable_block_state_integer.json",
+                "loottable_survives_explosion.json",
+                "loottable_world_block_tag.json"}) {
+            check(resourceText("/loottable/" + file).contains("\"toolbox_id\": \"loottable_blocks\""),
+                    file + " is listed in block conditions");
+        }
+        for (String file : new String[]{
+                "loottable_entity_has_potion.json",
+                "loottable_entity_mainhand_item.json",
+                "loottable_entity_nbt_logic.json",
+                "loottable_entity_nbt_number.json",
+                "loottable_entity_nbt_text.json",
+                "loottable_killed_by_player.json",
+                "loottable_killed_by_player_or_pets.json"}) {
+            check(resourceText("/loottable/" + file).contains("\"toolbox_id\": \"loottable_entities\""),
+                    file + " is listed in entity conditions");
+        }
     }
 
     private static void validItemConditionsAndDamage() {

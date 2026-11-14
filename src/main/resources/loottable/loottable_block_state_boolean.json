@@ -28,7 +28,8 @@
       "property",
       "block",
       "value"
-    ]
+    ],
+    "toolbox_id": "loottable_blocks"
   },
   "output": "LootTableCondition"
 }

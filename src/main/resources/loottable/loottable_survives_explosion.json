@@ -2,7 +2,8 @@
   "args0": [],
   "colour": 120,
   "mcreator": {
-    "toolbox_init": []
+    "toolbox_init": [],
+    "toolbox_id": "loottable_blocks"
   },
   "output": "LootTableCondition"
 }

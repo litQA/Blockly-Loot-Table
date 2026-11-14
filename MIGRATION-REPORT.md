@@ -12,12 +12,12 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
-### 1.0.3.69-beta
+### 1.0.3.71-beta
 
 - `All conditions`, `Any condition` and `Not` no longer embed a default child
   block; their inputs start empty.
-- Block conditions and Entity conditions are hidden from the toolbox while
-  remaining available for existing workspaces.
+- Block conditions and Entity conditions subcategories remain visible and keep
+  their original blocks and native category colours.
 - Every A-type condition block uses the shared condition green.
 - Scoreboard number providers now use the Numbers blue.
 

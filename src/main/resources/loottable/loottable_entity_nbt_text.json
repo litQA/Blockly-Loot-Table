@@ -28,7 +28,8 @@
       "tag",
       "entity",
       "value"
-    ]
+    ],
+    "toolbox_id": "loottable_entities"
   },
   "output": "LootTableCondition"
 }

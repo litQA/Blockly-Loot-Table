@@ -35,10 +35,10 @@ Pool and entry conditions accept one `LootTableCondition` value directly; use
 **Conditions** category also contains `Not`, which negates one condition value.
 These three combiners start with an empty input instead of an example block.
 
-Item, damage and world conditions are the visible subcategories under
-**Conditions**. Block and entity condition blocks remain supported for existing
-projects but their subcategories are hidden from the palette. The **Loot table**
-category and pool blocks use deep green.
+Item, damage, world, block and entity conditions are visible subcategories under
+**Conditions**. The Block and Entity subcategories keep their native category
+colors, while every individual condition block uses the condition green. The
+**Loot table** category and pool blocks use deep green.
 
 Same-level location checks are merged into one `minecraft:location_check`
 predicate when their keys do not conflict, so dimension, biome, position and
@@ -109,9 +109,8 @@ integer value, or a text value such as `upper`. This keeps the generated
 `block_state_property` values explicit and stable.
 
 `Random chance` lives in the **Logic** category and uses the condition green.
-The main-hand item block is hidden together with the entity condition
-subcategory. Item producers live in **Item components**; item-comparison
-blocks stay in **Item conditions**.
+The main-hand item block is in **Entity conditions**. Item producers live in
+**Item components**; item-comparison blocks stay in **Item conditions**.
 
 The count input accepts a bare number or a number provider. The **Numbers**
 category contains the terminal `Integer` and `Float` blocks, the constant
@@ -314,8 +313,8 @@ longer ships a preset-template selector.
 - Dimension, biome, biome tag, structure, structure tag, smokey, light and
   position conditions at the same chain level merge into one
   `minecraft:location_check` predicate instead of repeating the condition.
-- Block-tag conditions write `predicate.block.blocks` as `#<tag>`; the block
-  condition subcategory is hidden, but the block remains readable in old projects.
+- Block-tag conditions write `predicate.block.blocks` as `#<tag>` and appear in
+  the Block conditions category.
 - The structure-tag block is labelled **Current structure is tagged**.
 - The item count socket accepts `Integer`, `Float`, `Integer provider`,
   `Float provider`, `Uniform` or `Binomial`; generated JSON uses a bare number
@@ -336,7 +335,7 @@ longer ships a preset-template selector.
   logic, math and text hues.
 - The **Conditions**, **Minecraft components**, **Item components** and
   **Loot table** categories render their blocks without overlap or empty
-  entries. The Block conditions and Entity conditions subcategories are hidden.
+  entries. Block and Entity condition subcategories are visible again.
 - The Conditions root contains `All conditions`, `Any condition` and `Not`.
   `All conditions` and `Any condition` add/remove value rows dynamically; `Not`
   takes one condition. All three start with empty inputs. The Logic category

@@ -23,7 +23,8 @@
     ],
     "toolbox_init": [
       "<value name=\"entity\"><block type=\"loottable_entity_dependency\"></block></value>"
-    ]
+    ],
+    "toolbox_id": "loottable_entities"
   },
   "output": "LootTableCondition"
 }

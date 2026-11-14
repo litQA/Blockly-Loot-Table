@@ -14,7 +14,8 @@
     "toolbox_init": [],
     "fields": [
       "tag"
-    ]
+    ],
+    "toolbox_id": "loottable_blocks"
   },
   "output": "LootTableCondition"
 }

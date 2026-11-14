@@ -5,6 +5,8 @@
   "inputsInline": true,
   "colour": 120,
   "tooltip": "Minecraft loot table condition.",
-  "mcreator": {},
+  "mcreator": {
+    "toolbox_id": "loottable_entities"
+  },
   "output": "LootTableCondition"
 }

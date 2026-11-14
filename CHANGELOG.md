@@ -1,15 +1,15 @@
 # Changelog
 
-## 1.0.3.69-beta
+## 1.0.3.71-beta
 
 ### Changed
 
 - `All conditions`, `Any condition` and `Not` now start with an empty input
   instead of an embedded example condition.
+- The Block conditions and Entity conditions subcategories remain visible and
+  their original toolbox assignments are restored.
 - All A-type condition blocks now use the condition green, regardless of their
   original block, entity, world or item category colour.
-- The Block conditions and Entity conditions subcategories are no longer shown
-  in the toolbox. Their blocks remain readable for existing projects.
 - The three Scoreboard number providers now use the same blue as the rest of
   the Numbers category.
 
