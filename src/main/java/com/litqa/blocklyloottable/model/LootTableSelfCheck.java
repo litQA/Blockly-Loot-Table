@@ -38,6 +38,7 @@ public final class LootTableSelfCheck {
         validFunctionBlocks();
         validWorldConditions();
         validItemConditionsAndDamage();
+        validNestedPoolsAndEntries();
         entityAutoPath();
         manualPathProvidedBlock();
         validBlockSourceAliases();
@@ -143,6 +144,12 @@ public final class LootTableSelfCheck {
                 "blockly.block.loottable_binomial",
                 "blockly.category.loottable_functions",
                 "blockly.block.loottable_entry_item_simple",
+                "blockly.block.loottable_pool_if",
+                "blockly.block.loottable_pool_if_else_if",
+                "blockly.block.loottable_pool_if_else",
+                "blockly.block.loottable_entry_loot_table",
+                "blockly.block.loottable_entry_loot_table_simple",
+                "blockly.block.loottable_item_contents_loot",
                 "blockly.block.loottable_function_apply_bonus_uniform",
                 "blockly.block.loottable_function_apply_bonus_binomial",
                 "blockly.block.loottable_function_apply_bonus_ore",
@@ -396,6 +403,95 @@ public final class LootTableSelfCheck {
         check(toolJson.contains("\"condition\": \"minecraft:match_tool\""),
                 "tool enchantment uses match_tool");
         check(toolJson.contains("\"min\": 2"), "tool enchantment has a minimum level");
+    }
+
+    private static void validNestedPoolsAndEntries() {
+        String simpleEntry = "<block type=\"loottable_entry_item_simple\">"
+                + "<value name=\"item\"><block type=\"loottable_item_selector\">"
+                + "<field name=\"item\">Blocks.DIAMOND_ORE</field></block></value>"
+                + "<value name=\"count\"><block type=\"loottable_integer\">"
+                + "<field name=\"value\">2</field></block></value>"
+                + "<field name=\"weight\">4</field></block>";
+        BlocklyXmlParser.ParseResult simpleResult = BlocklyXmlParser.parse(blockTableXml(simpleEntry, ""),
+                LootTableType.BLOCK, value -> value);
+        check(!simpleResult.report().hasErrors(), "simple item entry has no errors");
+        check(simpleResult.model().getPools().get(0).getEntries().get(0).getWeight() == 4,
+                "simple item entry keeps its weight");
+
+        String alternativePool = """
+                <xml xmlns="https://developers.google.com/blockly/xml">
+                  <block type="loottable_start" deletable="false">
+                    <next>
+                      <block type="loottable_pool_if">
+                        <field name="rolls">1</field>
+                        <field name="bonus_rolls">0</field>
+                        <statement name="conditions1">
+                          <block type="loottable_random_chance"><field name="chance">0.5</field></block>
+                        </statement>
+                        <statement name="entries1">
+                          <block type="loottable_entry_loot_table">
+                            <value name="table"><block type="loottable_empty_text">
+                              <field name="TEXT">minecraft:entities/zombie</field>
+                            </block></value>
+                            <field name="weight">2</field>
+                            <statement name="functions">
+                              <block type="loottable_function_limit_count">
+                                <value name="limit"><block type="loottable_integer">
+                                  <field name="value">1</field>
+                                </block></value>
+                              </block>
+                            </statement>
+                          </block>
+                        </statement>
+                      </block>
+                    </next>
+                  </block>
+                </xml>
+                """;
+        BlocklyXmlParser.ParseResult poolResult = BlocklyXmlParser.parse(alternativePool, LootTableType.BLOCK,
+                value -> value);
+        check(!poolResult.report().hasErrors(), "alternative pool has no errors");
+        String poolJson = LootTableJsonWriter.write(poolResult.model(), "test", "blocks/choice", false);
+        check(poolJson.contains("\"type\": \"minecraft:alternatives\""), "alternative pool uses alternatives");
+        check(poolJson.contains("\"type\": \"minecraft:group\""), "alternative branch uses group");
+        check(poolJson.contains("\"type\": \"minecraft:loot_table\""), "nested loot table entry is written");
+        check(poolJson.contains("\"value\": \"minecraft:entities/zombie\""),
+                "nested loot table uses the 1.21 value field");
+        check(poolJson.contains("\"function\": \"minecraft:limit_count\""),
+                "nested loot table functions are written");
+
+        String legacyJson = LootTableJsonWriter.write(poolResult.model(), "test", "blocks/choice", false, false);
+        check(legacyJson.contains("\"name\": \"minecraft:entities/zombie\""),
+                "nested loot table uses name before item components");
+
+        String contentsEntry = entryWithItem(
+                "<block type=\"loottable_item_contents_loot\">"
+                        + "<value name=\"item\"><block type=\"loottable_item_selector\">"
+                        + "<field name=\"item\">minecraft:shulker_box</field></block></value>"
+                        + "<value name=\"table\"><block type=\"loottable_empty_text\">"
+                        + "<field name=\"TEXT\">minecraft:chests/simple_dungeon</field></block></value>"
+                        + "</block>",
+                "<value name=\"count\"><block type=\"loottable_integer\">"
+                        + "<field name=\"value\">1</field></block></value>",
+                1);
+        BlocklyXmlParser.ParseResult contentsResult = BlocklyXmlParser.parse(blockTableXml(contentsEntry, ""),
+                LootTableType.BLOCK, value -> value);
+        check(!contentsResult.report().hasErrors(), "loot-table contents item has no errors");
+        String contentsJson = LootTableJsonWriter.write(contentsResult.model(), "test", "blocks/contents", false);
+        check(contentsJson.contains("\"function\": \"minecraft:set_contents\""),
+                "loot-table contents uses set_contents");
+        check(contentsJson.contains("\"type\": \"minecraft:loot_table\"")
+                        && contentsJson.contains("\"value\": \"minecraft:chests/simple_dungeon\""),
+                "loot-table contents embeds a nested loot table");
+        check(contentsJson.contains("\"name\": \"minecraft:shulker_box\""),
+                "loot-table contents defaults the container item");
+
+        String nbtBlock = resourceText("/loottable/loottable_block_nbt_logic.json");
+        check(!nbtBlock.contains("\"operator\""), "NBT blocks do not expose an operator field");
+        String container = resourceText("/loottable/loottable_item_container.json");
+        check(container.contains("Blocks.SHULKER_BOX"), "container block defaults to a shulker box");
+        String simpleResource = resourceText("/loottable/loottable_entry_item_simple.json");
+        check(simpleResource.contains("\"name\": \"weight\""), "simple item entry exposes a weight field");
     }
 
     private static void entityAutoPath() {

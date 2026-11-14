@@ -1,0 +1,58 @@
+{
+  "args0": [
+    {
+      "type": "field_number",
+      "name": "rolls",
+      "value": 1,
+      "min": 0,
+      "max": 64000,
+      "precision": 1
+    },
+    {
+      "type": "field_number",
+      "name": "bonus_rolls",
+      "value": 0,
+      "min": 0,
+      "max": 64000,
+      "precision": 1
+    },
+    {
+      "type": "input_statement",
+      "name": "conditions1",
+      "check": "LootTableCondition"
+    },
+    {
+      "type": "input_statement",
+      "name": "entries1",
+      "check": "LootTableEntry"
+    },
+    {
+      "type": "input_statement",
+      "name": "entries_else",
+      "check": "LootTableEntry"
+    }
+  ],
+  "inputsInline": false,
+  "previousStatement": "LootTablePool",
+  "nextStatement": "LootTablePool",
+  "colour": 120,
+  "mcreator": {
+    "toolbox_id": "loottable",
+    "toolbox_init": [],
+    "fields": [
+      "rolls",
+      "bonus_rolls"
+    ],
+    "statements": [
+      {
+        "name": "conditions1"
+      },
+      {
+        "name": "entries1"
+      },
+      {
+        "name": "entries_else"
+      }
+    ]
+  }
+}

@@ -131,7 +131,17 @@ public final class BlocklyXmlParser {
     }
 
     private static boolean isPool(String blockType) {
-        return "loottable_pool".equals(blockType) || "loottable_pool_simple".equals(blockType);
+        return "loottable_pool".equals(blockType)
+                || "loottable_pool_simple".equals(blockType)
+                || "loottable_pool_if".equals(blockType)
+                || "loottable_pool_if_else_if".equals(blockType)
+                || "loottable_pool_if_else".equals(blockType);
+    }
+
+    private static boolean isChoicePool(String blockType) {
+        return "loottable_pool_if".equals(blockType)
+                || "loottable_pool_if_else_if".equals(blockType)
+                || "loottable_pool_if_else".equals(blockType);
     }
 
     private static int parsePoolChain(Element first, LootTableType type, ItemNameResolver resolver,
@@ -158,8 +168,13 @@ public final class BlocklyXmlParser {
 
         parseConditionChain(statementFirstBlock(block, "conditions"), type, resolver, providedBlock,
                 pool.getConditions(), report);
-        int entryCount = parseEntryChain(statementFirstBlock(block, "entries"), poolIndex, type, resolver,
-                providedBlock, pool.getEntries(), report);
+        int entryCount;
+        if (isChoicePool(block.getAttribute("type"))) {
+            entryCount = parseChoicePool(block, poolIndex, type, resolver, providedBlock, pool, report);
+        } else {
+            entryCount = parseEntryChain(statementFirstBlock(block, "entries"), poolIndex, type, resolver,
+                    providedBlock, pool.getEntries(), report);
+        }
         if (entryCount == 0) {
             report.addWarning("loottable_pool",
                     "Pool " + poolIndex + " has no valid entries and was skipped.");
@@ -168,24 +183,118 @@ public final class BlocklyXmlParser {
         model.addPool(pool);
     }
 
+    private static int parseChoicePool(Element block, int poolIndex, LootTableType type, ItemNameResolver resolver,
+            String providedBlock, LootTableModel.Pool pool, ValidationReport report) {
+        LootTableModel.Entry alternatives = new LootTableModel.Entry();
+        alternatives.setType("minecraft:alternatives");
+        String blockType = block.getAttribute("type");
+
+        int branches = addChoiceBranch(alternatives, block, "conditions1", "entries1", poolIndex, type, resolver,
+                providedBlock, report);
+        if ("loottable_pool_if_else_if".equals(blockType)) {
+            branches += addChoiceBranch(alternatives, block, "conditions2", "entries2", poolIndex, type, resolver,
+                    providedBlock, report);
+        }
+        if ("loottable_pool_if_else".equals(blockType)) {
+            branches += addChoiceElseBranch(alternatives, block, "entries_else", poolIndex, type, resolver,
+                    providedBlock, report);
+        }
+        if (branches == 0) {
+            return 0;
+        }
+        pool.getEntries().add(alternatives);
+        return 1;
+    }
+
+    private static int addChoiceBranch(LootTableModel.Entry alternatives, Element block, String conditionInput,
+            String entriesInput, int poolIndex, LootTableType type, ItemNameResolver resolver,
+            String providedBlock, ValidationReport report) {
+        Element firstEntry = statementFirstBlock(block, entriesInput);
+        if (firstEntry == null) {
+            return 0;
+        }
+        List<LootTableModel.Entry> children = new ArrayList<>();
+        parseEntryChain(firstEntry, poolIndex, type, resolver, providedBlock, children, report);
+        if (children.isEmpty()) {
+            return 0;
+        }
+        LootTableModel.Entry group = new LootTableModel.Entry();
+        group.setType("minecraft:group");
+        parseConditionChain(statementFirstBlock(block, conditionInput), type, resolver, providedBlock,
+                group.getConditions(), report);
+        if (group.getConditions().isEmpty()) {
+            report.addWarning("loottable_pool", "An if branch has no condition and was skipped.");
+            return 0;
+        }
+        group.getChildren().addAll(children);
+        alternatives.getChildren().add(group);
+        return 1;
+    }
+
+    private static int addChoiceElseBranch(LootTableModel.Entry alternatives, Element block, String entriesInput,
+            int poolIndex, LootTableType type, ItemNameResolver resolver, String providedBlock,
+            ValidationReport report) {
+        Element firstEntry = statementFirstBlock(block, entriesInput);
+        if (firstEntry == null) {
+            return 0;
+        }
+        List<LootTableModel.Entry> children = new ArrayList<>();
+        parseEntryChain(firstEntry, poolIndex, type, resolver, providedBlock, children, report);
+        if (children.isEmpty()) {
+            return 0;
+        }
+        LootTableModel.Entry group = new LootTableModel.Entry();
+        group.setType("minecraft:group");
+        group.getChildren().addAll(children);
+        alternatives.getChildren().add(group);
+        return 1;
+    }
+
     private static int parseEntryChain(Element first, int poolIndex, LootTableType type, ItemNameResolver resolver,
             String providedBlock, List<LootTableModel.Entry> entries, ValidationReport report) {
         int entryCount = 0;
         for (Element block = first; block != null; block = nextBlock(block)) {
             String blockType = block.getAttribute("type");
             if (!"loottable_entry_item".equals(blockType)
-                    && !"loottable_entry_item_simple".equals(blockType)) {
+                    && !"loottable_entry_item_simple".equals(blockType)
+                    && !"loottable_entry_loot_table".equals(blockType)
+                    && !"loottable_entry_loot_table_simple".equals(blockType)) {
                 report.addWarning(blockType,
-                        "Block " + blockType + " is not an item entry and was skipped in pool " + poolIndex + ".");
+                        "Block " + blockType + " is not a loot table entry and was skipped in pool " + poolIndex + ".");
                 continue;
             }
-            LootTableModel.Entry entry = parseEntry(block, type, resolver, providedBlock, report);
+            LootTableModel.Entry entry = "loottable_entry_loot_table".equals(blockType)
+                    || "loottable_entry_loot_table_simple".equals(blockType)
+                            ? parseLootTableEntry(block, resolver, report)
+                            : parseEntry(block, type, resolver, providedBlock, report);
             if (entry != null) {
                 entries.add(entry);
                 entryCount++;
             }
         }
         return entryCount;
+    }
+
+    private static LootTableModel.Entry parseLootTableEntry(Element block, ItemNameResolver resolver,
+            ValidationReport report) {
+        String table = parseTextInput(block, "table", "minecraft:entities/zombie",
+                block.getAttribute("type"), report).trim();
+        if (table.isBlank()) {
+            report.addWarning(block.getAttribute("type"),
+                    "A loot table entry has no loot table id and was skipped.");
+            return null;
+        }
+        if (table.startsWith("#")) {
+            report.addWarning(block.getAttribute("type"),
+                    "Loot table tags are not supported in nested loot table entries; '" + table + "' was skipped.");
+            return null;
+        }
+        LootTableModel.Entry entry = new LootTableModel.Entry();
+        entry.setType("minecraft:loot_table");
+        entry.setLootTable(table);
+        entry.setWeight(readWholeNumber(block, "weight", 1, 1, "Nested loot table weight", report));
+        parseFunctionChain(statementFirstBlock(block, "functions"), entry.getFunctions(), report);
+        return entry;
     }
 
     private static LootTableModel.Entry parseEntry(Element block, LootTableType type, ItemNameResolver resolver,
@@ -360,6 +469,23 @@ public final class BlocklyXmlParser {
                 LootTableModel.LootFunction value = new LootTableModel.LootFunction(itemType);
                 value.getProperties().put("component", component);
                 value.getProperties().put("items", items);
+                yield value;
+            }
+            case "loottable_item_contents_loot" -> {
+                String table = parseTextInput(itemBlock, "table", "minecraft:chests/simple_dungeon",
+                        itemType, report).trim();
+                if (table.isBlank() || table.startsWith("#")) {
+                    report.addWarning(itemType,
+                            "A loot-table contents item has no valid loot table id and was skipped.");
+                    yield null;
+                }
+                String component = fieldValue(itemBlock, "component").trim();
+                if (component.isBlank()) {
+                    component = "minecraft:container";
+                }
+                LootTableModel.LootFunction value = new LootTableModel.LootFunction(itemType);
+                value.getProperties().put("component", component);
+                value.getProperties().put("lootTable", table);
                 yield value;
             }
             default -> {

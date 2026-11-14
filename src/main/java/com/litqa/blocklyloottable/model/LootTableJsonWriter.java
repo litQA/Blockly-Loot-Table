@@ -64,6 +64,73 @@ public final class LootTableJsonWriter {
     }
 
     private static Map<String, Object> entryToJson(LootTableModel.Entry entry, boolean itemComponents) {
+        if ("minecraft:alternatives".equals(entry.getType())) {
+            List<Object> children = new ArrayList<>();
+            for (LootTableModel.Entry child : entry.getChildren()) {
+                Map<String, Object> childJson = entryToJson(child, itemComponents);
+                if (childJson != null) {
+                    children.add(childJson);
+                }
+            }
+            if (children.isEmpty()) {
+                return null;
+            }
+            Map<String, Object> json = new LinkedHashMap<>();
+            json.put("type", "minecraft:alternatives");
+            json.put("children", children);
+            return json;
+        }
+
+        if ("minecraft:group".equals(entry.getType())) {
+            List<Object> children = new ArrayList<>();
+            for (LootTableModel.Entry child : entry.getChildren()) {
+                Map<String, Object> childJson = entryToJson(child, itemComponents);
+                if (childJson != null) {
+                    children.add(childJson);
+                }
+            }
+            if (children.isEmpty()) {
+                return null;
+            }
+            Map<String, Object> json = new LinkedHashMap<>();
+            json.put("type", "minecraft:group");
+            if (!entry.getConditions().isEmpty()) {
+                List<Object> conditions = conditionsToJson(entry.getConditions(), itemComponents);
+                if (!conditions.isEmpty()) {
+                    json.put("conditions", conditions);
+                }
+            }
+            json.put("children", children);
+            return json;
+        }
+
+        if ("minecraft:loot_table".equals(entry.getType())) {
+            if (entry.getLootTable() == null || entry.getLootTable().isBlank()) {
+                return null;
+            }
+            Map<String, Object> json = new LinkedHashMap<>();
+            json.put("type", "minecraft:loot_table");
+            json.put(itemComponents ? "value" : "name", entry.getLootTable());
+            json.put("weight", entry.getWeight());
+            List<Object> functions = new ArrayList<>();
+            for (LootTableModel.LootFunction function : entry.getFunctions()) {
+                Map<String, Object> functionJson = functionToJson(function, itemComponents);
+                if (functionJson != null) {
+                    functions.add(functionJson);
+                }
+            }
+            if (!functions.isEmpty()) {
+                json.put("functions", functions);
+            }
+            if (!entry.getConditions().isEmpty()) {
+                List<Object> conditions = conditionsToJson(entry.getConditions(), itemComponents);
+                if (!conditions.isEmpty()) {
+                    json.put("conditions", conditions);
+                }
+            }
+            return json;
+        }
+
         String item = entry.getItem();
         if (item == null || item.isBlank() || item.startsWith("#") || "minecraft:air".equals(item)) {
             return null;
@@ -283,6 +350,23 @@ public final class LootTableJsonWriter {
                                 ? "minecraft:container"
                                 : string(function.getProperties().get("component")));
                 json.put("entries", entries);
+                return json;
+            }
+            case "loottable_item_contents_loot" -> {
+                String lootTable = string(function.getProperties().get("lootTable"));
+                if (lootTable.isBlank()) {
+                    return null;
+                }
+                Map<String, Object> lootEntry = new LinkedHashMap<>();
+                lootEntry.put("type", "minecraft:loot_table");
+                lootEntry.put(itemComponents ? "value" : "name", lootTable);
+                Map<String, Object> json = new LinkedHashMap<>();
+                json.put("function", "minecraft:set_contents");
+                json.put(itemComponents ? "component" : "type",
+                        string(function.getProperties().get("component")).isBlank()
+                                ? "minecraft:container"
+                                : string(function.getProperties().get("component")));
+                json.put("entries", List.of(lootEntry));
                 return json;
             }
             default -> {

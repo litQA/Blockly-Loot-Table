@@ -1,0 +1,48 @@
+{
+  "type": "loottable_item_contents_loot",
+  "message0": "Item %3 of type %2 containing loot table %1",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "table",
+      "check": "String"
+    },
+    {
+      "type": "field_dropdown",
+      "name": "component",
+      "options": [
+        [
+          "container",
+          "minecraft:container"
+        ],
+        [
+          "bundle",
+          "minecraft:bundle_contents"
+        ]
+      ]
+    },
+    {
+      "type": "input_value",
+      "name": "item",
+      "check": "MCItem"
+    }
+  ],
+  "inputsInline": false,
+  "output": "MCItem",
+  "colour": 350,
+  "tooltip": "Fills an item container from another loot table.",
+  "mcreator": {
+    "toolbox_id": "loottable_item_components",
+    "inputs": [
+      "table",
+      "item"
+    ],
+    "fields": [
+      "component"
+    ],
+    "toolbox_init": [
+      "<value name=\"item\"><block type=\"loottable_item_selector\"><field name=\"item\">Blocks.SHULKER_BOX</field></block></value>",
+      "<value name=\"table\"><block type=\"loottable_empty_text\"><field name=\"TEXT\">minecraft:chests/simple_dungeon</field></block></value>"
+    ]
+  }
+}

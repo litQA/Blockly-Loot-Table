@@ -1,0 +1,43 @@
+{
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "table",
+      "check": "String"
+    },
+    {
+      "type": "field_number",
+      "name": "weight",
+      "value": 1,
+      "min": 1,
+      "max": 64000,
+      "precision": 1
+    },
+    {
+      "type": "input_statement",
+      "name": "functions",
+      "check": "LootTableFunction"
+    }
+  ],
+  "inputsInline": true,
+  "previousStatement": "LootTableEntry",
+  "nextStatement": "LootTableEntry",
+  "colour": 350,
+  "mcreator": {
+    "toolbox_id": "loottable",
+    "toolbox_init": [
+      "<value name=\"table\"><block type=\"loottable_empty_text\"><field name=\"TEXT\">minecraft:entities/zombie</field></block></value>"
+    ],
+    "fields": [
+      "weight"
+    ],
+    "inputs": [
+      "table"
+    ],
+    "statements": [
+      {
+        "name": "functions"
+      }
+    ]
+  }
+}

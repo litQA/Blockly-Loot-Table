@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.0.3.61-beta
+
+### New Content
+
+- Added three deep-green alternatives pool blocks: one `if` branch, `if` +
+  `else if`, and `if` + `else`. They generate a `minecraft:alternatives` entry
+  with an optional final unconditional branch.
+- Added two loot-table entries that call another loot table, with optional
+  functions. The generated entry uses `value` on 1.21+ and `name` on older
+  generators.
+- Added an item component that fills a container from another loot table with
+  `minecraft:set_contents`.
+- Added a weight field to the compact item entry.
+
+### Changed
+
+- The boolean selector label no longer repeats the word "True/false" before the
+  selector.
+- Context dependencies use normal-size bold text with category colours.
+- The equals sign in NBT comparisons is fixed; it is no longer an editable
+  field.
+- The manual path field is half as wide.
+- Container, enchantment and other multi-row B/C blocks now right-align each
+  row's item and count/value inputs.
+- The container item component defaults to a shulker box.
+
 ## 1.0.3.55-beta
 
 ### New Content
@@ -419,6 +445,7 @@
 - The condition set is the first-phase subset documented in
   `MIGRATION-REPORT.md`.
 - Item tags and nested predicate editors are not implemented yet.
+
 
 
 

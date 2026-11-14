@@ -65,11 +65,22 @@ public final class LootTableModel {
 
     public static final class Entry {
 
+        private String type = "minecraft:item";
         private String item = "";
+        private String lootTable = "";
         private NumberProvider count = NumberProvider.number(1, false);
         private double weight = 1;
         private final List<Condition> conditions = new ArrayList<>();
         private final List<LootFunction> functions = new ArrayList<>();
+        private final List<Entry> children = new ArrayList<>();
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type == null || type.isBlank() ? "minecraft:item" : type;
+        }
 
         public String getItem() {
             return item;
@@ -77,6 +88,14 @@ public final class LootTableModel {
 
         public void setItem(String item) {
             this.item = item == null ? "" : item;
+        }
+
+        public String getLootTable() {
+            return lootTable;
+        }
+
+        public void setLootTable(String lootTable) {
+            this.lootTable = lootTable == null ? "" : lootTable;
         }
 
         public NumberProvider getCount() {
@@ -101,6 +120,10 @@ public final class LootTableModel {
 
         public List<LootFunction> getFunctions() {
             return functions;
+        }
+
+        public List<Entry> getChildren() {
+            return children;
         }
     }
 

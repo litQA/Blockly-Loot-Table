@@ -36,7 +36,7 @@
       "row"
     ],
     "toolbox_init": [
-      "<value name=\"item\"><block type=\"loottable_item_selector\"></block></value>",
+      "<value name=\"item\"><block type=\"loottable_item_selector\"><field name=\"item\">Blocks.SHULKER_BOX</field></block></value>",
       "<mutation inputs=\"1\"></mutation>",
       "~<value name=\"item0\"><block type=\"loottable_item_selector\"></block></value>",
       "~<value name=\"count0\"><block type=\"loottable_integer\"><field name=\"value\">1</field></block></value>"

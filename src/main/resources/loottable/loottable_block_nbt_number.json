@@ -11,16 +11,6 @@
       "check": "MCItemBlock"
     },
     {
-      "type": "field_dropdown",
-      "name": "operator",
-      "options": [
-        [
-          "=",
-          "="
-        ]
-      ]
-    },
-    {
       "type": "input_value",
       "name": "value",
       "check": [
@@ -38,11 +28,7 @@
     "toolbox_init": [
       "<value name=\"tag\"><block type=\"loottable_empty_text\"><field name=\"TEXT\">tagName</field></block></value>",
       "<value name=\"block\"><block type=\"loottable_provided_blockstate\"></block></value>",
-      "<field name=\"operator\">=</field>",
       "<value name=\"value\"><block type=\"loottable_float\"><field name=\"value\">0.0</field></block></value>"
-    ],
-    "fields": [
-      "operator"
     ],
     "inputs": [
       "tag",

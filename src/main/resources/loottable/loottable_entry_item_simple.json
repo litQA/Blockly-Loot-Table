@@ -12,6 +12,14 @@
         "Number",
         "NumberProvider"
       ]
+    },
+    {
+      "type": "field_number",
+      "name": "weight",
+      "value": 1,
+      "min": 1,
+      "max": 64000,
+      "precision": 1
     }
   ],
   "inputsInline": true,
@@ -23,6 +31,9 @@
     "toolbox_init": [
       "<value name=\"item\"><block type=\"loottable_item_selector\"></block></value>",
       "<value name=\"count\"><block type=\"loottable_integer\"><field name=\"value\">1</field></block></value>"
+    ],
+    "fields": [
+      "weight"
     ],
     "inputs": [
       "item",

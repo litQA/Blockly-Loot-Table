@@ -65,7 +65,7 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
     private final JButton blockTargetSelector = new JButton();
     private final JButton entityTargetSelector = new JButton();
     private final JCheckBox manualPath = new JCheckBox();
-    private final VTextField path = new VTextField(30);
+    private final VTextField path = new VTextField(15);
     private String targetValue = "";
     private final JLabel dependencyLabel = new JLabel();
 
@@ -303,8 +303,8 @@ public class BlocklyLootTableGUI extends ModElementGUI<BlocklyLootTable> {
         String dependencies = currentType() == LootTableType.ENTITY
                 ? entity + ", " + sourceEntity + ", " + world + ", " + damage
                 : block + ", " + targetEntity + ", " + sourceEntity + ", " + world;
-        dependencyLabel.setText("<html><font size='+1'><b>" + prefix + " " + dependencies
-                + "</b></font></html>");
+        dependencyLabel.setText("<html><b>" + prefix + " " + dependencies
+                + "</b></html>");
     }
 
     private static String dependencyName(String color, String key) {

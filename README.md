@@ -65,9 +65,14 @@ a warning.
 
 Pools support `rolls`, `bonus_rolls`, conditions and weighted item entries.
 The condition-free **Pool with rolls** block uses the same deep-green colour and
-is useful when a pool needs no condition chain. Entries require an **Item
-selector** input, a number count input, a weight, a condition chain and a
-function chain. The item input also accepts the **Item with enchantment** value
+is useful when a pool needs no condition chain. Three alternatives pool blocks
+add one `if` branch, an optional `else if` branch, or a final `else` branch.
+They generate a `minecraft:alternatives` entry and can nest any normal entry.
+Entries require an **Item selector** input, a number count input, a weight, a
+condition chain and a function chain. Two additional entries call another loot
+table directly: one includes a function chain, one does not. On 1.21+ the
+generated `minecraft:loot_table` entry uses `value`; older generators receive
+`name`. The item input also accepts the **Item with enchantment** value
 block and the four randomized enchantment item variants. **Item with
 enchantments** writes `minecraft:set_enchantments` with dynamic rows whose
 levels accept a bare number or a number provider. The four other variants write
@@ -115,8 +120,13 @@ the entry function chain. The three `apply_bonus` numeric parameters are
 literal numbers in 1.21.1; their sockets reject number providers with a
 warning.
 
-The compact item entry is a shorter B-shaped entry with only item and count
+The compact item entry is a shorter B-shaped entry with item, count and weight
 sockets. It is useful when no conditions or functions are needed.
+
+The **Loot table contents** item component fills a shulker box or bundle from
+another loot table. It emits `minecraft:set_contents` with a nested
+`minecraft:loot_table` entry and defaults to a shulker box plus
+`minecraft:chests/simple_dungeon`.
 
 Bare integer and float blocks serialize as bare JSON numbers. The two provider
 constant blocks serialize as `{"type":"minecraft:constant","value":...}`.

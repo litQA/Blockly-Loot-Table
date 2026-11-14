@@ -20,6 +20,7 @@
             function (thisBlock, inputName, index) {
                 thisBlock.appendValueInput(inputName + index)
                     .setCheck(['Number', 'NumberProvider'])
+                    .setAlign(Blockly.Input.Align.RIGHT)
                     .appendField(new FieldDataListSelector('enchantments'), 'enchantment' + index);
             },
             true,
@@ -40,6 +41,7 @@
             'row',
             function (thisBlock, inputName, index) {
                 thisBlock.appendDummyInput(inputName + index)
+                    .setAlign(Blockly.Input.Align.RIGHT)
                     .appendField(new FieldDataListSelector('enchantments'), 'enchantment' + index);
             },
             false,

@@ -12,6 +12,14 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.0.3.61-beta
+
+- Added version-aware nested loot-table entries. Minecraft 1.21+ uses the
+  `value` field; older generators receive `name`.
+- Added alternatives pools and a loot-table contents item component.
+- Fixed compact item entry weight output, container defaults, fixed NBT
+  comparison labels, and right alignment for expandable block rows.
+
 ### 1.0.3.55-beta
 
 - Grouped all condition categories under a **Conditions** parent category while
@@ -334,5 +342,6 @@ workspace metadata is modified.
     `LootTableFunction`. Third-party blocks must opt into the matching type to
     connect to these chains. NBT conditions compare one scalar tag at a time and
     do not provide a compound or list editor.
+
 
 
