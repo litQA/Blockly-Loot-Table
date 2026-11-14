@@ -43,6 +43,7 @@ public final class LootTableSelfCheck {
         validWorldConditions();
         validLegacyVersionFormats();
         validSetNameAndPotionBase();
+        datapackGenerators();
         validPotionRangeCondition();
         validItemConditionsAndDamage();
         validNestedPoolsAndEntries();
@@ -1627,6 +1628,27 @@ public final class LootTableSelfCheck {
         check(!potionJson.contains("\"Potion:\""), "potion has no legacy base template");
         check(!resourceExists("/fabric-1.21.11/blockly_loot_table.definition.yaml"),
                 "Fabric 1.21.11 definitions are not bundled");
+    }
+
+    private static void datapackGenerators() {
+        String[] generators = {
+                "datapack-1.16.x", "datapack-1.17.x", "datapack-1.18.x",
+                "datapack-1.19.2", "datapack-1.19.4", "datapack-1.20.1",
+                "datapack-1.20.4", "datapack-1.20.6", "datapack-1.21.1",
+                "datapack-1.21.4", "datapack-1.21.8"
+        };
+        for (String generator : generators) {
+            String definition = "/" + generator + "/blockly_loot_table.definition.yaml";
+            String template = "/" + generator + "/templates/blockly_loot_table.json.ftl";
+            check(resourceExists(definition), generator + " definition exists");
+            check(resourceExists(template), generator + " template exists");
+            String path = resourceText(definition);
+            if (generator.compareTo("datapack-1.21") < 0) {
+                check(path.contains("/loot_tables/"), generator + " uses plural loot_tables");
+            } else {
+                check(path.contains("/loot_table/"), generator + " uses singular loot_table");
+            }
+        }
     }
 
     private static void validPotionRangeCondition() {

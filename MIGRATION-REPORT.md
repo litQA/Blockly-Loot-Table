@@ -12,6 +12,16 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.2.0.109-beta
+
+- Added Data Pack generator definitions for 1.16.5 through 1.21.8. A Data Pack
+  workspace now exposes the same `blockly_loot_table` element and emits the
+  same version-gated loot-table JSON as the matching mod generator; only the
+  resource root differs (`src/main/data/...`).
+- The compatibility documents now distinguish mod and Data Pack output roots
+  and document unsupported-feature skipping/warnings for the older format
+  ranges.
+
 ### 1.1.1.106-beta
 
 - Added the Chest element type. Chest context has no tool, block-state or

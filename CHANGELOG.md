@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.2.0.109-beta
+
+### Added
+
+- Data Pack generator definitions for 1.16.5, 1.17.1, 1.18.2, 1.19.2,
+  1.19.4, 1.20.1, 1.20.4, 1.20.6, 1.21.1, 1.21.4 and 1.21.8. Each definition
+  is identical to the matching mod-generator definition and writes into the
+  Data Pack `src/main/data/<namespace>/loot_tables|...` tree.
+
+### Changed
+
+- Raised the minor version from `1.1.x` to `1.2.0` once; the build number
+  continues to increase normally.
+- Expanded the 1.16-1.19.4 and 1.20-1.20.6 compatibility documents with Data
+  Pack paths, generator mappings and the version-gated skip/warning behavior.
+
+### Verified
+
+- Prepared for the normal self-check/build pipeline; Data Pack resources and
+  folder names are covered by self-check assertions.
+
 ## 1.1.1.106-beta
 
 ### Added

@@ -200,6 +200,9 @@ Definitions are supplied for these MCreator 2026.1 generator folder names:
 - Forge 1.16.5, 1.17.1, 1.18.2, 1.19.2, 1.19.4, 1.20.1
 - NeoForge 1.20.1, 1.20.4, 1.20.6, 1.21.1, 1.21.4, 1.21.8
 - Fabric 1.21.8
+- Data Pack 1.16.5, 1.17.1, 1.18.2, 1.19.2, 1.19.4, 1.20.1, 1.20.4,
+  1.20.6, 1.21.1, 1.21.4, 1.21.8 (the matching `datapack-*` generator
+  folders are identical to the corresponding mod-generator definitions)
 
 The 1.21+ generators write to `data/<namespace>/loot_table/`; earlier
 generators write to `data/<namespace>/loot_tables/`. Definitions for Fabric

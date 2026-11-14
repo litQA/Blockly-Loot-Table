@@ -25,7 +25,8 @@ public final class PluginElementTypes {
                 null,
                 BlocklyLootTableGUI::new,
                 BlocklyLootTable.class
-        ).coveredOn(GeneratorFlavor.FORGE, GeneratorFlavor.NEOFORGE, GeneratorFlavor.FABRIC));
+        ).coveredOn(GeneratorFlavor.FORGE, GeneratorFlavor.NEOFORGE, GeneratorFlavor.FABRIC,
+                GeneratorFlavor.DATAPACK));
         System.out.println("[Blockly Loot Table] Registered mod element type " + BlocklyLootTable.REGISTRY_NAME);
     }
 }
