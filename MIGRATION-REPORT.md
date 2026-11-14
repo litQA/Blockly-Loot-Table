@@ -12,6 +12,19 @@ workspace metadata is modified.
 
 ## Fixed Issues
 
+### 1.1.0.74-beta
+
+- Build numbers are monotonic again: the temporary `1.1.0.1` regression is
+  followed by `1.1.0.74`, not a lower build number.
+- The condition pools expose the native `controls_if` mutator shape. The base
+  `if`/`do` pair lives in the block body; the mutator only manages `else if`
+  rows and the final `else` row. Both row types can be added or removed without
+  duplicating the base branch.
+- `All conditions`/`Any condition` start with two empty value rows.
+- The circular-reference warning now comes from the MCreator language file.
+- `loottable_block_same` compares the provided blockstate with another block and
+  emits one exact predicate when they match or an `all_of` when they differ.
+
 ### 1.1.0.1-beta
 
 - Fixed condition-aware pool dragging. The pool mutator previously skipped

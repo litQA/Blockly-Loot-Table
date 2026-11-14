@@ -18,18 +18,42 @@
       "precision": 1
     }
   ],
+  "message1": "if %1",
+  "args1": [
+    {
+      "type": "input_value",
+      "name": "condition0",
+      "check": "LootTableCondition",
+      "align": "RIGHT"
+    }
+  ],
+  "message2": "do %1",
+  "args2": [
+    {
+      "type": "input_statement",
+      "name": "entries0",
+      "check": "LootTableEntry",
+      "align": "RIGHT"
+    }
+  ],
   "inputsInline": false,
   "previousStatement": "LootTablePool",
   "nextStatement": "LootTablePool",
   "colour": 120,
-  "mutator": "loottable_pool_if_else_mutator",
+  "mutator": "loottable_pool_mutator",
   "mcreator": {
     "toolbox_id": "loottable",
     "toolbox_init": [
-      "<mutation inputs=\"1\"></mutation>",
+      "<mutation elseif=\"0\" else=\"1\"></mutation>",
       "<value name=\"condition0\"><block type=\"loottable_random_chance\"><field name=\"chance\">0.5</field></block></value>",
       "<statement name=\"entries0\"><block type=\"loottable_entry_item_simple\"><value name=\"item\"><block type=\"loottable_item_selector\"></block></value><value name=\"count\"><block type=\"loottable_integer\"><field name=\"value\">1</field></block></value></block></statement>",
       "<statement name=\"entries_else\"><block type=\"loottable_entry_item_simple\"><value name=\"item\"><block type=\"loottable_item_selector\"></block></value><value name=\"count\"><block type=\"loottable_integer\"><field name=\"value\">1</field></block></value></block></statement>"
+    ],
+    "inputs": [
+      "condition0"
+    ],
+    "statements": [
+      "entries0"
     ],
     "fields": [
       "rolls",

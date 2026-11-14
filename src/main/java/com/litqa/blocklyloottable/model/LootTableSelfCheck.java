@@ -159,6 +159,9 @@ public final class LootTableSelfCheck {
                 "blockly.block.loottable_function_limit_count",
                 "blockly.block.loottable_function_set_count_add",
                 "blockly.block.loottable_boolean",
+                "blockly.block.loottable_block_same",
+                "blockly.block.loottable_block_same.tooltip",
+                "blockly.block.loottable_pool_mutator.do",
                 "blockly.block.loottable_empty_text")) {
             check(properties.containsKey(key), fileName + " contains " + key);
         }
@@ -166,6 +169,8 @@ public final class LootTableSelfCheck {
                 fileName + " keeps the boolean field placeholder");
         check(properties.getProperty("blockly.block.loottable_empty_text").contains("%1"),
                 fileName + " keeps the empty-text field placeholder");
+        check(!properties.getProperty("elementgui.blockly_loot_table.warning.circular_reference", "").isBlank(),
+                fileName + " has a localized circular-reference warning");
         for (String nbtBlock : new String[]{
                 "loottable_block_nbt_logic",
                 "loottable_block_nbt_number",
@@ -436,7 +441,7 @@ public final class LootTableSelfCheck {
                   <block type="loottable_start" deletable="false">
                     <next>
                       <block type="loottable_pool_if_else">
-                        <mutation inputs="1"></mutation>
+                        <mutation elseif="0" else="1"></mutation>
                         <field name="rolls">1</field>
                         <field name="bonus_rolls">0</field>
                         <value name="condition0">
@@ -485,7 +490,7 @@ public final class LootTableSelfCheck {
                   <block type="loottable_start" deletable="false">
                     <next>
                       <block type="loottable_pool_if">
-                        <mutation inputs="1"></mutation>
+                        <mutation elseif="0" else="0"></mutation>
                         <field name="rolls">1</field>
                         <field name="bonus_rolls">0</field>
                         <value name="condition0">
@@ -520,8 +525,7 @@ public final class LootTableSelfCheck {
         check(poolJson.contains("\"type\": \"minecraft:loot_table\""), "nested loot table entry is written");
         check(poolJson.contains("\"value\": \"minecraft:entities/zombie\""),
                 "nested loot table uses the 1.21 value field");
-        check(poolResult.report().summary().contains(
-                        "记住，引用战利品表时严禁直接或间接引用自己，否则会造成游戏崩溃或无法进入存档。"),
+        check(poolResult.report().summary().contains(BlocklyXmlParser.getCircularReferenceWarning()),
                 "nested loot table warns about circular references");
         check(poolJson.contains("\"function\": \"minecraft:limit_count\""),
                 "nested loot table functions are written");
@@ -927,9 +931,9 @@ public final class LootTableSelfCheck {
         check(resourceText("/loottable/loottable_entry_item.json").contains("\"name\": \"conditions\"")
                         && resourceText("/loottable/loottable_entry_item.json").contains("\"type\": \"input_value\""),
                 "entry condition socket is a value input");
-        check(resourceText("/loottable/loottable_logic_and.json").contains("\"toolbox_init\": [\"<mutation inputs=\\\"1\\\"></mutation>\"]")
+        check(resourceText("/loottable/loottable_logic_and.json").contains("\"toolbox_init\": [\"<mutation inputs=\\\"2\\\"></mutation>\"]")
                         && !resourceText("/loottable/loottable_logic_and.json").contains("loottable_random_chance"),
-                "all conditions starts with one empty input");
+                "all conditions starts with two empty inputs");
         check(resourceText("/loottable/loottable_logic_not.json").contains("\"toolbox_init\": []")
                         && !resourceText("/loottable/loottable_logic_not.json").contains("loottable_random_chance"),
                 "not starts with one empty input");
@@ -941,12 +945,27 @@ public final class LootTableSelfCheck {
                         && resourceText("/loottable/loottable_score_player.json").contains("%{BKY_MATH_HUE}")
                         && resourceText("/loottable/loottable_score_uuid.json").contains("%{BKY_MATH_HUE}"),
                 "score providers use the number blue");
+        String sameBlock = condition("loottable_block_same",
+                value("block", "<block type=\"loottable_provided_blockstate\"></block>")
+                        + value("other", "<block type=\"loottable_block_selector\">"
+                                + "<field name=\"block\">minecraft:oak_log</field></block>"));
+        BlocklyXmlParser.ParseResult sameBlockResult = BlocklyXmlParser.parse(blockTableXml(
+                entry("Blocks.STONE", 1, 1), sameBlock), LootTableType.BLOCK, value -> value,
+                "minecraft:oak_log");
+        check(!sameBlockResult.report().hasErrors(), "same-block condition parses without errors");
+        String sameBlockJson = LootTableJsonWriter.write(sameBlockResult.model(), "test", "blocks/oak", false);
+        check(sameBlockJson.contains("\"condition\": \"minecraft:block_state_property\"")
+                        && sameBlockJson.contains("\"block\": \"minecraft:oak_log\""),
+                "same-block condition writes a block-state predicate");
+
         String mutatorJs = resourceText("/blockly/js/loottable_mutators.js");
         check(mutatorJs.contains("loottable_condition_all_mutator")
-                        && mutatorJs.contains("loottable_pool_if_mutator"),
-                "condition and pool mutators are registered");
-        check(!mutatorJs.contains("block.isInsertionMarker()"),
-                "pool mutator builds insertion-marker inputs");
+                        && mutatorJs.contains("loottable_pool_mutator")
+                        && mutatorJs.contains("loottable_pool_mutator_else_if")
+                        && mutatorJs.contains("loottable_pool_mutator_else"),
+                "condition and native-style pool mutators are registered");
+        check(mutatorJs.contains("elseifCount_") && mutatorJs.contains("updatePoolBranches(this)"),
+                "pool mutator follows the if/else-if/else shape");
     }
 
     private static void validEnchantedItem() {

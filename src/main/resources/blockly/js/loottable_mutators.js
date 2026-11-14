@@ -208,127 +208,186 @@
     registerSimpleMutatorInput('loottable_pool_mutator_input',
         'blockly.block.loottable_pool_mutator.input', 120, false);
 
-    function poolHasElse(block) {
-        return block.type === 'loottable_pool_if_else';
-    }
-
-    function updatePoolShape(block) {
-        if (!block) {
-            return;
-        }
-        for (var index = 0; index < 64; index++) {
-            if (block.getInput('condition' + index)) {
-                block.removeInput('condition' + index);
+    function registerPoolMutator() {
+        Blockly.Blocks['loottable_pool_mutator_container'] = {
+            init: function () {
+                this.appendDummyInput()
+                    .appendField(label('blockly.block.loottable_pool_mutator.container', 'If / else if / else'));
+                this.appendStatementInput('STACK');
+                this.setColour(120);
+                this.contextMenu = false;
+                this.setDeletable(false);
+                this.setMovable(false);
             }
-            if (block.getInput('entries' + index)) {
-                block.removeInput('entries' + index);
+        };
+        Blockly.Blocks['loottable_pool_mutator_else_if'] = {
+            init: function () {
+                this.appendDummyInput()
+                    .appendField(label('blockly.block.loottable_pool_mutator.else_if', 'else if'));
+                this.setPreviousStatement(true);
+                this.setNextStatement(true);
+                this.setColour(120);
+                this.contextMenu = false;
+            }
+        };
+        Blockly.Blocks['loottable_pool_mutator_else'] = {
+            init: function () {
+                this.appendDummyInput()
+                    .appendField(label('blockly.block.loottable_pool_mutator.else', 'else'));
+                this.setPreviousStatement(true);
+                this.setNextStatement(false);
+                this.setColour(120);
+                this.contextMenu = false;
+            }
+        };
+
+        function updatePoolBranches(block) {
+            if (!block) {
+                return;
+            }
+            for (var index = 1; index < 64; index++) {
+                if (block.getInput('condition' + index)) {
+                    block.removeInput('condition' + index);
+                }
+                if (block.getInput('entries' + index)) {
+                    block.removeInput('entries' + index);
+                }
+            }
+            if (block.getInput('entries_else')) {
+                block.removeInput('entries_else');
+            }
+            var elseifCount = Math.max(0, Math.min(63, block.elseifCount_ || 0));
+            for (var i = 1; i <= elseifCount; i++) {
+                block.appendValueInput('condition' + i)
+                    .setCheck('LootTableCondition')
+                    .setAlign(Blockly.Input.Align.RIGHT)
+                    .appendField(label('blockly.block.loottable_pool_mutator.else_if', 'else if'));
+                block.appendStatementInput('entries' + i)
+                    .setCheck('LootTableEntry')
+                    .setAlign(Blockly.Input.Align.RIGHT)
+                    .appendField(label('blockly.block.loottable_pool_mutator.do', 'do'));
+            }
+            if (block.elseCount_) {
+                block.appendStatementInput('entries_else')
+                    .setCheck('LootTableEntry')
+                    .setAlign(Blockly.Input.Align.RIGHT)
+                    .appendField(label('blockly.block.loottable_pool_mutator.else', 'else'));
             }
         }
-        if (block.getInput('entries_else')) {
-            block.removeInput('entries_else');
-        }
-        var count = Math.max(1, Math.min(64, block.inputCount_ || 1));
-        for (var i = 0; i < count; i++) {
-            var branchLabel = i === 0
-                ? label('blockly.block.loottable_pool_mutator.if', 'If condition')
-                : label('blockly.block.loottable_pool_mutator.else_if', 'Else if condition');
-            block.appendValueInput('condition' + i)
-                .setCheck('LootTableCondition')
-                .setAlign(Blockly.Input.Align.RIGHT)
-                .appendField(branchLabel);
-            block.appendStatementInput('entries' + i)
-                .setCheck('LootTableEntry')
-                .setAlign(Blockly.Input.Align.RIGHT)
-                .appendField(label('blockly.block.loottable_pool_mutator.entries', 'Entries'));
-        }
-        if (poolHasElse(block)) {
-            block.appendStatementInput('entries_else')
-                .setCheck('LootTableEntry')
-                .setAlign(Blockly.Input.Align.RIGHT)
-                .appendField(label('blockly.block.loottable_pool_mutator.else', 'Else entries'));
-        }
-    }
 
-    function registerPoolMutator(extensionName) {
-        Blockly.Extensions.registerMutator(extensionName, {
+        function reconnectPoolBranches(block, conditions, entries, elseConnection) {
+            for (var i = 1; i <= block.elseifCount_; i++) {
+                Blockly.Mutator.reconnect(conditions[i], block, 'condition' + i);
+                Blockly.Mutator.reconnect(entries[i], block, 'entries' + i);
+            }
+            if (block.elseCount_) {
+                Blockly.Mutator.reconnect(elseConnection, block, 'entries_else');
+            }
+        }
+
+        var poolMixin = {
+            elseifCount_: 0,
+            elseCount_: 0,
             mutationToDom: function () {
                 var mutation = document.createElement('mutation');
-                mutation.setAttribute('inputs', Math.max(1, Math.min(64, this.inputCount_ || 1)));
+                mutation.setAttribute('elseif', this.elseifCount_ || 0);
+                mutation.setAttribute('else', this.elseCount_ ? 1 : 0);
                 return mutation;
             },
             domToMutation: function (xmlElement) {
-                this.inputCount_ = Math.max(1, Math.min(64,
-                    parseInt(xmlElement.getAttribute('inputs'), 10) || 1));
-                updatePoolShape(this);
+                this.elseifCount_ = Math.max(0, Math.min(63,
+                    parseInt(xmlElement.getAttribute('elseif'), 10) || 0));
+                this.elseCount_ = parseInt(xmlElement.getAttribute('else'), 10) ? 1 : 0;
+                this.rebuildPoolShape_();
             },
             saveExtraState: function () {
-                return {'inputCount': Math.max(1, Math.min(64, this.inputCount_ || 1))};
+                return {'elseIfCount': this.elseifCount_ || 0, 'hasElse': !!this.elseCount_};
             },
             loadExtraState: function (state) {
-                this.inputCount_ = Math.max(1, Math.min(64,
-                    parseInt(state.inputCount, 10) || 1));
-                updatePoolShape(this);
+                this.elseifCount_ = Math.max(0, Math.min(63,
+                    parseInt(state.elseIfCount, 10) || 0));
+                this.elseCount_ = state.hasElse ? 1 : 0;
+                updatePoolBranches(this);
             },
             decompose: function (workspace) {
                 var container = workspace.newBlock('loottable_pool_mutator_container');
                 container.initSvg();
                 var connection = container.getInput('STACK').connection;
-                for (var i = 0; i < Math.max(1, this.inputCount_ || 1); i++) {
-                    var row = workspace.newBlock('loottable_pool_mutator_input');
+                for (var i = 1; i <= this.elseifCount_; i++) {
+                    var row = workspace.newBlock('loottable_pool_mutator_else_if');
                     row.initSvg();
                     connection.connect(row.previousConnection);
                     connection = row.nextConnection;
                 }
+                if (this.elseCount_) {
+                    var elseRow = workspace.newBlock('loottable_pool_mutator_else');
+                    elseRow.initSvg();
+                    connection.connect(elseRow.previousConnection);
+                }
                 return container;
             },
             compose: function (containerBlock) {
-                var conditionConnections = [];
-                var entriesConnections = [];
+                var conditions = [null];
+                var entries = [null];
+                var elseConnection = null;
+                this.elseifCount_ = 0;
+                this.elseCount_ = 0;
                 var row = containerBlock.getInputTargetBlock('STACK');
-                while (row && !row.isInsertionMarker()) {
-                    conditionConnections.push(row.conditionConnection_);
-                    entriesConnections.push(row.entriesConnection_);
-                    row = row.nextConnection && row.nextConnection.targetBlock();
-                }
-                for (var i = 0; i < 64; i++) {
-                    var conditionInput = this.getInput('condition' + i);
-                    var entriesInput = this.getInput('entries' + i);
-                    if (conditionInput && conditionInput.connection.targetConnection
-                        && conditionConnections.indexOf(conditionInput.connection.targetConnection) === -1) {
-                        conditionInput.connection.targetConnection.disconnect();
+                while (row) {
+                    if (!row.isInsertionMarker()) {
+                        if (row.type === 'loottable_pool_mutator_else_if') {
+                            this.elseifCount_++;
+                            conditions.push(row.conditionConnection_);
+                            entries.push(row.entriesConnection_);
+                        } else if (row.type === 'loottable_pool_mutator_else') {
+                            this.elseCount_ = 1;
+                            elseConnection = row.entriesConnection_;
+                        }
                     }
-                    if (entriesInput && entriesInput.connection.targetConnection
-                        && entriesConnections.indexOf(entriesInput.connection.targetConnection) === -1) {
-                        entriesInput.connection.targetConnection.disconnect();
-                    }
+                    row = row.getNextBlock();
                 }
-                this.inputCount_ = Math.max(1, conditionConnections.length);
-                updatePoolShape(this);
-                for (var index = 0; index < this.inputCount_; index++) {
-                    Blockly.Mutator.reconnect(conditionConnections[index], this, 'condition' + index);
-                    Blockly.Mutator.reconnect(entriesConnections[index], this, 'entries' + index);
-                }
+                updatePoolBranches(this);
+                reconnectPoolBranches(this, conditions, entries, elseConnection);
             },
             saveConnections: function (containerBlock) {
                 var row = containerBlock.getInputTargetBlock('STACK');
-                var index = 0;
+                var index = 1;
                 while (row) {
                     if (!row.isInsertionMarker()) {
-                        var conditionInput = this.getInput('condition' + index);
-                        var entriesInput = this.getInput('entries' + index);
-                        row.conditionConnection_ = conditionInput && conditionInput.connection.targetConnection;
-                        row.entriesConnection_ = entriesInput && entriesInput.connection.targetConnection;
-                        index++;
+                        if (row.type === 'loottable_pool_mutator_else_if') {
+                            var conditionInput = this.getInput('condition' + index);
+                            var entriesInput = this.getInput('entries' + index);
+                            row.conditionConnection_ = conditionInput && conditionInput.connection.targetConnection;
+                            row.entriesConnection_ = entriesInput && entriesInput.connection.targetConnection;
+                            index++;
+                        } else if (row.type === 'loottable_pool_mutator_else') {
+                            var elseInput = this.getInput('entries_else');
+                            row.entriesConnection_ = elseInput && elseInput.connection.targetConnection;
+                        }
                     }
                     row = row.getNextBlock();
                 }
             },
+            rebuildPoolShape_: function () {
+                var conditions = [null];
+                var entries = [null];
+                var elseConnection = null;
+                if (this.getInput('entries_else')) {
+                    elseConnection = this.getInput('entries_else').connection.targetConnection;
+                }
+                for (var i = 1; this.getInput('condition' + i); i++) {
+                    conditions.push(this.getInput('condition' + i).connection.targetConnection);
+                    entries.push(this.getInput('entries' + i).connection.targetConnection);
+                }
+                updatePoolBranches(this);
+                reconnectPoolBranches(this, conditions, entries, elseConnection);
+            },
             updateShape_: function () {
-                updatePoolShape(this);
+                updatePoolBranches(this);
             }
-        }, undefined, ['loottable_pool_mutator_input']);
+        };
+        Blockly.Extensions.registerMutator('loottable_pool_mutator', poolMixin, undefined,
+            ['loottable_pool_mutator_else_if', 'loottable_pool_mutator_else']);
     }
-    registerPoolMutator('loottable_pool_if_mutator');
-    registerPoolMutator('loottable_pool_if_else_if_mutator');
-    registerPoolMutator('loottable_pool_if_else_mutator');
+    registerPoolMutator();
 })();

@@ -10,6 +10,7 @@ import com.litqa.blocklyloottable.util.VersionCompat;
 import net.mcreator.blockly.data.BlocklyXML;
 import net.mcreator.element.GeneratableElement;
 import net.mcreator.element.ModElementType;
+import net.mcreator.ui.init.L10N;
 import net.mcreator.workspace.Workspace;
 import net.mcreator.workspace.elements.ModElement;
 
@@ -111,6 +112,8 @@ public class BlocklyLootTable extends GeneratableElement {
     }
 
     private BlocklyXmlParser.ParseResult parseDocument() {
+        BlocklyXmlParser.setCircularReferenceWarning(
+                L10N.t("elementgui.blockly_loot_table.warning.circular_reference"));
         return BlocklyXmlParser.parse(blocklyXml, getLootTableTypeEnum(), createResolver(),
                 getProvidedBlockRegistryName());
     }

@@ -6,7 +6,7 @@
   "mutator": "loottable_condition_all_mutator",
   "mcreator": {
     "toolbox_id": "loottable_conditions",
-    "toolbox_init": ["<mutation inputs=\"1\"></mutation>"]
+    "toolbox_init": ["<mutation inputs=\"2\"></mutation>"]
   },
   "output": "LootTableCondition"
 }

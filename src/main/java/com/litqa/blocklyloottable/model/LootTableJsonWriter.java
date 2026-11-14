@@ -415,6 +415,20 @@ public final class LootTableJsonWriter {
                 properties.put(property, string(condition.getProperties().get("value")));
                 json.put("properties", properties);
             }
+            case "loottable_block_same" -> {
+                String block = string(condition.getProperties().get("block"));
+                String other = string(condition.getProperties().get("other"));
+                if (block.isBlank() || other.isBlank()) {
+                    return null;
+                }
+                if (block.equals(other)) {
+                    json.put("condition", "minecraft:block_state_property");
+                    json.put("block", block);
+                    json.put("properties", new LinkedHashMap<>());
+                } else {
+                    json.put("terms", List.of(blockStateCondition(block), blockStateCondition(other)));
+                }
+            }
             case "loottable_entity_has_potion" -> {
                 String entity = string(condition.getProperties().get("entity"));
                 String effect = string(condition.getProperties().get("effect"));
@@ -665,6 +679,14 @@ public final class LootTableJsonWriter {
             }
         }
         return json;
+    }
+
+    private static Map<String, Object> blockStateCondition(String block) {
+        Map<String, Object> condition = new LinkedHashMap<>();
+        condition.put("condition", "minecraft:block_state_property");
+        condition.put("block", block);
+        condition.put("properties", new LinkedHashMap<>());
+        return condition;
     }
 
     private static Map<String, Object> itemConditionToJson(LootTableModel.Condition condition, boolean itemComponents) {

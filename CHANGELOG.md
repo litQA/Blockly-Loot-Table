@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.1.0.74-beta
+
+### Changed
+
+- Restored the monotonic build number above the previous `73` (the temporary
+  `1.1.0.1` regression is superseded).
+- Condition-aware pools now use a native `if` / `else if` / `else` mutator:
+  the mutator list only contains optional `else if` and `else` rows, the base
+  `if` branch stays in the block body, and `else` remains at the bottom.
+- `All conditions` and `Any condition` start with two empty condition rows.
+- The circular loot-table reference warning is localized instead of hardcoded
+  Chinese.
+- Added the Block condition `A and B are the same block`, defaulting to the
+  provided blockstate and an empty block selector.
+
+### Verified
+
+- Self-check 528 checks; all 111 loottable JSON resources and the mutator script
+  validate.
+
 ## 1.1.0.1-beta
 
 ### Fixed

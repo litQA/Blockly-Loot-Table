@@ -14,6 +14,7 @@ Supported condition blocks:
 - `survives_explosion` (Block loot tables only)
 - `weather_check`
 - block-state boolean, integer and enum comparisons (Block loot tables only)
+- block identity comparisons for the provided blockstate and another block
 - entity potion-effect predicate (Block tables test the player who breaks the
   block; Entity tables test the selected entity)
 - block and entity NBT logic, number and text comparisons
@@ -33,7 +34,8 @@ Every condition block is an A-type value block and uses the condition green.
 Pool and entry conditions accept one `LootTableCondition` value directly; use
 `All conditions` or `Any condition` to combine several conditions. The parent
 **Conditions** category also contains `Not`, which negates one condition value.
-These three combiners start with an empty input instead of an example block.
+`All conditions` and `Any condition` start with two empty value rows; `Not`
+starts with one empty value row. They do not embed an example condition.
 
 Item, damage, world, block and entity conditions are visible subcategories under
 **Conditions**. The Block and Entity subcategories keep their native category
@@ -72,9 +74,11 @@ a warning.
 
 Pools support `rolls`, `bonus_rolls`, one A-type condition value and weighted item
 entries. The condition-free **Pool with rolls** block uses the same deep-green
-colour. Three alternatives pool blocks provide dynamic `if` / `else if` rows and
-an optional bottom `else` row. They generate a `minecraft:alternatives` entry
-and can nest any normal entry. Entries require an **Item selector** input, a
+colour. Three alternatives pool blocks provide the native `if` / `else if` /
+`else` structure. The mutator panel exposes the optional `else if` and `else`
+rows; the base `if` branch is part of the block body, `else if` rows can be added
+or removed freely, and `else` is always last. They generate a
+`minecraft:alternatives` entry and can nest any normal entry. Entries require an **Item selector** input, a
 number count input, a weight, one condition value and a function chain. Two
 additional entries call another loot table directly: one includes a function
 chain, one does not. On 1.21+ the generated `minecraft:loot_table` entry uses
@@ -126,9 +130,9 @@ value (default `1.0`). Because 1.21.1 reads the scale as a static float, a
 provider scale is rejected with a warning.
 
 Referencing another loot table through a nested-entry or loot-table-contents
-block shows a warning: a direct or indirect self-reference can crash the game or
-prevent the world from loading. The plugin cannot inspect other files to prove
-a cycle, so the warning is advisory.
+block shows a localized warning: a direct or indirect self-reference can crash
+the game or prevent the world from loading. The plugin cannot inspect other
+files to prove a cycle, so the warning is advisory.
 
 The **Functions** category, colour 280, contains `Add value` and five
 loot-function blocks: `Add enchantment bonus` (uniform), `Add binomial
@@ -330,6 +334,9 @@ longer ships a preset-template selector.
   socket on a pool or entry.
 - Condition-aware pool variants can be dragged from the toolbox and around the
   workspace; the drag preview keeps their condition and entry inputs.
+- Opening the condition-pool mutator shows `else if` and `else` rows rather than
+  a duplicate of the base `if` branch; `else if` can be added/removed and `else`
+  stays at the bottom.
 - The block selector displays only the selector field, without a
   `Block to test` prefix.
 - Entity and item blocks use the native entity and item colors; all A-type
@@ -339,13 +346,17 @@ longer ships a preset-template selector.
   **Loot table** categories render their blocks without overlap or empty
   entries. Block and Entity condition subcategories are visible again.
 - The Conditions root contains `All conditions`, `Any condition` and `Not`.
-  `All conditions` and `Any condition` add/remove value rows dynamically; `Not`
-  takes one condition. All three start with empty inputs. The Logic category
+  `All conditions` and `Any condition` start with two empty value rows and add or
+  remove rows dynamically; `Not` starts with one empty row. The Logic category
   contains only `random chance` and the true/false selector.
+- The Block conditions category contains the provided-blockstate identity check:
+  both inputs default to the current block, and a different second block emits
+  an `all_of` requiring both block-state predicates.
 - The Scoreboard providers use the Numbers blue and produce `minecraft:score`;
   the entity variant uses a context target, while the player-name and UUID
   variants use fixed names.
-- Referencing another loot table shows the circular-reference warning.
+- Referencing another loot table shows the circular-reference warning in the
+  active MCreator language.
 - The entry item socket accepts the empty item selector and the **Item with
   enchantment** value block. The enchanted item block starts with one row, adds
   and removes rows dynamically, and emits `minecraft:set_enchantments` with the

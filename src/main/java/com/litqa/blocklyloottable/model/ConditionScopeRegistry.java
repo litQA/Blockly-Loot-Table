@@ -35,6 +35,8 @@ public final class ConditionScopeRegistry {
                 ConditionScope.BLOCK_ONLY, "Block state integer property"));
         register(new ConditionDefinition("loottable_block_state_enum", "minecraft:block_state_property",
                 ConditionScope.BLOCK_ONLY, "Block state enum property"));
+        register(new ConditionDefinition("loottable_block_same", "minecraft:all_of",
+                ConditionScope.BLOCK_ONLY, "Same block"));
         register(new ConditionDefinition("loottable_entity_has_potion", "minecraft:entity_properties",
                 ConditionScope.BLOCK_AND_ENTITY, "Entity has potion effect"));
         register(new ConditionDefinition("loottable_block_nbt_logic", "minecraft:location_check",

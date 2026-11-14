@@ -1,0 +1,31 @@
+{
+  "type": "loottable_block_same",
+  "message0": "%1 and %2 are the same block",
+  "args0": [
+    {
+      "type": "input_value",
+      "name": "block",
+      "check": "MCItemBlock"
+    },
+    {
+      "type": "input_value",
+      "name": "other",
+      "check": "MCItemBlock"
+    }
+  ],
+  "inputsInline": true,
+  "colour": 120,
+  "tooltip": "Checks whether the broken block and another block are the same block.",
+  "mcreator": {
+    "toolbox_id": "loottable_blocks",
+    "toolbox_init": [
+      "<value name=\"block\"><block type=\"loottable_provided_blockstate\"></block></value>",
+      "<value name=\"other\"><block type=\"loottable_block_selector\"></block></value>"
+    ],
+    "inputs": [
+      "block",
+      "other"
+    ]
+  },
+  "output": "LootTableCondition"
+}

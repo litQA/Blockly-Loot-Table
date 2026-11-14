@@ -26,8 +26,28 @@ public final class BlocklyXmlParser {
     private static final Pattern NBT_NUMBER = Pattern.compile(
             "[-+]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][-+]?\\d+)?[bBsSlLfFdD]?");
     private static final Pattern NBT_TAG = Pattern.compile("[A-Za-z0-9_.+-]+");
+    private static String circularReferenceWarning = "Remember: a loot table must never reference itself "
+            + "directly or indirectly, otherwise the game may crash or the world may fail to load.";
 
     private BlocklyXmlParser() {
+    }
+
+    /**
+     * Updates the localized warning shown when a loot table references another table.
+     *
+     * @param message localized warning text
+     */
+    public static void setCircularReferenceWarning(String message) {
+        if (message != null && !message.isBlank()) {
+            circularReferenceWarning = message;
+        }
+    }
+
+    /**
+     * @return warning currently used for loot table references
+     */
+    public static String getCircularReferenceWarning() {
+        return circularReferenceWarning;
     }
 
     public record ParseResult(LootTableModel model, ValidationReport report) {
@@ -186,15 +206,18 @@ public final class BlocklyXmlParser {
             String providedBlock, LootTableModel.Pool pool, ValidationReport report) {
         LootTableModel.Entry alternatives = new LootTableModel.Entry();
         alternatives.setType("minecraft:alternatives");
-        String blockType = block.getAttribute("type");
 
         int branchCount = mutationInputCount(block);
+        int elseifCount = mutationElseIfCount(block);
+        if (elseifCount >= 0) {
+            branchCount = elseifCount + 1;
+        }
         int branches = 0;
         for (int index = 0; index < branchCount; index++) {
             branches += addChoiceBranch(alternatives, block, "condition" + index, "entries" + index,
                     poolIndex, type, resolver, providedBlock, report);
         }
-        if ("loottable_pool_if_else".equals(blockType)) {
+        if (statementFirstBlock(block, "entries_else") != null) {
             branches += addChoiceElseBranch(alternatives, block, "entries_else", poolIndex, type, resolver,
                     providedBlock, report);
         }
@@ -288,8 +311,7 @@ public final class BlocklyXmlParser {
                     "Loot table tags are not supported in nested loot table entries; '" + table + "' was skipped.");
             return null;
         }
-        report.addWarning(block.getAttribute("type"),
-                "记住，引用战利品表时严禁直接或间接引用自己，否则会造成游戏崩溃或无法进入存档。");
+        report.addWarning(block.getAttribute("type"), circularReferenceWarning);
         LootTableModel.Entry entry = new LootTableModel.Entry();
         entry.setType("minecraft:loot_table");
         entry.setLootTable(table);
@@ -480,8 +502,7 @@ public final class BlocklyXmlParser {
                             "A loot-table contents item has no valid loot table id and was skipped.");
                     yield null;
                 }
-                report.addWarning(itemType,
-                        "记住，引用战利品表时严禁直接或间接引用自己，否则会造成游戏崩溃或无法进入存档。");
+                report.addWarning(itemType, circularReferenceWarning);
                 String component = fieldValue(itemBlock, "component").trim();
                 if (component.isBlank()) {
                     component = "minecraft:container";
@@ -776,6 +797,11 @@ public final class BlocklyXmlParser {
                 condition.getProperties().put("block", resolvedBlock);
                 condition.getProperties().put("property", property);
                 condition.getProperties().put("value", value);
+            }
+            case "loottable_block_same" -> {
+                if (!parseBlockSameCondition(block, providedBlock, resolver, condition, report)) {
+                    return null;
+                }
             }
             case "loottable_entity_has_potion" -> {
                 String entity = parseEntityValue(block, "entity", type, report);
@@ -1256,6 +1282,20 @@ public final class BlocklyXmlParser {
         return 1;
     }
 
+    private static int mutationElseIfCount(Element block) {
+        for (Element mutation : directChildren(block, "mutation")) {
+            String elseif = mutation.getAttribute("elseif");
+            if (!elseif.isBlank()) {
+                try {
+                    return Math.max(0, Math.min(63, Integer.parseInt(elseif)));
+                } catch (NumberFormatException ignored) {
+                    return 0;
+                }
+            }
+        }
+        return -1;
+    }
+
     private static int readEnchantmentLevelField(Element block, int index, ValidationReport report) {
         String raw = fieldValue(block, "level" + index).trim();
         if (raw.isBlank()) {
@@ -1367,6 +1407,23 @@ public final class BlocklyXmlParser {
         report.addWarning(blockType,
                 "Block state text value " + valueType + " is not supported and was skipped.");
         return null;
+    }
+
+    private static boolean parseBlockSameCondition(Element block, String providedBlock, ItemNameResolver resolver,
+            LootTableModel.Condition condition, ValidationReport report) {
+        String blockType = block.getAttribute("type");
+        if (valueBlock(block, "other") == null) {
+            report.addWarning(blockType, "A second block value is required and this condition was skipped.");
+            return false;
+        }
+        String first = parseBlockValue(block, "block", providedBlock, resolver, report);
+        String second = parseBlockValue(block, "other", "", resolver, report);
+        if (first.isBlank() || second.isBlank()) {
+            return false;
+        }
+        condition.getProperties().put("block", first);
+        condition.getProperties().put("other", second);
+        return true;
     }
 
     private static String nbtComparisonValue(Element block, String blockType, ValidationReport report) {
